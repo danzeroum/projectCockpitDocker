@@ -123,8 +123,9 @@ items:
     governed_by:
       - RULE-CONTRATO-002
     acceptance_criteria:
-      - "danzeroum/qa-suite publica a tag v1.0.0 apontando para o commit 090b7b43."
+      - "danzeroum/qa-suite publica a tag v1.0.0 apontando para o commit 305be2a5."
       - "git clone --branch v1.0.0 resolve, e o job de auditoria sai do modo suite_not_installed."
+      - "O commit da tag é o mesmo carimbado em docs/laudo-adocao.json (standard.commit)."
       - "Enquanto a tag não existir, o CI NÃO cai para main — régua sem pin não mede."
 
   - id: REQ-007

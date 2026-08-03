@@ -7,7 +7,7 @@ Registro do que foi feito, contra o quê, e o que ficou pendente. Segue o playbo
 
 | Papel | Repositório | Commit observado | O que é dono da verdade |
 |---|---|---|---|
-| **Padrão** (régua) | `danzeroum/qa-suite` @ `v1.0.0` | `090b7b4336e513a327d33713ea9bb2272262faa1` | motor, `checks/`, lista curada, gates |
+| **Padrão** (régua) | `danzeroum/qa-suite` @ `v1.0.0` | `305be2a587051b03be707690bbebfbe0da21a2f0` | motor, `checks/`, lista curada, gates |
 | **Molde** (casca) | `danzeroum/project` | `319e533ae98cb678fa0be725e4ac00a7cd4ad291` | forma da harness |
 | **Alvo** (negócio) | `danzeroum/docker` | `89ce0aed62dd870fb259b3c7a0b768524fcfea4e` | comportamento do Docker Cockpit |
 | **Consumidor** | este repositório | — | alvo, thresholds, autorização, evidência |
@@ -85,13 +85,21 @@ isso em vez de supor:
 2. **Git na tag exata:** `danzeroum/qa-suite` **não publica tag nenhuma** —
    `git ls-remote --tags` volta vazio, e o clone falha com
    `fatal: Remote branch v1.0.0 not found in upstream origin`. A versão 1.0.0 é real (está no
-   `pyproject.toml` da suíte, no commit `090b7b43`), mas não é alcançável por ref.
+   `pyproject.toml` da suíte), mas ainda não é alcançável por ref.
 
 O `qa.yml` trata isso como `suite_not_installed` (código 20) e **não** cai para `main`: uma régua
 sem pin mede o alvo com uma fita que muda sozinha, e dois laudos deixariam de ser comparáveis sem
-que ninguém percebesse. Fechar isso é **REQ-008** — criar a tag `v1.0.0` no repositório da régua,
-apontando para `090b7b43`. Enquanto isso, o que ancora a régua no laudo é o **commit observado**,
-não a tag.
+que ninguém percebesse. Fechar isso é **REQ-008**.
+
+**Commit alvo da tag: `305be2a5`.** A régua andou durante a adoção (`090b7b43 → 305be2a5`), e a
+diferença foi verificada antes de escolher: os dois commits declaram `version = "1.0.0"`, o hash
+da lista curada é idêntico (`fadb9fd7…`) e `checks/`, `webqa/` e `data/` não têm diferença
+nenhuma — mudou só `scripts/cockpit.py` e seu teste, a tela do relatório. A **superfície de
+medição é byte a byte a mesma**; o que muda é o commit, e a fingerprint do contrato §7 inclui o
+commit. Por isso este laudo foi regerado contra `305be2a5`: quando a tag for publicada, o que
+`v1.0.0` resolve e o que o laudo carimba são o mesmo objeto.
+
+Enquanto a ref não existir, o que ancora a régua é o **commit observado**, não a tag.
 
 Isto não bloqueia nada hoje: o modo passivo já está recusado por `INCOMPLETE:target_url`, então a
 indisponibilidade da régua só se torna operante depois que houver alvo.
