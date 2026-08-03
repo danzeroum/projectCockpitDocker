@@ -1,0 +1,103 @@
+# Stack de HOMOLOGAÇÃO do Docker Cockpit — o alvo que esta harness pode auditar.
+#
+# Derivado do docker-compose.yml de danzeroum/docker (commit 89ce0ae), com as diferenças
+# que separam homologação de produção. Não é uma cópia do produto: o código continua lá, e
+# este arquivo só o constrói a partir do clone que já existe no servidor (COCKPIT_SRC).
+#
+# As quatro diferenças que importam, e por quê:
+#
+#  1. NOMES E VOLUME PRÓPRIOS — container, projeto e volume distintos. Sem isso, `compose up`
+#     aqui derrubaria o cockpit de produção pelo nome do container.
+#  2. ENABLE_ACTIONS: "0" — produção fixa "1" (o pin que sustenta unlock->reiniciar lá). Aqui
+#     fica desligado: com a flag off as rotas de mutação não são REGISTRADAS (404, não 403).
+#     Homologação é onde a auditoria cutuca; superfície de escrita não deveria existir.
+#  3. SOCKET-PROXY SEM POST/DELETE — segunda tranca, fora do alcance da aplicação. Mesmo que
+#     alguém ligue ENABLE_ACTIONS por engano, o proxy recusa a escrita no daemon. Uma tranca
+#     que o vigiado pode desligar sozinho não é uma tranca.
+#  4. SEM /etc/letsencrypt — produção já as deixa comentadas; aqui nem entram na conversa.
+#
+# O que NÃO fica isolado, e é honesto dizer: a rede btv-prod-net é compartilhada, porque é
+# nela que o global-ingress alcança os upstreams. O isolamento é de container, volume e
+# permissão de daemon — não de rede.
+#
+# Subir:  docker compose -f deploy/homologacao/compose.yml --env-file deploy/homologacao/.env up -d
+# Passo a passo completo: docs/HOMOLOGACAO.md
+
+name: docker-cockpit-homolog
+
+services:
+
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    restart: unless-stopped
+    container_name: docker-cockpit-proxy-homolog
+    environment:
+      CONTAINERS: 1
+      IMAGES: 1
+      INFO: 1
+      NETWORKS: 1
+      VOLUMES: 1
+      EVENTS: 1
+      SYSTEM: 1
+      # Produção usa 1/1. Em homologação a escrita no daemon é negada na origem:
+      # é o controle que sobrevive a um erro de configuração da aplicação.
+      POST: 0
+      DELETE: 0
+      LOG_LEVEL: warning
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:2375/version"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  app:
+    # O código do cockpit NÃO mora neste repositório (ADR-007 §decisão): o build parte do
+    # clone de danzeroum/docker que já existe no servidor. Se COCKPIT_SRC apontar para o
+    # lugar errado, o build falha alto — melhor que subir uma versão antiga em silêncio.
+    build:
+      context: ${COCKPIT_SRC:-/opt/btv/docker}/app
+    container_name: docker-cockpit-homolog
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      SOCKET_PROXY: http://docker-cockpit-proxy-homolog:2375
+      DOCKER_HOST: tcp://docker-cockpit-proxy-homolog:2375
+      NGINX_CONFIG_PATH: /etc/nginx-ingress/nginx.conf
+      # Pin explícito e OPOSTO ao de produção. Ver cabeçalho, item 2.
+      ENABLE_ACTIONS: "0"
+    volumes:
+      # Somente-leitura, iguais aos de produção: sem eles as telas de Ingress e Drift ficam
+      # vazias, e um alvo de homologação com metade das telas em branco não representa o
+      # alvo real — a auditoria mediria uma casca.
+      - /opt/btv/ingress/nginx:/etc/nginx-ingress:ro
+      - /opt/btv:/opt/btv:ro
+      - cockpit-data-homolog:/data
+    networks:
+      - internal
+      - btv-prod-net
+    depends_on:
+      docker-socket-proxy:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python3", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  # Banco próprio: a série temporal de homologação não contamina a de produção, e um
+  # `down -v` aqui não apaga 30 dias de histórico de lá.
+  cockpit-data-homolog:
+
+networks:
+  internal:
+    internal: true
+  btv-prod-net:
+    external: true   # criada pelo global-ingress; é por ela que o nginx alcança o upstream

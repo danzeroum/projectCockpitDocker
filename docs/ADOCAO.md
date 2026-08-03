@@ -12,8 +12,9 @@ Registro do que foi feito, contra o quê, e o que ficou pendente. Segue o playbo
 | **Alvo** (negócio) | `danzeroum/docker` | `89ce0aed62dd870fb259b3c7a0b768524fcfea4e` | comportamento do Docker Cockpit |
 | **Consumidor** | este repositório | — | alvo, thresholds, autorização, evidência |
 
-O código do alvo **não** foi copiado para cá (ADR-005). A régua **não** foi copiada para cá
-(ADR-001, invariante 1).
+O **código** do alvo não foi copiado para cá (ADR-007, que manteve essa parte da ADR-005); o
+**stack de homologação**, sim — `deploy/homologacao/`, ver `docs/HOMOLOGACAO.md`. A régua **não**
+foi copiada para cá (ADR-001, invariante 1).
 
 ## 1. Reconhecimento do alvo
 
@@ -106,7 +107,9 @@ indisponibilidade da régua só se torna operante depois que houver alvo.
 
 ## 5. Alvo — `INCOMPLETE:target_url`
 
-**Não há URL de homologação para o Docker Cockpit.** Ver ADR-006. A configuração ficou
+**Ainda não há URL de homologação no ar para o Docker Cockpit.** Ver ADR-006. O que existe agora
+é a bancada pronta para subir — `deploy/homologacao/` (ADR-007) e o passo a passo em
+`docs/HOMOLOGACAO.md`; falta executá-lo no servidor (REQ-009). Até lá a configuração segue
 fail-closed: `base_url` sob `.invalid` (RFC 2606), `python -m cockpit_harness pendencias` imprime
 
 ```

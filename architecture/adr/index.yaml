@@ -45,7 +45,10 @@ adrs:
 
   - id: ADR-005
     title: "O alvo auditado mora em danzeroum/docker; este repositório é o plano de controle"
-    status: accepted
+    # Substituída por ADR-007: o CÓDIGO do cockpit segue upstream (parte que se manteve), mas o
+    # stack de homologação passou a morar aqui. Fica no índice porque decisão substituída não
+    # se apaga — se apagasse, o repositório perderia a memória de por que já foi diferente.
+    status: superseded
     file: architecture/adr/ADR-005-alvo-fora-do-consumidor.md
     related_capabilities:
       - CAP-ALVO
@@ -64,3 +67,15 @@ adrs:
     related_risks:
       - RISK-ALVO-001
       - RISK-SEGREDO-001
+
+  - id: ADR-007
+    title: "O stack de homologação mora no consumidor; o produto continua upstream"
+    status: accepted
+    file: architecture/adr/ADR-007-stack-de-homologacao-no-consumidor.md
+    supersedes:
+      - ADR-005
+    related_capabilities:
+      - CAP-ALVO
+    related_risks:
+      - RISK-ALVO-001
+      - RISK-HOMOLOG-001

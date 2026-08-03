@@ -2,6 +2,10 @@
 # Ele é injetado como segredo no CI; o que vive versionado é só o .example ao lado.
 tests/qa/escopo-autorizado.yaml
 
+# SEGREDO — o .env de homologação carrega a credencial do basic auth do ingress.
+# Ele é preenchido NO SERVIDOR; aqui vive só o .example.
+deploy/homologacao/.env
+
 # Evidência da harness — efêmera, nunca versionada
 harness/runs/*
 harness/reports/*

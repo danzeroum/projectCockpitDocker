@@ -39,6 +39,9 @@ houver uma URL de homologação declarada, nenhum modo de rede roda: `passive`, 
 roda sempre. Ver [ADR-006](architecture/adr/ADR-006-pendencia-em-vez-de-alvo-inventado.md) e
 [`CP-001`](harness/change-proposals/CP-001-declarar-alvo-de-homologacao.yaml).
 
+A bancada para destravar já está pronta em [`deploy/homologacao/`](deploy/homologacao/) — falta
+subi-la no servidor. Passo a passo: [`docs/HOMOLOGACAO.md`](docs/HOMOLOGACAO.md).
+
 ## Os dois trabalhos
 
 | Trabalho | Objeto | Rede | Autorização | Agente pode disparar |
@@ -55,6 +58,7 @@ projectCockpitDocker/
 ├── architecture/           componentes + interfaces + adr/
 ├── design/                 sistema de design e superfícies de UI do ALVO
 ├── governance/             registro de riscos
+├── deploy/homologacao/     a bancada: compose + ingress do alvo que a régua pode auditar
 ├── src/cockpit_harness/    o software desta adoção (contrato, plano, procedência, CLI)
 ├── tests/
 │   ├── unit/ integration/ e2e/   os quatro níveis — entrada do inventário
