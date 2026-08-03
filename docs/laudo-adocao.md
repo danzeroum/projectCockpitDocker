@@ -45,6 +45,7 @@ Nada do Docker Cockpit publicado. Nenhuma requisição foi emitida — `network_
 |---|---|
 | `INCOMPLETE:target_url` | `danzeroum/docker` só publica `docker.danzeroum.com` (produção). Sem host de homologação, os modos `passive`, `load` e `active_discovery` são recusados com `SCOPE_MISSING` (12). |
 | `INCOMPLETE:escopo-autorizado` | O escopo real não é comitado; ele é injetado como segredo do CI e ainda não existe. |
+| Régua inalcançável por ref | `danzeroum/qa-suite` não publica tags: `v1.0.0` existe como versão (no `pyproject.toml`, commit `090b7b43`) mas não como ref. `pip` e `git clone --branch` falham; o CI sai em `suite_not_installed` (20) e **não** cai para `main`. Rastreado em REQ-008. |
 
 Isto é resultado, não omissão: um laudo passivo apontado para produção mediria o servidor real —
 o cockpit fala com o daemon Docker através do socket-proxy. Ver ADR-006 e `CP-001`.

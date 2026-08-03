@@ -6,10 +6,17 @@
 # harness.yaml referencia o arquivo, e tests/qa/config.yaml é o único espelho tolerado —
 # fiscalizado por ci/validate_metadata.py (I3) e por tests/integration/test_repositorio.py.
 #
-# A suíte ainda NÃO é publicada no PyPI, então a INSTALAÇÃO real é feita a partir do Git
+# A suíte ainda NÃO é publicada no PyPI, então a INSTALAÇÃO real seria feita a partir do Git
 # (ver docs/ADOCAO.md §4 e docs/COMO-ADOTAR.md §4 do molde):
 #   pip install "webqa-suite @ git+https://github.com/danzeroum/qa-suite@v1.0.0#subdirectory=webqa-suite"
-# Quando publicar no PyPI, `pip install -r requirements-qa.txt` resolve direto e a linha
+#
+# ATENÇÃO — hoje esse comando NÃO resolve: `danzeroum/qa-suite` não publica tag nenhuma
+# (`git ls-remote --tags` volta vazio), então a ref `v1.0.0` não existe. A versão 1.0.0 é real —
+# está no pyproject.toml da suíte — mas não é alcançável por ref. O CI trata isso como
+# suite_not_installed (código 20) e NÃO cai para `main`: uma régua sem pin mede o alvo com uma
+# fita que muda sozinha. Fechar isso é REQ-008 (criar a tag v1.0.0 no repositório da régua).
+#
+# Quando a suíte publicar no PyPI, `pip install -r requirements-qa.txt` resolve direto e a linha
 # abaixo passa a ser suficiente sozinha.
 #
 # Ao subir de versão: PR próprio, com o laudo anterior e o novo lado a lado

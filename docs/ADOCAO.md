@@ -76,11 +76,25 @@ E fixada em `requirements-qa.txt` (`webqa-suite==1.0.0`), com o espelho em
 `tests/qa/config.yaml → standard_version`. O número **não** aparece em mais nenhum lugar: o CI
 lê a versão com `python -m cockpit_harness versao`.
 
-Realidade da instalação: a v1.0.0 **não está no PyPI** e o `pyproject.toml` da suíte não tem
-`[build-system]` nem declaração de pacotes — `pip install` do pin não resolve hoje. Por isso o
-`qa.yml` obtém a régua por **clone na tag exata** (`git clone --branch v$(… versao)`) e mantém o
-`pip install -r requirements-qa.txt` como tentativa tolerante, que passa a resolver sozinha
-quando a suíte publicar.
+Realidade da instalação — **os dois caminhos estão fechados hoje**, e o primeiro run do CI provou
+isso em vez de supor:
+
+1. **PyPI:** a v1.0.0 não está publicada, e o `pyproject.toml` da suíte não declara
+   `[build-system]` nem pacotes. `pip install -r requirements-qa.txt` responde
+   `No matching distribution found for webqa-suite==1.0.0`.
+2. **Git na tag exata:** `danzeroum/qa-suite` **não publica tag nenhuma** —
+   `git ls-remote --tags` volta vazio, e o clone falha com
+   `fatal: Remote branch v1.0.0 not found in upstream origin`. A versão 1.0.0 é real (está no
+   `pyproject.toml` da suíte, no commit `090b7b43`), mas não é alcançável por ref.
+
+O `qa.yml` trata isso como `suite_not_installed` (código 20) e **não** cai para `main`: uma régua
+sem pin mede o alvo com uma fita que muda sozinha, e dois laudos deixariam de ser comparáveis sem
+que ninguém percebesse. Fechar isso é **REQ-008** — criar a tag `v1.0.0` no repositório da régua,
+apontando para `090b7b43`. Enquanto isso, o que ancora a régua no laudo é o **commit observado**,
+não a tag.
+
+Isto não bloqueia nada hoje: o modo passivo já está recusado por `INCOMPLETE:target_url`, então a
+indisponibilidade da régua só se torna operante depois que houver alvo.
 
 ## 5. Alvo — `INCOMPLETE:target_url`
 

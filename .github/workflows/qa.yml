@@ -109,7 +109,7 @@ jobs:
             pip install -r "$RUNNER_TEMP/qa-suite/webqa-suite/requirements.txt" || true
             echo "regua_ok=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::warning::régua v$VERSAO indisponível — auditoria em modo stub (suite_not_installed, código 20)."
+            echo "::warning::tag v$VERSAO não existe em danzeroum/qa-suite — auditoria em modo stub (suite_not_installed, código 20). O repositório da régua não publica tags; ver docs/ADOCAO.md §4 e REQ-008. NÃO faça fallback para main: uma régua sem pin mede o alvo com uma fita que muda sozinha."
             echo "regua_ok=false" >> "$GITHUB_OUTPUT"
           fi
 

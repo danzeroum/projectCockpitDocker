@@ -153,6 +153,10 @@ graph TD
   REQ_007 -.->|depende| REQ_005
   REQ_007 -.->|depende| REQ_006
   REQ_007 ==>|move| MET_PENDENCIA
+  REQ_008["REQ-008<br/>proposed"]
+  REQ_008 -->|requisito| CAP_CONTRATO
+  REQ_008 ==>|move| MET_COMPARAVEL
+  REQ_008 -.->|regido por| RULE_CONTRATO_002
   RISK_ALVO_001["RISK-ALVO-001"]
   RISK_CHANGE_001["RISK-CHANGE-001"]
   RISK_DEP_001["RISK-DEP-001"]
@@ -194,7 +198,7 @@ graph TD
   classDef ui fill:#db2777,stroke:#9d174d,color:#fff;
   class UI_COCKPIT_EXECUTIVO,UI_COCKPIT_PAINEL ui;
   classDef req fill:#0d9488,stroke:#0f766e,color:#fff;
-  class REQ_001,REQ_002,REQ_003,REQ_004,REQ_005,REQ_006,REQ_007 req;
+  class REQ_001,REQ_002,REQ_003,REQ_004,REQ_005,REQ_006,REQ_007,REQ_008 req;
   classDef met fill:#ea580c,stroke:#c2410c,color:#fff;
   class MET_COMPARAVEL,MET_FRONTEIRA,MET_PENDENCIA met;
   classDef test fill:#57534e,stroke:#44403c,color:#fff;

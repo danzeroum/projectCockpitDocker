@@ -111,6 +111,22 @@ items:
       - "authorized:true, host de homologação em origem exata e authorization_expires vigente."
       - "A pendência INCOMPLETE:escopo-autorizado desaparece."
 
+  - id: REQ-008
+    title: "Publicar a tag v1.0.0 no repositório da régua"
+    type: enabler
+    capability: CAP-CONTRATO
+    status: proposed
+    priority: high
+    risk: RISK-DEP-001
+    metrics:
+      - MET-COMPARAVEL
+    governed_by:
+      - RULE-CONTRATO-002
+    acceptance_criteria:
+      - "danzeroum/qa-suite publica a tag v1.0.0 apontando para o commit 090b7b43."
+      - "git clone --branch v1.0.0 resolve, e o job de auditoria sai do modo suite_not_installed."
+      - "Enquanto a tag não existir, o CI NÃO cai para main — régua sem pin não mede."
+
   - id: REQ-007
     title: "Rodar a auditoria passiva do cockpit contra homologação"
     type: user-story
