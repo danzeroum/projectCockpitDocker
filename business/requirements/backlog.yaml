@@ -81,6 +81,27 @@ items:
       - "Qualquer variável com prefixo do denylist aborta com DENIED_ENV (10)."
       - "O CI prova que a detecção funciona, em passo negativo explícito."
 
+  - id: REQ-009
+    title: "Subir o ambiente de homologação do cockpit na VPS"
+    type: task
+    capability: CAP-ALVO
+    status: proposed
+    priority: high
+    risk: RISK-HOMOLOG-001
+    metrics:
+      - MET-PENDENCIA
+    governed_by:
+      - RULE-HOMOLOG-001
+      - RULE-HOMOLOG-002
+      - RULE-HOMOLOG-003
+      - RULE-HOMOLOG-004
+    acceptance_criteria:
+      - "Registro DNS A de homolog.docker.danzeroum.com apontando para o servidor."
+      - "deploy/homologacao/.env preenchido NO SERVIDOR, com credencial própria (nunca a de produção)."
+      - "docker compose -f deploy/homologacao/compose.yml up -d com os dois containers saudáveis."
+      - "setup-ingress-homolog.sh executado: certificado emitido e bloco server{} no ingress."
+      - "https://homolog.docker.danzeroum.com/health responde, e as rotas de mutação dão 404."
+
   - id: REQ-005
     title: "Declarar a URL de homologação do Docker Cockpit"
     type: task
@@ -90,6 +111,8 @@ items:
     risk: RISK-ALVO-001
     metrics:
       - MET-PENDENCIA
+    depends_on:
+      - REQ-009
     acceptance_criteria:
       - "tests/qa/config.yaml aponta para um host de homologação (nunca docker.danzeroum.com)."
       - "environment permanece staging; produção nunca é alvo automático."

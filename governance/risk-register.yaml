@@ -107,6 +107,27 @@ risks:
       - kind: local_path
         ref: architecture/adr/ADR-006-pendencia-em-vez-de-alvo-inventado.md
 
+  - id: RISK-HOMOLOG-001
+    area: access
+    description: >
+      Ambiente de homologação com superfície de escrita ligada vira uma segunda porta para o
+      daemon Docker do servidor de produção — normalmente com credencial mais fraca, porque
+      "é só homologação". O stack divide host, disco e rede com o cockpit de verdade.
+    likelihood: medium
+    impact: high
+    treatment: prevent
+    owner: security_owner
+    status: mitigated
+    controls:
+      - kind: local_path
+        ref: deploy/homologacao/compose.yml
+      - kind: local_path
+        ref: tests/integration/test_homologacao.py
+      - kind: local_path
+        ref: deploy/homologacao/setup-ingress-homolog.sh
+      - kind: local_path
+        ref: architecture/adr/ADR-007-stack-de-homologacao-no-consumidor.md
+
   - id: RISK-SEGREDO-001
     area: access
     description: >

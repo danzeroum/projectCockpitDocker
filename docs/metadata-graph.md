@@ -12,6 +12,7 @@ graph TD
   PROJ_danzeroum_projectcockpitdocker["danzeroum-projectcockpitdocker"]
   TEST_tests_e2e_test_checklist_adocao_py{{"test_checklist_adocao.py"}}
   TEST_tests_e2e_test_cli_laudo_py{{"test_cli_laudo.py"}}
+  TEST_tests_integration_test_homologacao_py{{"test_homologacao.py"}}
   TEST_tests_integration_test_repositorio_py{{"test_repositorio.py"}}
   TEST_tests_integration_test_workflows_py{{"test_workflows.py"}}
   TEST_tests_unit_test_contrato_py{{"test_contrato.py"}}
@@ -80,6 +81,18 @@ graph TD
   RULE_CONTRATO_005["RULE-CONTRATO-005"]
   CAP_CONTRATO -->|regra| RULE_CONTRATO_005
   RULE_CONTRATO_005 -.->|verifica| TEST_tests_unit_test_contrato_py
+  RULE_HOMOLOG_001["RULE-HOMOLOG-001"]
+  CAP_ALVO -->|regra| RULE_HOMOLOG_001
+  RULE_HOMOLOG_001 -.->|verifica| TEST_tests_integration_test_homologacao_py
+  RULE_HOMOLOG_002["RULE-HOMOLOG-002"]
+  CAP_ALVO -->|regra| RULE_HOMOLOG_002
+  RULE_HOMOLOG_002 -.->|verifica| TEST_tests_integration_test_homologacao_py
+  RULE_HOMOLOG_003["RULE-HOMOLOG-003"]
+  CAP_ALVO -->|regra| RULE_HOMOLOG_003
+  RULE_HOMOLOG_003 -.->|verifica| TEST_tests_integration_test_homologacao_py
+  RULE_HOMOLOG_004["RULE-HOMOLOG-004"]
+  CAP_ALVO -->|regra| RULE_HOMOLOG_004
+  RULE_HOMOLOG_004 -.->|verifica| TEST_tests_integration_test_homologacao_py
   RULE_MODOS_001["RULE-MODOS-001"]
   CAP_MODOS -->|regra| RULE_MODOS_001
   RULE_MODOS_001 -.->|verifica| TEST_tests_unit_test_plano_py
@@ -143,6 +156,7 @@ graph TD
   REQ_004 -.->|validado por| TEST_tests_unit_test_plano_py
   REQ_005["REQ-005<br/>proposed"]
   REQ_005 -->|requisito| CAP_ALVO
+  REQ_005 -.->|depende| REQ_009
   REQ_005 ==>|move| MET_PENDENCIA
   REQ_006["REQ-006<br/>proposed"]
   REQ_006 -->|requisito| CAP_ALVO
@@ -157,9 +171,17 @@ graph TD
   REQ_008 -->|requisito| CAP_CONTRATO
   REQ_008 ==>|move| MET_COMPARAVEL
   REQ_008 -.->|regido por| RULE_CONTRATO_002
+  REQ_009["REQ-009<br/>proposed"]
+  REQ_009 -->|requisito| CAP_ALVO
+  REQ_009 ==>|move| MET_PENDENCIA
+  REQ_009 -.->|regido por| RULE_HOMOLOG_001
+  REQ_009 -.->|regido por| RULE_HOMOLOG_002
+  REQ_009 -.->|regido por| RULE_HOMOLOG_003
+  REQ_009 -.->|regido por| RULE_HOMOLOG_004
   RISK_ALVO_001["RISK-ALVO-001"]
   RISK_CHANGE_001["RISK-CHANGE-001"]
   RISK_DEP_001["RISK-DEP-001"]
+  RISK_HOMOLOG_001["RISK-HOMOLOG-001"]
   RISK_META_001["RISK-META-001"]
   RISK_SEGREDO_001["RISK-SEGREDO-001"]
   RISK_WEBQA_001["RISK-WEBQA-001"]
@@ -185,6 +207,10 @@ graph TD
   ADR_006 -->|decide| CMP_CONTRATO
   ADR_006 -->|mitiga| RISK_ALVO_001
   ADR_006 -->|mitiga| RISK_SEGREDO_001
+  ADR_007["ADR-007"]
+  ADR_007 -->|decide| CAP_ALVO
+  ADR_007 -->|mitiga| RISK_ALVO_001
+  ADR_007 -->|mitiga| RISK_HOMOLOG_001
   classDef project fill:#1f2937,stroke:#111827,color:#fff;
   class PROJ_danzeroum_projectcockpitdocker project;
   classDef cap fill:#2563eb,stroke:#1e40af,color:#fff;
@@ -194,17 +220,17 @@ graph TD
   classDef ifc fill:#7c3aed,stroke:#5b21b6,color:#fff;
   class IFC_CLI,IFC_CONTRATO,IFC_PLANO,IFC_PROCEDENCIA ifc;
   classDef rule fill:#16a34a,stroke:#15803d,color:#fff;
-  class RULE_CONTRATO_001,RULE_CONTRATO_002,RULE_CONTRATO_003,RULE_CONTRATO_004,RULE_CONTRATO_005,RULE_MODOS_001,RULE_MODOS_002,RULE_MODOS_003,RULE_MODOS_004,RULE_PROCEDENCIA_001,RULE_PROCEDENCIA_002,RULE_PROCEDENCIA_003,RULE_PROCEDENCIA_004 rule;
+  class RULE_CONTRATO_001,RULE_CONTRATO_002,RULE_CONTRATO_003,RULE_CONTRATO_004,RULE_CONTRATO_005,RULE_HOMOLOG_001,RULE_HOMOLOG_002,RULE_HOMOLOG_003,RULE_HOMOLOG_004,RULE_MODOS_001,RULE_MODOS_002,RULE_MODOS_003,RULE_MODOS_004,RULE_PROCEDENCIA_001,RULE_PROCEDENCIA_002,RULE_PROCEDENCIA_003,RULE_PROCEDENCIA_004 rule;
   classDef ui fill:#db2777,stroke:#9d174d,color:#fff;
   class UI_COCKPIT_EXECUTIVO,UI_COCKPIT_PAINEL ui;
   classDef req fill:#0d9488,stroke:#0f766e,color:#fff;
-  class REQ_001,REQ_002,REQ_003,REQ_004,REQ_005,REQ_006,REQ_007,REQ_008 req;
+  class REQ_001,REQ_002,REQ_003,REQ_004,REQ_005,REQ_006,REQ_007,REQ_008,REQ_009 req;
   classDef met fill:#ea580c,stroke:#c2410c,color:#fff;
   class MET_COMPARAVEL,MET_FRONTEIRA,MET_PENDENCIA met;
   classDef test fill:#57534e,stroke:#44403c,color:#fff;
-  class TEST_tests_e2e_test_checklist_adocao_py,TEST_tests_e2e_test_cli_laudo_py,TEST_tests_integration_test_repositorio_py,TEST_tests_integration_test_workflows_py,TEST_tests_unit_test_contrato_py,TEST_tests_unit_test_plano_py,TEST_tests_unit_test_procedencia_py test;
+  class TEST_tests_e2e_test_checklist_adocao_py,TEST_tests_e2e_test_cli_laudo_py,TEST_tests_integration_test_homologacao_py,TEST_tests_integration_test_repositorio_py,TEST_tests_integration_test_workflows_py,TEST_tests_unit_test_contrato_py,TEST_tests_unit_test_plano_py,TEST_tests_unit_test_procedencia_py test;
   classDef adr fill:#ca8a04,stroke:#a16207,color:#fff;
-  class ADR_001,ADR_002,ADR_003,ADR_004,ADR_005,ADR_006 adr;
+  class ADR_001,ADR_002,ADR_003,ADR_004,ADR_005,ADR_006,ADR_007 adr;
   classDef risk fill:#dc2626,stroke:#991b1b,color:#fff;
-  class RISK_ALVO_001,RISK_CHANGE_001,RISK_DEP_001,RISK_META_001,RISK_SEGREDO_001,RISK_WEBQA_001 risk;
+  class RISK_ALVO_001,RISK_CHANGE_001,RISK_DEP_001,RISK_HOMOLOG_001,RISK_META_001,RISK_SEGREDO_001,RISK_WEBQA_001 risk;
 ```
