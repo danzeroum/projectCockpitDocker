@@ -14,7 +14,8 @@
 # (`git ls-remote --tags` volta vazio), então a ref `v1.0.0` não existe. A versão 1.0.0 é real —
 # está no pyproject.toml da suíte — mas não é alcançável por ref. O CI trata isso como
 # suite_not_installed (código 20) e NÃO cai para `main`: uma régua sem pin mede o alvo com uma
-# fita que muda sozinha. Fechar isso é REQ-008 (criar a tag v1.0.0 no repositório da régua).
+# fita que muda sozinha. Fechar isso é REQ-008 — publicar a tag v1.0.0 apontando para o commit
+# 305be2a5, que é o mesmo carimbado em docs/laudo-adocao.json.
 #
 # Quando a suíte publicar no PyPI, `pip install -r requirements-qa.txt` resolve direto e a linha
 # abaixo passa a ser suficiente sozinha.

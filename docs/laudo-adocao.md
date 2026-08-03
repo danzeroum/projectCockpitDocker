@@ -9,7 +9,7 @@
 |---|---|
 | `standard.name` | `webqa-suite` |
 | `standard.version` | `1.0.0` — lida de `requirements-qa.txt` (fonte única) |
-| `standard.commit` | `090b7b4336e513a327d33713ea9bb2272262faa1` |
+| `standard.commit` | `305be2a587051b03be707690bbebfbe0da21a2f0` — o commit que `v1.0.0` marca |
 | `standard.sensitive_paths_hash` | `sha256:fadb9fd75759537ea924df49f7b18938bd69c5b7e6dad562a1190d2b755400f3` |
 | `consumer_project.repository` | `danzeroum/projectCockpitDocker` |
 | `consumer_project.commit` | commit do HEAD quando o inventário rodou — anterior ao commit da adoção, porque o laudo é gerado antes de ser versionado |
@@ -45,7 +45,7 @@ Nada do Docker Cockpit publicado. Nenhuma requisição foi emitida — `network_
 |---|---|
 | `INCOMPLETE:target_url` | `danzeroum/docker` só publica `docker.danzeroum.com` (produção). Sem host de homologação, os modos `passive`, `load` e `active_discovery` são recusados com `SCOPE_MISSING` (12). |
 | `INCOMPLETE:escopo-autorizado` | O escopo real não é comitado; ele é injetado como segredo do CI e ainda não existe. |
-| Régua inalcançável por ref | `danzeroum/qa-suite` não publica tags: `v1.0.0` existe como versão (no `pyproject.toml`, commit `090b7b43`) mas não como ref. `pip` e `git clone --branch` falham; o CI sai em `suite_not_installed` (20) e **não** cai para `main`. Rastreado em REQ-008. |
+| Tag `v1.0.0` ainda não publicada | O commit alvo está decidido e observado (`305be2a5`), e é contra ele que este laudo carimba. Enquanto a ref não existir em `danzeroum/qa-suite`, `pip` e `git clone --branch` falham e o CI sai em `suite_not_installed` (20) — sem cair para `main`. Rastreado em REQ-008. |
 
 Isto é resultado, não omissão: um laudo passivo apontado para produção mediria o servidor real —
 o cockpit fala com o daemon Docker através do socket-proxy. Ver ADR-006 e `CP-001`.
