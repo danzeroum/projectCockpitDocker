@@ -1,0 +1,88 @@
+# Capacidades de negócio com rastreabilidade física: cada capacidade aponta para código e teste
+# reais. IDs estáveis (CAP-...) formam as arestas duráveis do grafo.
+# Schema: harness/schemas/capabilities.schema.json
+# O fiscal semântico só exige que source_paths/test_paths existam para status implemented/verified.
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+capabilities:
+  - id: CAP-CONTRATO
+    name: "Conformidade com o contrato de consumo"
+    status: verified
+    owners:
+      business_owner: danzeroum
+      technical_owner: danzeroum
+    risk_level: high
+    source_paths:
+      - src/cockpit_harness/contrato.py
+      - src/cockpit_harness/codigos.py
+    test_paths:
+      - tests/unit/test_contrato.py
+      - tests/integration/test_repositorio.py
+      - tests/e2e/test_checklist_adocao.py
+    business_rules:
+      - business/rules/contrato.yaml
+    evidence:
+      tests:
+        - tests/unit/test_contrato.py
+      architecture:
+        - architecture/adr/ADR-003-versao-em-fonte-unica.md
+
+  - id: CAP-MODOS
+    name: "Roteamento de modo e higiene de ambiente"
+    status: verified
+    owners:
+      business_owner: danzeroum
+      technical_owner: danzeroum
+    risk_level: critical
+    source_paths:
+      - src/cockpit_harness/plano.py
+    test_paths:
+      - tests/unit/test_plano.py
+      - tests/integration/test_workflows.py
+      - tests/e2e/test_cli_laudo.py
+    business_rules:
+      - business/rules/modos.yaml
+    evidence:
+      tests:
+        - tests/unit/test_plano.py
+      architecture:
+        - architecture/adr/ADR-001-webqa-como-padrao-externo.md
+
+  - id: CAP-PROCEDENCIA
+    name: "Procedência e comparabilidade do laudo"
+    status: verified
+    owners:
+      business_owner: danzeroum
+      technical_owner: danzeroum
+    risk_level: high
+    source_paths:
+      - src/cockpit_harness/procedencia.py
+      - src/cockpit_harness/cli.py
+      - src/cockpit_harness/__main__.py
+    test_paths:
+      - tests/unit/test_procedencia.py
+      - tests/e2e/test_cli_laudo.py
+    business_rules:
+      - business/rules/procedencia.yaml
+    evidence:
+      tests:
+        - tests/unit/test_procedencia.py
+      quality_reports:
+        - docs/laudo-adocao.json
+
+  - id: CAP-ALVO
+    name: "Auditoria do Docker Cockpit publicado"
+    # planned, não verified: deste lado ela é auditoria A EXECUTAR, e está bloqueada por
+    # INCOMPLETE:target_url (ADR-006). O código do alvo mora em danzeroum/docker (ADR-005),
+    # por isso source_paths/test_paths estão vazios aqui — e o fiscal só os cobraria se a
+    # capacidade fosse implemented/verified.
+    status: planned
+    owners:
+      business_owner: danzeroum
+      technical_owner: danzeroum
+    risk_level: high
+    source_paths: []
+    test_paths: []

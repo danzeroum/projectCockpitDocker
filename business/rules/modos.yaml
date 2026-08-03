@@ -1,0 +1,52 @@
+# Regras da capacidade de roteamento de modo e higiene de ambiente.
+# Schema: harness/schemas/business-rules.schema.json
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+capability: CAP-MODOS
+
+rules:
+  - id: RULE-MODOS-001
+    name: "Default deny"
+    status: verified
+    statement: >
+      Modo ou runner-kind que a harness não reconhece não é autorizado. A ausência de declaração
+      nunca é lida como permissão.
+    rationale: "Uma chamada ambígua roteada como operação barata é o caminho curto para o acidente."
+    verified_by:
+      - tests/unit/test_plano.py
+
+  - id: RULE-MODOS-002
+    name: "Agente nunca dispara load nem active_discovery"
+    status: verified
+    statement: >
+      Os modos pesados só existem em job segregado por workflow_dispatch, com confirmação humana
+      explícita; um runner-kind agent recebe MODE_FORBIDDEN (11) independentemente de configuração.
+    rationale: "Rajada e sondagem ativa têm efeito no alvo; quem responde por isso é uma pessoa."
+    verified_by:
+      - tests/unit/test_plano.py
+      - tests/integration/test_workflows.py
+      - tests/e2e/test_cli_laudo.py
+
+  - id: RULE-MODOS-003
+    name: "Variável negada aborta, não é ignorada"
+    status: verified
+    statement: >
+      Com fail_on_denied_env, encontrar qualquer WEBQA_* no ambiente aborta com DENIED_ENV (10)
+      em vez de seguir ignorando a variável.
+    rationale: >
+      Ignorar em silêncio esconde exatamente o erro de configuração que o controle existe para
+      revelar — e o erro vira evento auditável.
+    verified_by:
+      - tests/unit/test_plano.py
+      - tests/e2e/test_cli_laudo.py
+
+  - id: RULE-MODOS-004
+    name: "A matriz de modos é lida, não repetida em código"
+    status: verified
+    statement: "pode_disparar decide a partir de harness/harness.yaml; não há matriz hardcoded."
+    rationale: "Código que repete a declaração vira segunda fonte de verdade e diverge sem aviso."
+    verified_by:
+      - tests/integration/test_repositorio.py

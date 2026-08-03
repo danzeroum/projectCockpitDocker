@@ -1,0 +1,52 @@
+# Regras da capacidade de procedência e comparabilidade do laudo.
+# Schema: harness/schemas/business-rules.schema.json
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+capability: CAP-PROCEDENCIA
+
+rules:
+  - id: RULE-PROCEDENCIA-001
+    name: "Todo laudo carimba a régua que o produziu"
+    status: verified
+    statement: >
+      O laudo declara name, version, commit e sensitive_paths_hash do padrão, além de run_id,
+      modo, network_used e runner_kind. Laudo sem bloco válido é PROVENANCE_INVALID (30).
+    rationale: "Sem procedência, um laudo é opinião com aparência de medida."
+    verified_by:
+      - tests/unit/test_procedencia.py
+      - tests/e2e/test_checklist_adocao.py
+
+  - id: RULE-PROCEDENCIA-002
+    name: "Réguas diferentes não se comparam"
+    status: verified
+    statement: >
+      A agregação computa a fingerprint (nome, versão, commit, hash da lista curada, schema) e
+      recusa comparar laudos divergentes com NOT_COMPARABLE (31).
+    rationale: >
+      'Não comparável' é resultado válido e muito melhor que um painel aparentemente preciso e
+      enganoso.
+    verified_by:
+      - tests/unit/test_procedencia.py
+
+  - id: RULE-PROCEDENCIA-003
+    name: "Entra o hash da lista curada; a lista não"
+    status: verified
+    statement: >
+      O consumidor registra sha256 da lista de caminhos sensíveis da suíte, nunca o conteúdo — e
+      hashes diferentes na mesma versão provam edição da régua.
+    rationale: "Carimbar a régua sem trazê-la para dentro preserva a invariante 1."
+    verified_by:
+      - tests/unit/test_procedencia.py
+
+  - id: RULE-PROCEDENCIA-004
+    name: "Régua não observada é declarada ausente, nunca presumida"
+    status: verified
+    statement: >
+      Sem commit e hash observados, o laudo sai com version/commit/hash 'UNINSTALLED' e result
+      'suite_not_installed' (20) — jamais com valores inventados.
+    rationale: "Um carimbo falso quebra a fingerprint e faz laudos incomparáveis parecerem iguais."
+    verified_by:
+      - tests/unit/test_procedencia.py

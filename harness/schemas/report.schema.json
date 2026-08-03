@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://danzeroum/project/harness/schemas/report.schema.json",
+  "title": "Envelope do laudo",
+  "description": "Envolve a procedência, o resultado e os achados. A procedência é obrigatória em qualquer comparação. NOTA DE ADOÇÃO: as referências são por PROPRIEDADE (provenance.schema.json#/properties/...) em vez de um allOf do documento inteiro — provenance é 'additionalProperties: false', então herdá-lo por allOf recusaria result/findings/summary e nenhum laudo válido passaria. As condições de bump (artifact ⇒ schema_version 1.1) são reafirmadas aqui porque moram na raiz do documento.",
+  "type": "object",
+  "required": ["schema_version", "standard", "consumer_project", "execution", "result", "findings"],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "comment": "Bump formalizado: schema_version 1.0 NÃO admite o bloco artifact.",
+      "if": { "properties": { "schema_version": { "const": "1.0" } } },
+      "then": { "not": { "required": ["artifact"] } }
+    },
+    {
+      "comment": "E a presença de artifact EXIGE schema_version 1.1 — o campo novo obriga o bump.",
+      "if": { "required": ["artifact"] },
+      "then": { "properties": { "schema_version": { "const": "1.1" } } }
+    }
+  ],
+  "properties": {
+    "schema_version": { "$ref": "provenance.schema.json#/properties/schema_version" },
+    "artifact": { "$ref": "provenance.schema.json#/properties/artifact" },
+    "standard": { "$ref": "provenance.schema.json#/properties/standard" },
+    "consumer_project": { "$ref": "provenance.schema.json#/properties/consumer_project" },
+    "execution": { "$ref": "provenance.schema.json#/properties/execution" },
+    "result": {
+      "type": "string",
+      "enum": ["ok", "findings", "suite_not_installed", "error"],
+      "description": "ok = sem achados; findings = achados presentes; suite_not_installed = stub tolerante; error = falha."
+    },
+    "findings": {
+      "type": "array",
+      "description": "Achados já sanitizados pela suíte. Vazio quando result != findings.",
+      "items": {
+        "type": "object",
+        "required": ["id", "severity", "dimension"],
+        "properties": {
+          "id": { "type": "string" },
+          "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+          "dimension": { "type": "string" },
+          "summary": { "type": "string" }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "description": "Contagens agregadas por severidade/dimensão e pendências abertas. Opcional.",
+      "additionalProperties": true
+    }
+  }
+}

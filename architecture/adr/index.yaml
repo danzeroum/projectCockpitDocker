@@ -1,0 +1,66 @@
+# Índice fiscalizável dos ADRs. Os arquivos .md são a prosa; este índice é o que o CI verifica:
+# arquivo existe, status válido, referências (CAP/CMP/RISK/ADR) resolvem.
+# Schema: harness/schemas/adr-index.schema.json
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+adrs:
+  - id: ADR-001
+    title: "Consumir a WebQA Suite como padrão externo, nunca copiado"
+    status: accepted
+    file: architecture/adr/ADR-001-webqa-como-padrao-externo.md
+    related_capabilities:
+      - CAP-CONTRATO
+    related_risks:
+      - RISK-WEBQA-001
+
+  - id: ADR-002
+    title: "Enforcement mora em schema, CI e gates — não em markdown"
+    status: accepted
+    file: architecture/adr/ADR-002-enforcement-nao-em-markdown.md
+    related_risks:
+      - RISK-META-001
+
+  - id: ADR-003
+    title: "Versão do padrão em fonte única e procedência carimbada"
+    status: accepted
+    file: architecture/adr/ADR-003-versao-em-fonte-unica.md
+    related_capabilities:
+      - CAP-CONTRATO
+      - CAP-PROCEDENCIA
+    related_components:
+      - CMP-CONTRATO
+      - CMP-PROCEDENCIA
+    related_risks:
+      - RISK-DEP-001
+
+  - id: ADR-004
+    title: "Toda mudança proposta é declarada e validada antes de executada"
+    status: accepted
+    file: architecture/adr/ADR-004-mudanca-proposta-declarada.md
+    related_risks:
+      - RISK-CHANGE-001
+
+  - id: ADR-005
+    title: "O alvo auditado mora em danzeroum/docker; este repositório é o plano de controle"
+    status: accepted
+    file: architecture/adr/ADR-005-alvo-fora-do-consumidor.md
+    related_capabilities:
+      - CAP-ALVO
+    related_risks:
+      - RISK-ALVO-001
+
+  - id: ADR-006
+    title: "Sem homologação declarada, a saída é uma pendência; nunca produção"
+    status: accepted
+    file: architecture/adr/ADR-006-pendencia-em-vez-de-alvo-inventado.md
+    related_capabilities:
+      - CAP-ALVO
+      - CAP-CONTRATO
+    related_components:
+      - CMP-CONTRATO
+    related_risks:
+      - RISK-ALVO-001
+      - RISK-SEGREDO-001

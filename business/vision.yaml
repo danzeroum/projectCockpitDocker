@@ -1,0 +1,32 @@
+# Visão de produto: o problema, os usuários e as métricas de sucesso (IDs estáveis MET-*).
+# Os requisitos do backlog citam quais métricas movem — o fiscal cobra que a métrica exista.
+# Schema: harness/schemas/vision.schema.json
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+product:
+  problem: >
+    O Docker Cockpit é medido hoje só pelos próprios testes: eles dizem se o código faz o que o
+    autor quis, não se o que está publicado atende a uma régua de qualidade externa e estável.
+    Sem régua versionada e sem procedência, dois relatórios de meses diferentes não são
+    comparáveis — e ninguém percebe.
+  target_users:
+    - "quem opera o cockpit (responsável pela VPS e pelo ingress)"
+    - "quem evolui o cockpit por agentes (precisa de contexto e de trava, não de conselho)"
+    - "quem revisa o PR (precisa de evidência com procedência, não de captura de tela)"
+  value_proposition: >
+    Uma adoção verificável: a régua é declarada por versão exata, os modos de execução têm dono e
+    gate, e todo laudo carimba qual régua o produziu — tornando "não comparável" um resultado
+    possível em vez de um painel enganoso.
+  success_metrics:
+    - id: MET-FRONTEIRA
+      description: "Caminhos da régua (webqa/, checks/, data/caminhos-sensiveis.yaml) presentes neste repositório."
+      target: "= 0, verificado a cada push"
+    - id: MET-PENDENCIA
+      description: "Pendências INCOMPLETE:* abertas na configuração de consumo."
+      target: "= 0 antes do primeiro laudo de modo passivo"
+    - id: MET-COMPARAVEL
+      description: "Laudos com fingerprint de régua idêntica entre dois runs da mesma versão."
+      target: "100% — divergência é 'não comparável', nunca média silenciosa"

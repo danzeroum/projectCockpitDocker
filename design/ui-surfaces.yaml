@@ -1,0 +1,36 @@
+# Superfícies de UI do ALVO (Docker Cockpit) ligadas à capacidade de auditoria.
+# Critérios de aceite explícitos dão ao modo ux/frontend uma régua de experiência, não um palpite.
+# Schema: harness/schemas/ui-surfaces.schema.json
+#
+# status: proposed — o código da UI mora em danzeroum/docker (ADR-005) e a auditoria está
+# bloqueada por INCOMPLETE:target_url (ADR-006). O fiscal não exige arquivo local; exige apenas
+# que a capacidade referenciada exista.
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+ui_surfaces:
+  - id: UI-COCKPIT-PAINEL
+    capability: CAP-ALVO
+    status: proposed
+    routes:
+      - /
+    primary_user_goal: "Ver o estado dos containers do servidor sem poder alterá-lo."
+    acceptance_criteria:
+      - "Nenhuma violação de acessibilidade crítica (a11y_critical_max: 0)."
+      - "Nenhum erro de console na carga inicial (max_console_errors: 0)."
+      - "A navegação entre telas é operável apenas por teclado, na ordem visual."
+      - "Com ENABLE_ACTIONS desligado, nenhum botão de mutação aparece no DOM."
+
+  - id: UI-COCKPIT-EXECUTIVO
+    capability: CAP-ALVO
+    status: proposed
+    routes:
+      - /
+      - /api/executive
+    primary_user_goal: "Ler o resumo executivo do servidor (custo, capacidade, achados)."
+    acceptance_criteria:
+      - "Cartão sem fonte de dado some da tela em vez de exibir zero inventado."
+      - "Serviço não mapeado é rotulado como 'não mapeado', nunca omitido em silêncio."
+      - "TTFB e p95 dentro dos orçamentos declarados em tests/qa/config.yaml."

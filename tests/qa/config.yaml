@@ -1,0 +1,41 @@
+# Configuração DECLARATIVA de consumo da suíte. Este arquivo é do PROJETO, não do padrão.
+# A suíte LÊ isto; o projeto não copia código de verificação.
+# Schema: WEBQA_CONSUMER_CONTRACT.md §2.
+
+# DEVE ser igual ao pin em requirements-qa.txt (o contrato cruza os dois; ci/validate_metadata.py
+# reprova a divergência, e tests/integration/test_repositorio.py também).
+standard_version: "1.0.0"
+
+target:
+  # PENDÊNCIA DECLARADA — INCOMPLETE:target_url
+  #
+  # O Docker Cockpit publicado hoje responde em https://docker.danzeroum.com, que é PRODUÇÃO
+  # (DOMAIN no .env.example de danzeroum/docker). Não há URL de homologação declarada no
+  # repositório de origem, e auditar produção por automação é exatamente o acidente que o
+  # escopo autorizado existe para evitar.
+  #
+  # Enquanto o host abaixo terminar em .invalid (RFC 2606 — nunca resolve), o consumidor fica
+  # fail-closed: `python -m cockpit_harness pendencias` imprime INCOMPLETE:target_url e todo
+  # modo de rede é recusado com SCOPE_MISSING (12).
+  #
+  # Para liberar o modo passivo: troque por https://<homologacao-do-cockpit> e injete o
+  # escopo-autorizado.yaml real como segredo no CI (nunca comitado — ver o .example ao lado).
+  base_url: "https://homologacao-nao-declarada.invalid"
+  environment: staging   # staging | production | preview — produção NUNCA é alvo automático
+
+thresholds:
+  max_high: 0        # nenhum achado de severidade alta é tolerado no cockpit
+  max_medium: 5
+
+# Orçamentos de latência/renderização que a suíte usa nos modos de rede (COMO-ADOTAR §5 do molde).
+# Não são lidos automaticamente: o job de auditoria passiva os repassa à suíte junto com
+# WEBQA_TARGET_URL. Ficam aqui para que o número seja revisável no PR, não escondido no YAML do CI.
+suite_overrides:
+  ttfb_ms: 800
+  p95_ms: 1500
+  a11y_critical_max: 0
+  max_console_errors: 0
+
+# Gates que ESTE projeto autoriza explicitamente. Vazio = nenhum modo ativo autorizado aqui;
+# load/active_discovery só existem em jobs segregados disparados por pessoa (qa.yml).
+active_gates: []

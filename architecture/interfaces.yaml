@@ -1,0 +1,55 @@
+# Contratos de interface entre componentes. O fiscal cruza:
+#  - provider e consumers existem em components.yaml;
+#  - exposes ⊆ exposes do componente provedor;
+#  - cada consumidor declara depends_on o provedor (coerência com o grafo de componentes).
+# Schema: harness/schemas/interfaces.schema.json
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+interfaces:
+  - id: IFC-CONTRATO
+    name: "Situação verificada do consumidor"
+    kind: python-api
+    provider: CMP-CONTRATO
+    consumers:
+      - CMP-PLANO
+      - CMP-PROCEDENCIA
+      - CMP-CLI
+    exposes:
+      - "cockpit_harness.contrato.situacao"
+      - "cockpit_harness.contrato.exigir_rede_liberada"
+    status: verified
+
+  - id: IFC-PLANO
+    name: "Roteamento de modo por runner-kind"
+    kind: python-api
+    provider: CMP-PLANO
+    consumers:
+      - CMP-CLI
+    exposes:
+      - "cockpit_harness.plano.pode_disparar"
+      - "cockpit_harness.plano.exigir_permissao"
+      - "cockpit_harness.plano.exigir_ambiente_limpo"
+    status: verified
+
+  - id: IFC-PROCEDENCIA
+    name: "Envelope de laudo com procedência"
+    kind: python-api
+    provider: CMP-PROCEDENCIA
+    consumers:
+      - CMP-CLI
+    exposes:
+      - "cockpit_harness.procedencia.montar_laudo"
+      - "cockpit_harness.procedencia.validar"
+    status: verified
+
+  - id: IFC-CLI
+    name: "Porta de linha de comando da harness"
+    kind: cli
+    provider: CMP-CLI
+    consumers: []
+    exposes:
+      - "cockpit_harness.cli.main"
+    status: verified
