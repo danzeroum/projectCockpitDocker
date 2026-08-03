@@ -1,0 +1,17 @@
+# Padrão DECLARADO, nunca copiado. Pin exato (==), sem faixa.
+# A superfície do que a suíte procura é dado de segurança: não deve mudar sozinha entre dois runs.
+#
+# Esta linha é a FONTE ÚNICA da versão da régua neste repositório. Nenhum outro arquivo
+# restata o número: project.yaml aponta para cá (quality_standard.version_source), o
+# harness.yaml referencia o arquivo, e tests/qa/config.yaml é o único espelho tolerado —
+# fiscalizado por ci/validate_metadata.py (I3) e por tests/integration/test_repositorio.py.
+#
+# A suíte ainda NÃO é publicada no PyPI, então a INSTALAÇÃO real é feita a partir do Git
+# (ver docs/ADOCAO.md §4 e docs/COMO-ADOTAR.md §4 do molde):
+#   pip install "webqa-suite @ git+https://github.com/danzeroum/qa-suite@v1.0.0#subdirectory=webqa-suite"
+# Quando publicar no PyPI, `pip install -r requirements-qa.txt` resolve direto e a linha
+# abaixo passa a ser suficiente sozinha.
+#
+# Ao subir de versão: PR próprio, com o laudo anterior e o novo lado a lado
+# (ver harness/policies/dependency-updates.md). Nunca automático.
+webqa-suite==1.0.0

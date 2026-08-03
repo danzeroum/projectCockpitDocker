@@ -1,0 +1,64 @@
+# Regras da capacidade de conformidade com o contrato de consumo.
+# Cada regra verificada aponta para o teste que a prova — a régua funcional que um agente não
+# pode contrariar mesmo escrevendo código "correto".
+# Schema: harness/schemas/business-rules.schema.json
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+capability: CAP-CONTRATO
+
+rules:
+  - id: RULE-CONTRATO-001
+    name: "A versão da régua mora em fonte única"
+    status: verified
+    statement: >
+      O número da versão do padrão existe apenas em requirements-qa.txt. O único espelho tolerado
+      é tests/qa/config.yaml → standard_version, e ele é verificado por igualdade.
+    rationale: "Cópias derivam em silêncio, e a comparação entre laudos passa a mentir (risco H3)."
+    verified_by:
+      - tests/unit/test_contrato.py
+      - tests/integration/test_repositorio.py
+
+  - id: RULE-CONTRATO-002
+    name: "Pin exato, nunca faixa"
+    status: verified
+    statement: "webqa-suite é declarado com == ; faixa (>=, ~=, >) é erro de configuração (40)."
+    rationale: >
+      A superfície do que a suíte procura é dado de segurança: não pode mudar sozinha entre dois
+      runs da mesma configuração.
+    verified_by:
+      - tests/unit/test_contrato.py
+
+  - id: RULE-CONTRATO-003
+    name: "A régua é declarada, nunca copiada"
+    status: verified
+    statement: "webqa/, checks/ e data/caminhos-sensiveis.yaml não existem neste repositório."
+    rationale: >
+      Uma cópia editável da lista curada permite remover a linha que dava trabalho; a suíte para de
+      procurar aquilo e o laudo segue dizendo 'nenhum achado'.
+    verified_by:
+      - tests/unit/test_contrato.py
+      - tests/e2e/test_checklist_adocao.py
+
+  - id: RULE-CONTRATO-004
+    name: "Alvo ausente vira pendência declarada, não produção"
+    status: verified
+    statement: >
+      Sem URL de homologação, base_url permanece sob o TLD reservado .invalid, a situação declara
+      INCOMPLETE:target_url e todo modo de rede é recusado com SCOPE_MISSING (12).
+    rationale: "Um número sem objeto é pior que número nenhum; produção não é alvo de automação."
+    verified_by:
+      - tests/unit/test_contrato.py
+      - tests/e2e/test_checklist_adocao.py
+
+  - id: RULE-CONTRATO-005
+    name: "Origem exata, nunca 'o mesmo IP'"
+    status: verified
+    statement: >
+      Um alvo só é tocado se o host constar textualmente no escopo autorizado, vigente e com
+      authorized:true; qualquer outro host produz INCOMPLETE:escopo-autorizado.
+    rationale: "Resolver para o mesmo endereço não é autorização; o dono do host é que autoriza."
+    verified_by:
+      - tests/unit/test_contrato.py

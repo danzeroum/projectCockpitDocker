@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cockpit-harness"
+version = "0.1.0"
+description = "Harness de adoção do Docker Cockpit (danzeroum/docker) sob o padrão externo WebQA Suite."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+dependencies = [
+    "pyyaml>=6",
+]
+
+# NOTA: o pacote NÃO depende de webqa-suite no core. A suíte é um concern de QA,
+# declarada com pin exato apenas em requirements-qa.txt (fonte única da versão).
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "jsonschema>=4",
+    "pyyaml>=6",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+# Inventário (Trabalho B) = `pytest -q` sobre os quatro níveis. tests/qa/ NÃO é testpath:
+# lá moram declarações (config, campanha, escopo), não código de teste.
+testpaths = ["tests/unit", "tests/integration", "tests/e2e"]
+pythonpath = ["src"]

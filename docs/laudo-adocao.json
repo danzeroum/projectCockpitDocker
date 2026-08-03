@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "standard": {
+    "name": "webqa-suite",
+    "version": "1.0.0",
+    "commit": "090b7b4336e513a327d33713ea9bb2272262faa1",
+    "sensitive_paths_hash": "sha256:fadb9fd75759537ea924df49f7b18938bd69c5b7e6dad562a1190d2b755400f3"
+  },
+  "consumer_project": {
+    "repository": "danzeroum/projectCockpitDocker",
+    "commit": "ebffb197e4b21cb5dd38bcea27699243b1be271f"
+  },
+  "execution": {
+    "run_id": "2026-08-03T22-40-00Z",
+    "mode": "inventory",
+    "network_used": false,
+    "active_gates": [],
+    "runner_kind": "ci"
+  },
+  "result": "ok",
+  "findings": [],
+  "summary": {
+    "pendencias": [
+      "INCOMPLETE:target_url",
+      "INCOMPLETE:escopo-autorizado"
+    ]
+  }
+}

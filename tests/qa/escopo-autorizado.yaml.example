@@ -1,0 +1,23 @@
+# EXEMPLO. Copie para `tests/qa/escopo-autorizado.yaml` e edite — o arquivo REAL nunca é
+# comitado (invariante 4 do playbook): ele vive fora do repositório, como segredo injetado no CI.
+# O .gitignore deste repositório recusa o arquivo real; tests/e2e/test_checklist_adocao.py prova.
+#
+# Autorização DECLARATIVA para modos que tocam a rede. Obrigatório antes de passive/active_discovery.
+# Schema: WEBQA_CONSUMER_CONTRACT.md §3.
+# Enquanto este arquivo declarar authorized:false, nenhum modo de rede é permitido.
+
+authorized: false   # troque para true quando houver autorização real, com dono e data
+
+scope:
+  # Origem EXATA, https, ambiente de HOMOLOGAÇÃO do Docker Cockpit — nunca o host de produção
+  # (docker.danzeroum.com). www e apex são hosts distintos: liste os dois se ambos forem alvo.
+  hosts: ["homologacao-nao-declarada.invalid"]
+  paths_in_scope: ["/", "/api/*"]      # o cockpit serve a UI em / e a API sob /api
+  paths_excluded: ["/api/session/*"]   # unlock/sessão: fora de escopo para auditoria automática
+
+# Obrigatório e não-vazio para active_discovery (prova de que o alvo é seu).
+proof_of_possession:
+  method: dns-txt                # dns-txt | file | header
+  reference: "not-configured"    # ex.: "webqa-ownership=<hash-desta-entrada>"
+
+authorization_expires: "2026-12-31"   # data ISO; expirado ⇒ recusa

@@ -1,0 +1,17 @@
+# Campanha DECLARATIVA: quais modos este projeto roda de forma recorrente.
+# Schema: WEBQA_CONSUMER_CONTRACT.md §4.
+
+campaign: baseline
+
+# load e active_discovery estão AUSENTES de propósito — são disparados por pessoa em jobs
+# segregados (workflow_dispatch), nunca por campanha automática.
+#
+# `passive` está declarado, mas hoje NÃO roda: enquanto houver INCOMPLETE:target_url, a porta
+# fail-closed do consumidor recusa qualquer modo de rede (SCOPE_MISSING, 12). Declarar o modo e
+# vê-lo recusado é melhor que omiti-lo: a campanha diz o que se pretende medir, e a pendência
+# diz por que ainda não se mede.
+modes:
+  - inventory
+  - passive
+
+retention_days: 90

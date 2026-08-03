@@ -1,0 +1,39 @@
+# Proposta de mudança REAL desta adoção: fechar a pendência INCOMPLETE:target_url.
+# Declarada agora, executada só quando houver homologação e autorização — por pessoa.
+# Schema: harness/schemas/change-proposal.schema.json · Fiscal: ci/validate_metadata.py
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+proposal:
+  id: CP-001
+  title: "Declarar a homologação do Docker Cockpit e liberar o modo passivo"
+  author_kind: agent
+  created_at: "2026-08-03T00:00:00Z"
+  capabilities_affected:
+    - CAP-ALVO
+    - CAP-CONTRATO
+  components_affected:
+    - CMP-CONTRATO
+  risk_assessment:
+    level: high
+    risks:
+      - RISK-ALVO-001
+      - RISK-SEGREDO-001
+    rationale: >
+      Trocar base_url e injetar o escopo autorizado transforma um repositório fail-closed em um
+      que emite requisições contra um host real. Errar o host significa auditar produção — o
+      cockpit fala com o daemon Docker de um servidor de verdade. Por isso o aval é humano, e o
+      escopo entra como segredo do CI, nunca comitado.
+  required_gates:
+    - inventory
+    - unit-tests
+    - metadata-validation
+    - passive
+  tests_required:
+    - tests/e2e/test_checklist_adocao.py
+    - tests/e2e/test_cli_laudo.py
+    - tests/unit/test_contrato.py
+  human_approval_required: true
+  change_mode: pull_request

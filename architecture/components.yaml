@@ -1,0 +1,86 @@
+# Componentes técnicos ligados a capacidades. Fecha a rastreabilidade
+# capacidade → componente → código → teste.
+# Schema: harness/schemas/components.schema.json
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+components:
+  - id: CMP-CONTRATO
+    kind: domain-module
+    capability: CAP-CONTRATO
+    status: verified
+    source_paths:
+      - src/cockpit_harness/contrato.py
+      - src/cockpit_harness/codigos.py
+    depends_on: []
+    exposes:
+      - "cockpit_harness.contrato.situacao"
+      - "cockpit_harness.contrato.conferir_fonte_unica"
+      - "cockpit_harness.contrato.regua_copiada"
+      - "cockpit_harness.contrato.exigir_rede_liberada"
+    tested_by:
+      - tests/unit/test_contrato.py
+      - tests/integration/test_repositorio.py
+    implements:
+      - REQ-001
+    owner: danzeroum
+
+  - id: CMP-PLANO
+    kind: domain-module
+    capability: CAP-MODOS
+    status: verified
+    source_paths:
+      - src/cockpit_harness/plano.py
+    depends_on:
+      - CMP-CONTRATO
+    exposes:
+      - "cockpit_harness.plano.pode_disparar"
+      - "cockpit_harness.plano.exigir_permissao"
+      - "cockpit_harness.plano.exigir_ambiente_limpo"
+    tested_by:
+      - tests/unit/test_plano.py
+      - tests/integration/test_workflows.py
+    implements:
+      - REQ-002
+      - REQ-004
+    owner: danzeroum
+
+  - id: CMP-PROCEDENCIA
+    kind: domain-module
+    capability: CAP-PROCEDENCIA
+    status: verified
+    source_paths:
+      - src/cockpit_harness/procedencia.py
+    depends_on:
+      - CMP-CONTRATO
+    exposes:
+      - "cockpit_harness.procedencia.montar_laudo"
+      - "cockpit_harness.procedencia.validar"
+      - "cockpit_harness.procedencia.fingerprint"
+      - "cockpit_harness.procedencia.exigir_comparaveis"
+    tested_by:
+      - tests/unit/test_procedencia.py
+    implements:
+      - REQ-003
+    owner: danzeroum
+
+  - id: CMP-CLI
+    kind: adapter
+    capability: CAP-PROCEDENCIA
+    status: verified
+    source_paths:
+      - src/cockpit_harness/cli.py
+      - src/cockpit_harness/__main__.py
+    depends_on:
+      - CMP-CONTRATO
+      - CMP-PLANO
+      - CMP-PROCEDENCIA
+    exposes:
+      - "cockpit_harness.cli.main"
+    tested_by:
+      - tests/e2e/test_cli_laudo.py
+    implements:
+      - REQ-003
+    owner: danzeroum

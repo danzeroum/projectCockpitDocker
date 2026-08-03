@@ -1,0 +1,225 @@
+name: qa
+
+# Onde a trava morde. A harness é declarativa; a enforcement efetiva vive aqui e nos gates
+# fail-closed da suíte externa.
+#
+#  - inventory + passive: automáticos (push/PR), runner-kind ci, ambiente limpo.
+#  - load / active_discovery: SÓ workflow_dispatch, disparados por pessoa, jobs segregados.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Modo segregado a rodar (humano dispara)"
+        required: true
+        type: choice
+        options:
+          - load
+          - active_discovery
+      confirm:
+        description: 'Digite "confirmo" para autorizar o modo segregado'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Guardas estruturais + inventário + auditoria passiva. Rodam sempre.
+  # ---------------------------------------------------------------------------
+  inventory-and-passive:
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    # Ambiente automático não define nenhum WEBQA_*: os gates não moram no ambiente do CI automático.
+    # (O contexto `env` não pode ser referenciado em job-level env; a higiene é provada no passo negativo abaixo.)
+    steps:
+      - uses: actions/checkout@v4
+
+      # Guarda de fronteira: a régua nunca mora neste repo (política webqa.md).
+      - name: Recusar régua copiada (declarar, não copiar)
+        run: |
+          set -euo pipefail
+          violacao=0
+          for alvo in webqa checks data/caminhos-sensiveis.yaml; do
+            if [ -e "$alvo" ]; then
+              echo "::error::'$alvo' não pode existir no consumidor — a régua é declarada, não copiada."
+              violacao=1
+            fi
+          done
+          if [ "$violacao" -ne 0 ]; then exit 40; fi
+
+      # Guarda de pin exato: webqa-suite deve estar pinado com == (política dependency-updates.md).
+      - name: Exigir pin exato do padrão
+        run: |
+          set -euo pipefail
+          if ! grep -Eq '^webqa-suite==[^[:space:]]+' requirements-qa.txt; then
+            echo "::error::requirements-qa.txt deve pinar webqa-suite com == (sem faixa)."
+            exit 40
+          fi
+
+      # A trava que morde: prova que o denylist DETECTA uma variável WEBQA_* injetada.
+      # O passo passa quando a detecção funciona (comportamento correto do guard) e só falha
+      # se o denylist NÃO detectar — aí sim o CI acusa que a trava parou de morder.
+      - name: Higiene de ambiente — denylist WEBQA_* deve detectar (passo negativo)
+        env:
+          WEBQA_LEAK: "1"
+        run: |
+          set -euo pipefail
+          if env | grep -qE '^WEBQA_'; then
+            echo "::notice::Guard detectou variável WEBQA_* — fail_on_denied_env=true abortaria (DENIED_ENV=10)."
+            echo "Detecção OK: o denylist morde."
+          else
+            echo "::error::Denylist não detectou WEBQA_LEAK — a trava parou de morder."
+            exit 1
+          fi
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar a harness da adoção + ferramentas
+        run: pip install -e ".[dev]"
+
+      # Trabalho B — INVENTÁRIO. Sem rede, sem autorização: roda os quatro níveis de teste do
+      # próprio repositório (unidade, integração, sistema, aceitação). É o passo mais barato e
+      # o mais seguro, por isso vem primeiro (invariante 3: inventário antes de auditoria).
+      - name: Inventário (Trabalho B — sem rede, sem autorização)
+        run: pytest -q
+
+      - name: Verificação do contrato de consumo
+        run: python -m cockpit_harness checar
+
+      # Consumo do padrão externo. A versão sai da FONTE ÚNICA (requirements-qa.txt), lida pela
+      # harness — o YAML nunca restata o número. A v1.0.0 não está no PyPI e não expõe CLI
+      # instalável, então a régua é OBTIDA por clone na tag exata e executada por marcador de
+      # pytest (docs/ADOCAO.md §4 e §8). O `pip install` segue como tentativa tolerante: quando a
+      # suíte publicar, ele passa a resolver sozinho e o clone vira redundância.
+      - name: Obter o padrão declarado (pin exato; tolerante)
+        id: regua
+        run: |
+          set -uo pipefail
+          VERSAO="$(python -m cockpit_harness versao)"
+          echo "versao=$VERSAO" >> "$GITHUB_OUTPUT"
+          pip install -r requirements-qa.txt || echo "::notice::webqa-suite ainda não resolve por PyPI — usando o clone na tag."
+          if git clone --depth 1 --branch "v$VERSAO" https://github.com/danzeroum/qa-suite "$RUNNER_TEMP/qa-suite"; then
+            pip install -r "$RUNNER_TEMP/qa-suite/webqa-suite/requirements.txt" || true
+            echo "regua_ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::régua v$VERSAO indisponível — auditoria em modo stub (suite_not_installed, código 20)."
+            echo "regua_ok=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Trabalho A — PASSIVO. Só roda com alvo de homologação E escopo autorizado. Enquanto
+      # houver INCOMPLETE:target_url, o passo REGISTRA a pendência e não emite requisição alguma:
+      # pular dizendo por quê é honesto; medir um alvo inventado não é.
+      - name: Auditoria passiva (Trabalho A — só com alvo e escopo autorizados)
+        run: |
+          set -uo pipefail
+          if ! python -m cockpit_harness pendencias --exigir; then
+            echo "::warning::Auditoria passiva pulada — pendências acima (SCOPE_MISSING, código 12). Ver docs/ADOCAO.md §5."
+            exit 0
+          fi
+          if [ "${{ steps.regua.outputs.regua_ok }}" != "true" ]; then
+            echo "::warning::Régua indisponível — nada a medir (suite_not_installed, código 20)."
+            exit 0
+          fi
+          WEBQA_TARGET_URL="$(python -m cockpit_harness alvo)"
+          export WEBQA_TARGET_URL
+          cd "$RUNNER_TEMP/qa-suite/webqa-suite"
+          pytest -m "(backend or frontend or ux or seguranca or lgpd) and not load and not browser"
+
+      # O laudo carimba a régua OBSERVADA (commit + hash da lista curada). Sem observação, sai
+      # 'UNINSTALLED' — nunca um carimbo inventado.
+      - name: Laudo com procedência (evidência do run)
+        if: always()
+        run: |
+          set -uo pipefail
+          python -m cockpit_harness laudo --modo inventory --runner ci \
+            --regua "$RUNNER_TEMP/qa-suite" \
+            --saida "harness/reports/laudo-${GITHUB_RUN_ID}.json"
+
+      - name: Arquivar evidência
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-reports
+          path: harness/reports/
+          if-no-files-found: ignore
+
+  # ---------------------------------------------------------------------------
+  # Modos segregados. SÓ workflow_dispatch, disparados por pessoa. Agente/CI automático
+  # nunca chega aqui. environment: production exige revisores (configurar no repositório).
+  # ---------------------------------------------------------------------------
+  segregated-load-or-active:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: production   # aprovação manual obrigatória — configurar required reviewers
+    steps:
+      - name: Validar confirmação humana
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event.inputs.confirm }}" != "confirmo" ]; then
+            echo "::error::Confirmação ausente. Modo segregado exige disparo humano explícito."
+            exit 11
+          fi
+          echo "Modo segregado autorizado por pessoa: ${{ github.event.inputs.mode }}"
+
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar a harness da adoção
+        run: pip install -e ".[dev]"
+
+      # Mesma obtenção do job automático: versão da fonte única, régua clonada na tag exata.
+      - name: Obter padrão declarado (pin exato)
+        run: |
+          set -uo pipefail
+          VERSAO="$(python -m cockpit_harness versao)"
+          pip install -r requirements-qa.txt || true
+          git clone --depth 1 --branch "v$VERSAO" https://github.com/danzeroum/qa-suite "$RUNNER_TEMP/qa-suite" \
+            && pip install -r "$RUNNER_TEMP/qa-suite/webqa-suite/requirements.txt" || \
+            echo "::warning::régua v$VERSAO indisponível (suite_not_installed, código 20)."
+
+      # O escopo REAL nunca está no repositório: ele é montado aqui, a partir do segredo, e some
+      # com o runner. Sem o segredo, o passo seguinte não tem escopo e a suíte recusa (12).
+      - name: Montar escopo autorizado a partir do segredo
+        env:
+          ESCOPO_AUTORIZADO: ${{ secrets.WEBQA_ESCOPO_AUTORIZADO }}
+        run: |
+          set -uo pipefail
+          if [ -n "${ESCOPO_AUTORIZADO}" ]; then
+            printf '%s' "${ESCOPO_AUTORIZADO}" > tests/qa/escopo-autorizado.yaml
+            echo "escopo montado a partir do segredo (não versionado)"
+          else
+            echo "::warning::Segredo WEBQA_ESCOPO_AUTORIZADO ausente — modo segregado sem escopo (SCOPE_MISSING, 12)."
+          fi
+
+      # Aqui — e SÓ aqui — o ambiente monta o gate correspondente, no job segregado.
+      # A v1.0.0 da suíte não tem CLI: os modos rodam por marcador de pytest (docs/ADOCAO.md §8).
+      - name: Rodar modo segregado
+        env:
+          WEBQA_LOAD_AUTHORIZED: ${{ github.event.inputs.mode == 'load' && '1' || '' }}
+          WEBQA_DISCOVERY_AUTHORIZED: ${{ github.event.inputs.mode == 'active_discovery' && '1' || '' }}
+        run: |
+          set -uo pipefail
+          if [ ! -d "$RUNNER_TEMP/qa-suite/webqa-suite" ]; then
+            echo "::warning::régua ausente — nada a rodar (suite_not_installed, código 20)."
+            exit 0
+          fi
+          WEBQA_TARGET_URL="$(python -m cockpit_harness alvo)" || {
+            echo "::error::sem alvo declarado — modo segregado recusado (SCOPE_MISSING, 12)."
+            exit 12
+          }
+          export WEBQA_TARGET_URL
+          cp tests/qa/escopo-autorizado.yaml "$RUNNER_TEMP/qa-suite/webqa-suite/" 2>/dev/null || true
+          cd "$RUNNER_TEMP/qa-suite/webqa-suite"
+          case "${{ github.event.inputs.mode }}" in
+            load)             pytest -m load ;;
+            active_discovery) pytest -m "seguranca and not load" ;;
+          esac
