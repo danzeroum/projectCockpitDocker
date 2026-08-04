@@ -27,6 +27,26 @@ thresholds:
   max_high: 0        # nenhum achado de severidade alta é tolerado no cockpit
   max_medium: 5
 
+active_discovery:
+  # QUANTOS caminhos da lista curada o NOSSO PRÓPRIO ingress derruba antes de chegarem ao app.
+  #
+  # `deploy/homologacao/setup-ingress-homolog.sh` emite
+  # `location ~* (wp-login|\.git|\.env) { return 444; }`, e três caminhos da lista da régua
+  # caem nessa regra: /.git/HEAD, /.env e /.env.local. O 444 fecha a conexão sem resposta, a
+  # régua não os conta como executados, e o run fica 5/8 — inconclusivo, para sempre.
+  #
+  # Medido na bancada em 2026-08-04, contra um ingress fiel ao de homologação:
+  #   cockpit.bancada (publicada) .... 5/8, veredito 22
+  #   interno.bancada (atrás da tranca) 8/8, veredito 0
+  #
+  # Sem esta declaração o modo sairia 22 em todo run contra a superfície publicada, e um
+  # check permanentemente vermelho é um check que se aprende a ignorar. Com ela, o vão é
+  # EXATAMENTE este: um caminho a mais faltando reprova, e um a menos avisa que a
+  # declaração envelheceu (o ingress pode ter parado de derrubar).
+  #
+  # O que ela não consegue ser: precisa. O laudo diz quantos faltaram, nunca quais.
+  unreachable_by_our_ingress: 3
+
 # Orçamentos de latência/renderização que a suíte usa nos modos de rede (COMO-ADOTAR §5 do molde).
 # Não são lidos automaticamente: o job de auditoria passiva os repassa à suíte junto com
 # WEBQA_TARGET_URL. Ficam aqui para que o número seja revisável no PR, não escondido no YAML do CI.

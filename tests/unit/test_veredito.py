@@ -68,9 +68,61 @@ def test_alvo_fora_do_ar_nao_e_alvo_limpo(raiz):
 def test_cobertura_parcial_reprova_mesmo_sem_flag(raiz):
     """`executado != esperado` basta: não se depende de a régua ter marcado a flag.
     Duas fontes concordando é redundância barata; confiar só na flag é confiar que
-    quem produziu o laudo classificou o próprio run corretamente."""
-    with pytest.raises(RunInconclusivo, match="5/8"):
-        veredito.avaliar(_laudo(raiz, _alvo(executado=5, inconclusivo=False)), raiz)
+    quem produziu o laudo classificou o próprio run corretamente.
+
+    4/8 e não 5/8 porque `unreachable_by_our_ingress: 3` tolera exatamente três —
+    e o caso 5/8 tem teste próprio logo abaixo.
+    """
+    with pytest.raises(RunInconclusivo, match="4/8"):
+        veredito.avaliar(_laudo(raiz, _alvo(executado=4, inconclusivo=False)), raiz)
+
+
+# ---------------------------------------------------------------------------
+# o vão do nosso próprio ingress
+# ---------------------------------------------------------------------------
+# `return 444` em (wp-login|\.git|\.env) derruba três caminhos da lista curada antes
+# de chegarem ao app. Sem declarar isso, o modo sairia 22 em TODO run contra a
+# superfície publicada — e check permanentemente vermelho é check ignorado.
+
+def test_o_vao_declarado_e_tolerado(raiz):
+    """O caso real medido na bancada: 5/8 com `unreachable_by_our_ingress: 3`."""
+    resumo = veredito.avaliar(_laudo(raiz, _alvo(executado=5, inconclusivo=True)), raiz)
+    assert "vão declarado: 3" in resumo
+
+
+def test_um_caminho_a_mais_faltando_reprova(raiz):
+    """A tolerância é do TAMANHO declarado, não "parcial tudo bem". O quarto caminho
+    que some é o que ninguém previu — exatamente o que se quer ver."""
+    with pytest.raises(RunInconclusivo, match="vão declarado 3"):
+        veredito.avaliar(_laudo(raiz, _alvo(executado=4, inconclusivo=True)), raiz)
+
+
+def test_abortado_nao_e_perdoado_pelo_vao(raiz):
+    """Kill-switch e circuit-breaker não são "o ingress derrubou três caminhos": são
+    o run parando. Nenhum vão declarado cobre isso — nem um run que, por coincidência,
+    parou com a diferença exata do vão."""
+    with pytest.raises(RunInconclusivo, match="abortado por circuit-breaker"):
+        veredito.avaliar(
+            _laudo(raiz, _alvo(executado=5, inconclusivo=True, abortado="circuit-breaker")), raiz)
+
+
+def test_vao_menor_passa_avisando_que_a_declaracao_envelheceu(raiz):
+    """Assimetria deliberada: mediu-se MAIS que o esperado, e reprovar puniria a
+    melhora. Mas a declaração ficou velha — o ingress pode ter parado de derrubar
+    aqueles caminhos, e quem lê o laudo tem interesse nisso."""
+    resumo = veredito.avaliar(_laudo(raiz, _alvo(executado=8)), raiz)
+    assert "::warning::" in resumo
+    assert "unreachable_by_our_ingress" in resumo
+
+
+def test_sem_declaracao_a_cobertura_total_volta_a_ser_exigida(raiz):
+    """Default 0. Quem não declara vão nenhum continua com a régua antiga —
+    a tolerância é opt-in, não um relaxamento que chega de graça."""
+    config = yaml.safe_load((raiz / "tests/qa/config.yaml").read_text(encoding="utf-8"))
+    del config["active_discovery"]
+    (raiz / "tests/qa/config.yaml").write_text(yaml.safe_dump(config), encoding="utf-8")
+    with pytest.raises(RunInconclusivo):
+        veredito.avaliar(_laudo(raiz, _alvo(executado=5, inconclusivo=True)), raiz)
 
 
 def test_um_alvo_parcial_condena_o_laudo_inteiro(raiz):
