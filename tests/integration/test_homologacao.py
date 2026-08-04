@@ -159,3 +159,34 @@ def test_retencao_curta_para_nao_encher_o_disco_de_producao(ambiente: dict[str, 
     """O stack divide o disco com produção; série longa em teste vira incidente lá."""
     assert int(ambiente["RETENTION_RAW_HOURS"]) <= 24
     assert int(ambiente["RETENTION_ROLLUP_DAYS"]) <= 7
+
+
+def test_subnet_declarada_e_a_observada_no_servidor(ambiente: dict[str, str]):
+    """A subnet do exemplo do repositório do cockpit (172.19.0.0/16) NÃO é a deste servidor.
+
+    Copiar o placeholder faz /api/session/unlock negar com 403 e ninguém entende por quê —
+    o valor errado falha silenciosamente, que é o pior modo de falhar.
+    """
+    assert ambiente["TRUSTED_GATEWAY_CIDR"] == "192.168.32.0/20"
+
+
+# --- o script de ingress edita config de PRODUÇÃO: precisa de rede de segurança ------------
+
+def test_script_faz_backup_antes_de_editar(request):
+    texto = (Path(request.config.rootpath) / SETUP).read_text(encoding="utf-8")
+    assert "BACKUP=" in texto and "cp -a" in texto
+
+
+def test_script_reverte_se_a_config_nao_validar(request):
+    """`nginx -t` reprovado tem de restaurar o arquivo: um ingress que não recarrega trava a
+    próxima alteração de quem vier depois, mesmo sem derrubar o que já está no ar."""
+    texto = (Path(request.config.rootpath) / SETUP).read_text(encoding="utf-8")
+    assert "reverter()" in texto
+    assert "nginx -t" in texto
+    # a reversão escreve no MESMO inode (bind-mount); rename quebraria o mount
+    assert 'cat "$BACKUP" > "$INGRESS_CONF"' in texto
+
+
+def test_script_recusa_credencial_identica_a_de_producao(request):
+    texto = (Path(request.config.rootpath) / SETUP).read_text(encoding="utf-8")
+    assert "cmp -s" in texto and "/etc/nginx/.htpasswd" in texto

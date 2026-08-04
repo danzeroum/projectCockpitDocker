@@ -30,18 +30,61 @@ servidor. Espere propagar:
 host homolog.docker.danzeroum.com
 ```
 
-## 2. Credencial própria do basic auth
+## 2. Credencial própria do basic auth — e a pegadinha do bind-mount
 
 **Não reuse a de produção.** Se as duas forem iguais, o ambiente de teste vira uma segunda porta
-para o mesmo servidor.
+para o mesmo servidor: quem obtiver a senha "de teste" entra na produção (RULE-HOMOLOG-003).
+
+O obstáculo real, observado no servidor:
+
+```
+/opt/btv/ingress/.htpasswd -> /etc/nginx/.htpasswd     ← bind-mount de ARQUIVO
+```
+
+Bind-mount de arquivo **não traz vizinhos**. Criar `/opt/btv/ingress/.htpasswd-homolog` no host
+não faz o arquivo existir dentro do container; `/etc/nginx/` lá dentro é o do próprio image.
+Há duas saídas, e elas custam coisas diferentes:
+
+### Opção A — montar um diretório (correta, exige recriar o ingress)
 
 ```bash
-# no servidor
-SENHA=$(openssl rand -base64 24); echo "guarde: $SENHA"
-htpasswd -B -c /opt/btv/ingress/nginx/.htpasswd-homolog qa-homolog
-# monte o arquivo no btv-nginx-prod como /etc/nginx/.htpasswd-homolog
-docker exec btv-nginx-prod test -f /etc/nginx/.htpasswd-homolog && echo "montado"
+mkdir -p /opt/btv/ingress/htpasswd.d
+cp -a /opt/btv/ingress/.htpasswd /opt/btv/ingress/htpasswd.d/producao
+htpasswd -B -c /opt/btv/ingress/htpasswd.d/homolog qa-homolog   # senha NOVA
 ```
+
+Depois, no compose do global-ingress, troque o mount de arquivo por um de diretório
+(`/opt/btv/ingress/htpasswd.d:/etc/nginx/htpasswd.d:ro`), ajuste o `auth_basic_user_file` do
+bloco de produção para `/etc/nginx/htpasswd.d/producao`, e recrie o container.
+
+- **Custo:** segundos de indisponibilidade em **tudo** que o ingress serve — o cockpit,
+  `docs-site`, a demo de governança, o portfólio e o educacional.
+- **Ganho:** persistente. Sobrevive a `docker compose up -d`, a reboot e a recriação.
+
+Depois de recriar, rode o script com o caminho novo:
+
+```bash
+HTPASSWD_HOMOLOG=/etc/nginx/htpasswd.d/homolog \
+  bash deploy/homologacao/setup-ingress-homolog.sh homolog.docker.danzeroum.com
+```
+
+### Opção B — `docker cp` (sem indisponibilidade, mas efêmera)
+
+```bash
+htpasswd -B -c /opt/btv/ingress/.htpasswd-homolog qa-homolog    # senha NOVA
+docker cp /opt/btv/ingress/.htpasswd-homolog btv-nginx-prod:/etc/nginx/.htpasswd-homolog
+docker exec btv-nginx-prod test -f /etc/nginx/.htpasswd-homolog && echo "presente"
+```
+
+- **Custo:** o arquivo vive na camada gravável do container. **Some na primeira recriação do
+  `btv-nginx-prod`** — e aí o `nginx.conf` passa a referenciar um `auth_basic_user_file`
+  inexistente, o que faz `nginx -t` reprovar e **bloquear o próximo reload de produção**.
+- **Quando serve:** para validar a homologação hoje, com a Opção A agendada para a próxima
+  janela de manutenção.
+
+> **O que NÃO fazer:** apontar a homologação para o `.htpasswd` de produção. É a saída fácil, e
+> o script recusa — ele compara os dois arquivos e aborta se forem idênticos. Mudar isso exige
+> mudar RULE-HOMOLOG-003 e a ADR-007, não um `-f`.
 
 ## 3. Ambiente
 
@@ -51,12 +94,17 @@ cp deploy/homologacao/.env.example deploy/homologacao/.env
 $EDITOR deploy/homologacao/.env       # DOMAIN, BASIC_AUTH_*, TRUSTED_GATEWAY_CIDR, COCKPIT_SRC
 ```
 
-`TRUSTED_GATEWAY_CIDR` é a subnet real da rede do ingress — sem ela o unlock nega com 403
-(fail-closed, por desenho):
+`TRUSTED_GATEWAY_CIDR` é a subnet real da rede do ingress — sem ela, ou com ela errada, o unlock
+nega com 403 (fail-closed, por desenho) e nada na tela explica o motivo:
 
 ```bash
 docker network inspect btv-prod-net --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}'
+# observado em 2026-08-04: 192.168.32.0/20
 ```
+
+> O `.env.example` do repositório do cockpit traz `172.19.0.0/16`. **Não é o valor deste
+> servidor.** O `.example` daqui já vem com o observado, e um teste de integração trava a
+> regressão — mas confirme mesmo assim: a subnet muda se a rede for recriada.
 
 `COCKPIT_SRC` aponta para o clone de `danzeroum/docker` no servidor (padrão `/opt/btv/docker`).
 O código do cockpit **não** vive neste repositório — o compose constrói a partir de lá.
