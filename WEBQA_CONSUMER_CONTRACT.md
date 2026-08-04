@@ -69,6 +69,9 @@ Obrigatório para qualquer modo que toca a rede.
 
 ```yaml
 authorized: true                 # booleano; false ⇒ modos de rede são recusados
+authorized_by: "danzeroum"       # quem autorizou; só exigido por active_discovery
+authorized_on: "2026-08-04"      # data ISO da autorização; nunca futura
+evidence: "pr#42"                # link ou hash do aceite
 scope:
   hosts: ["example.invalid"]     # hosts em escopo, comparação de origem EXATA
   paths_in_scope: ["/api/*"]     # caminhos autorizados
@@ -81,6 +84,14 @@ authorization_expires: "2026-12-31"   # data ISO; expirado ⇒ recusa
 
 A suíte compara origem **exata** — um host fora da lista nunca é tocado, mesmo que resolva para o
 mesmo IP. `active_discovery` exige `proof_of_possession.reference` não-vazio e verificável.
+
+**`authorized_by` / `authorized_on` / `evidence` só valem para `active_discovery`**, e existem
+porque a régua os cobra para aceitar uma autorização (`webqa/escopo.py` recusa entrada com autor
+vazio, evidência vazia ou data futura). Este arquivo está no schema do CONSUMIDOR; a régua lê
+outro, com o mesmo nome e schema incompatível (`alvos:` por origem). A ponte é
+`python -m cockpit_harness escopo-regua --saida <path>`, que traduz um no outro e **recusa com
+`SCOPE_MISSING` (12) quando falta declaração** — nenhum campo é preenchido por default. O arquivo
+traduzido é efêmero: vive no runner e some com ele.
 
 ---
 
@@ -168,9 +179,17 @@ configuração como evento operacional, não como crash.
 | 12 | `SCOPE_MISSING` | modo de rede sem escopo autorizado / prova de posse |
 | 20 | `SUITE_UNINSTALLED` | pacote `webqa-suite` não disponível (degradação tolerante) |
 | 21 | `SUITE_ERROR` | a suíte rodou e retornou erro |
+| 22 | `RUN_INCONCLUSIVE` | a sondagem **não cobriu** a superfície declarada — não medido, não limpo |
+| 23 | `THRESHOLD_EXCEEDED` | achados acima do que `config.yaml §2 thresholds` tolera |
 | 30 | `PROVENANCE_INVALID` | laudo sem bloco de procedência válido |
 | 31 | `NOT_COMPARABLE` | agregação recusou: réguas incompatíveis |
 | 40 | `CONFIG_INVALID` | `harness.yaml`/`config.yaml` falhou schema ou regra de pin |
+
+**22 e 23 são emitidos pela harness, não pela suíte** — e é esse o ponto. `webqa.sondagem` sai
+**0** mesmo quando o próprio laudo diz `inconclusivo: true` / `abortado_por: circuit-breaker`
+(medido na bancada: alvo fora do ar ⇒ `0/8 caminhos, 0 achado(s)` e exit 0). O relatório é
+honesto, o código de saída não, e gate de CI lê código de saída. `cockpit_harness veredito`
+lê o laudo e emite o veredito que falta.
 
 ---
 

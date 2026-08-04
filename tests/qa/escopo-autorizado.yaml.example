@@ -8,6 +8,15 @@
 
 authorized: false   # troque para true quando houver autorização real, com dono e data
 
+# Os três campos abaixo só são exigidos por `active_discovery`, e existem porque a RÉGUA os
+# cobra para aceitar uma autorização (webqa/escopo.py: EntradaEscopo recusa autorizado_por
+# vazio, evidencia vazia ou data futura). A harness os TRADUZ; não os inventa. Faltando
+# qualquer um, `cockpit_harness escopo-regua` recusa com SCOPE_MISSING (12) e diz qual falta
+# — preencher com "ci" ou com a data de hoje faria a autorização parecer completa sem ser.
+authorized_by: ""     # pessoa que autorizou (nome ou handle), não "ci"
+authorized_on: ""     # data ISO em que a autorização foi dada; nunca uma data futura
+evidence: ""          # link ou hash do aceite (ex.: "pr#42", "ata de 2026-08-04")
+
 scope:
   # Origem EXATA, https, ambiente de HOMOLOGAÇÃO do Docker Cockpit — nunca o host de produção
   # (docker.danzeroum.com). www e apex são hosts distintos: liste os dois se ambos forem alvo.
@@ -16,6 +25,12 @@ scope:
   paths_excluded: ["/api/session/*"]   # unlock/sessão: fora de escopo para auditoria automática
 
 # Obrigatório e não-vazio para active_discovery (prova de que o alvo é seu).
+#
+# `dns-txt` é o único método com equivalente na régua, e ele é VERIFICADO: o token abaixo tem
+# de estar nos registros TXT do host, por igualdade exata, senão o alvo é abortado com
+# `dns-txt-ausente`. Declarar dns-txt sem publicar o TXT reprova o run — de propósito.
+# Com `file` ou `header`, a entrada traduzida sai sem `verificacao` e a posse cai no padrão da
+# régua: pino de IP no carregamento, com takeover de subdomínio abortando o alvo.
 proof_of_possession:
   method: dns-txt                # dns-txt | file | header
   reference: "not-configured"    # ex.: "webqa-ownership=<hash-desta-entrada>"

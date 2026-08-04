@@ -20,6 +20,13 @@ class Codigo(IntEnum):
     SCOPE_MISSING = 12
     SUITE_UNINSTALLED = 20
     SUITE_ERROR = 21
+    # 22 e 23 nascem de uma medição: `webqa.sondagem` sai 0 mesmo quando o laudo diz
+    # `inconclusivo: true` ou `abortado_por: circuit-breaker`. O relatório é honesto; o
+    # código de saída não — e código de saída é o que um gate de CI lê. Distinguir os
+    # dois casos importa: 22 é "não medi", 23 é "medi e reprovou". Confundi-los faria
+    # um alvo inalcançável passar como alvo limpo.
+    RUN_INCONCLUSIVE = 22
+    THRESHOLD_EXCEEDED = 23
     PROVENANCE_INVALID = 30
     NOT_COMPARABLE = 31
     CONFIG_INVALID = 40
@@ -47,6 +54,18 @@ class EscopoAusente(ErroHarness):
     """Modo de rede sem alvo/escopo autorizado ou sem prova de posse (12)."""
 
     codigo = Codigo.SCOPE_MISSING
+
+
+class RunInconclusivo(ErroHarness):
+    """A sondagem não cobriu a superfície declarada (22). Não é "limpo": é "não medido"."""
+
+    codigo = Codigo.RUN_INCONCLUSIVE
+
+
+class LimiteExcedido(ErroHarness):
+    """Achados acima do que config.yaml tolera (23)."""
+
+    codigo = Codigo.THRESHOLD_EXCEEDED
 
 
 class ProcedenciaInvalida(ErroHarness):

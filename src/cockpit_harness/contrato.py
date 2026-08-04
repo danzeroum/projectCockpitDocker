@@ -127,6 +127,14 @@ class Escopo:
     hosts: tuple[str, ...] = ()
     expira_em: str | None = None
     prova_de_posse: str = ""
+    # Os quatro campos abaixo só são exigidos por `active_discovery`: são o que a régua
+    # cobra de uma autorização para aceitá-la (quem autorizou, quando, com que evidência,
+    # por qual método de posse). Ficam com default vazio porque `passive` não os pede, e
+    # a ausência vira recusa na tradução — nunca um valor inventado. Ver §3 do contrato.
+    metodo_de_posse: str = ""
+    autorizado_em: str = ""
+    autorizado_por: str = ""
+    evidencia: str = ""
 
     def expirado(self, hoje: _dt.date | None = None) -> bool:
         if not self.expira_em:
@@ -155,6 +163,10 @@ def escopo_autorizado(raiz: Path) -> Escopo | None:
         hosts=tuple((dados.get("scope") or {}).get("hosts", [])),
         expira_em=dados.get("authorization_expires"),
         prova_de_posse=str(prova.get("reference", "")),
+        metodo_de_posse=str(prova.get("method", "")),
+        autorizado_em=str(dados.get("authorized_on", "") or ""),
+        autorizado_por=str(dados.get("authorized_by", "") or ""),
+        evidencia=str(dados.get("evidence", "") or ""),
     )
 
 

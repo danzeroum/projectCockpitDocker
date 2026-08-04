@@ -6,6 +6,8 @@ Regra da CLI (contrato §6): sai com código estável, nunca com traceback. Falh
     python -m cockpit_harness checar              # verificação sem rede do consumidor
     python -m cockpit_harness pendencias          # imprime INCOMPLETE:* (uma por linha)
     python -m cockpit_harness modo --modo passive --runner agent
+    python -m cockpit_harness escopo-regua --saida $RUNNER_TEMP/escopo.yaml
+    python -m cockpit_harness veredito --laudo harness/reports/sondagem.json
     python -m cockpit_harness laudo --modo inventory --runner ci --saida docs/laudo-adocao.json
 """
 
@@ -104,6 +106,33 @@ def cmd_modo(args: argparse.Namespace) -> int:
     return int(Codigo.OK)
 
 
+def cmd_escopo_regua(args: argparse.Namespace) -> int:
+    """Traduz o escopo do contrato (§3) para o formato que a régua lê. Sai 12 se faltar.
+
+    Existe porque os dois arquivos se chamam `escopo-autorizado.yaml` e têm schemas
+    incompatíveis — o CI copiava um no lugar do outro, e `webqa.escopo.carregar`
+    recusaria com "escopo sem alvos declarados".
+    """
+    from cockpit_harness import escopo_regua
+
+    atual = contrato.exigir_rede_liberada(args.raiz)
+    destino = escopo_regua.escrever(atual, Path(args.saida))
+    print(f"✓ escopo traduzido para a régua em {destino}")
+    return int(Codigo.OK)
+
+
+def cmd_veredito(args: argparse.Namespace) -> int:
+    """Veredito sobre o laudo da sondagem. 22 = não medido; 23 = medido e reprovou.
+
+    A régua sai 0 mesmo com o laudo dizendo `inconclusivo: true` — este comando é
+    quem impede que "não medi" chegue ao CI como "está limpo".
+    """
+    from cockpit_harness import veredito
+
+    print(veredito.avaliar(Path(args.laudo), args.raiz))
+    return int(Codigo.OK)
+
+
 def cmd_laudo(args: argparse.Namespace) -> int:
     raiz = args.raiz
     versao = contrato.conferir_fonte_unica(raiz)
@@ -156,6 +185,16 @@ def construir_parser() -> argparse.ArgumentParser:
     p_modo.add_argument("--modo", required=True)
     p_modo.add_argument("--runner", required=True)
     p_modo.set_defaults(func=cmd_modo)
+
+    p_escopo = subs.add_parser("escopo-regua",
+                               help="traduz o escopo do contrato para o formato da régua")
+    p_escopo.add_argument("--saida", required=True, help="arquivo de destino (efêmero, no runner)")
+    p_escopo.set_defaults(func=cmd_escopo_regua)
+
+    p_ver = subs.add_parser("veredito",
+                            help="veredito sobre o laudo da sondagem; 22 = não medido, 23 = reprovou")
+    p_ver.add_argument("--laudo", required=True, help="laudo JSON produzido por webqa.sondagem")
+    p_ver.set_defaults(func=cmd_veredito)
 
     p_laudo = subs.add_parser("laudo", help="emite o laudo com procedência carimbada")
     p_laudo.add_argument("--modo", default="inventory")
