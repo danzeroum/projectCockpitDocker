@@ -164,6 +164,25 @@ load`.
 textual (`confirmo`), `environment: production` (revisores obrigatórios) e os gates `WEBQA_*`
 montados **apenas** naquele job. Nenhum agente e nenhum CI automático chega lá.
 
+O que cada um roda, e por que não é a mesma coisa:
+
+* **`load`** — `pytest -m load` na régua. Marcador, porque é assim que ela expõe carga.
+* **`active_discovery`** — `python -m webqa.sondagem --executar`, a sondagem C1 de verdade
+  (HEAD-only, sem seguir redirect, sem ler corpo). Rodava `pytest -m "seguranca ..."` até
+  2026-08-04, o que era um subconjunto do que a auditoria passiva já faz: toda a cerimônia de
+  autorização protegia um run que não emitia probe nenhum. `webqa/sondagem.py` é o **único**
+  consumidor de `WEBQA_DISCOVERY_AUTHORIZED` — nenhum arquivo em `checks/` lê esse gate.
+
+Dois passos da harness cercam a sondagem, e os dois existem por medição:
+
+* `cockpit_harness escopo-regua` traduz `tests/qa/escopo-autorizado.yaml` (schema do consumidor,
+  contrato §3) para o schema da régua (`alvos:` por origem). Os dois arquivos têm o mesmo nome e
+  formatos incompatíveis; o `cp` direto entregava algo que `webqa.escopo.carregar` recusa.
+* `cockpit_harness veredito` lê o laudo e emite o código de saída que falta. A régua sai **0**
+  mesmo com `inconclusivo: true` no laudo — medido na bancada: alvo fora do ar devolveu
+  `0/8 caminhos, 0 achado(s)` e exit 0; um `.git/HEAD` exposto (severidade alta) também saiu 0.
+  Sem esse passo, "não medi" e "achei uma falha grave" chegam ao CI como sucesso.
+
 ## 10. Evidência
 
 `docs/laudo-adocao.json` (máquina) e `docs/laudo-adocao.md` (leitura) carimbam a procedência

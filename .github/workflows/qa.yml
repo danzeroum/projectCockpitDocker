@@ -116,6 +116,24 @@ jobs:
       # Trabalho A — PASSIVO. Só roda com alvo de homologação E escopo autorizado. Enquanto
       # houver INCOMPLETE:target_url, o passo REGISTRA a pendência e não emite requisição alguma:
       # pular dizendo por quê é honesto; medir um alvo inventado não é.
+      #
+      # O NAVEGADOR é instalado AQUI, e não num passo próprio, porque a instalação só faz sentido
+      # depois das guardas: na condição normal deste repositório (INCOMPLETE:target_url) não há o
+      # que medir, e baixar Chromium a cada push seria minuto de CI por nada.
+      #
+      # Por que ele passou a ser necessário. A expressão anterior terminava em `not browser`, e
+      # medindo a régua na bancada descobriu-se o que isso custava:
+      #
+      #     família     com browser   sem browser
+      #     backend         19            19
+      #     frontend        19            13
+      #     ux              16            12
+      #     seguranca       16             0   <— a família INTEIRA
+      #     lgpd            18             9
+      #
+      # Os 16 checks de `seguranca` são todos `browser` (por desenho: a família mede o que o
+      # NAVEGADOR baixa). A expressão nomeava cinco famílias e entregava quatro — e a que sumia
+      # inteira era segurança. Nomear e descartar em silêncio é pior que não nomear.
       - name: Auditoria passiva (Trabalho A — só com alvo e escopo autorizados)
         run: |
           set -uo pipefail
@@ -130,7 +148,40 @@ jobs:
           WEBQA_TARGET_URL="$(python -m cockpit_harness alvo)"
           export WEBQA_TARGET_URL
           cd "$RUNNER_TEMP/qa-suite/webqa-suite"
-          pytest -m "(backend or frontend or ux or seguranca or lgpd) and not load and not browser"
+
+          # A expressão nunca NOMEIA uma família que este run não pode medir. Sem navegador,
+          # `seguranca` sai da lista e o aviso a nomeia — em vez de continuar escrita numa
+          # expressão que a descarta em silêncio, que era exatamente o defeito.
+          PROMETIDAS="backend frontend ux seguranca lgpd"
+          if python -m playwright install --with-deps chromium; then
+            FILTRO="and not load"
+          else
+            echo "::warning::Chromium não instalou — a família 'seguranca' (16 checks, TODOS browser) sai deste run, e frontend/ux/lgpd rodam parciais. Quatro famílias medidas, não cinco."
+            FILTRO="and not load and not browser"
+            PROMETIDAS="backend frontend ux lgpd"
+          fi
+
+          # Guarda contra o defeito voltar por outro caminho: toda família PROMETIDA tem de
+          # coletar pelo menos um teste. Foi um `and not browser` que zerou `seguranca` sem
+          # que nada acusasse; um filtro novo pode zerar outra família do mesmo jeito.
+          # A checagem é pela AUSÊNCIA de "no tests collected", e não por um padrão de
+          # contagem: o pytest imprime "16/1029 tests collected", "1 test collected"
+          # (singular, sem barra) e "no tests collected" — casar a contagem erraria o
+          # caso de um teste só, acusando família vazia onde há uma.
+          vazias=""
+          for familia in $PROMETIDAS; do
+            if pytest -m "$familia $FILTRO" --collect-only -q 2>/dev/null \
+                 | grep -q 'no tests collected'; then
+              vazias="$vazias $familia"
+            fi
+          done
+          if [ -n "$vazias" ]; then
+            echo "::error::famílias prometidas que não coletam teste nenhum:$vazias — a auditoria promete o que não mede."
+            exit 21
+          fi
+
+          EXPRESSAO="$(echo "$PROMETIDAS" | sed 's/ / or /g')"
+          pytest -m "($EXPRESSAO) $FILTRO"
 
       # O laudo carimba a régua OBSERVADA (commit + hash da lista curada). Sem observação, sai
       # 'UNINSTALLED' — nunca um carimbo inventado.
@@ -201,7 +252,22 @@ jobs:
           fi
 
       # Aqui — e SÓ aqui — o ambiente monta o gate correspondente, no job segregado.
-      # A v1.0.0 da suíte não tem CLI: os modos rodam por marcador de pytest (docs/ADOCAO.md §8).
+      #
+      # O que este passo fazia e por que estava errado. `active_discovery` rodava
+      # `pytest -m "seguranca and not load"` e NUNCA invocava a sondagem. Duas consequências,
+      # ambas medidas na bancada:
+      #
+      #  1. `webqa/sondagem.py` é o ÚNICO consumidor de WEBQA_DISCOVERY_AUTHORIZED — nenhum
+      #     arquivo em checks/ lê esse gate. Toda a cerimônia (disparo humano, `confirmo`,
+      #     environment: production com revisores, escopo do segredo) protegia um run que não
+      #     emitia probe nenhum. O modo tinha o nome da coisa e não fazia a coisa.
+      #  2. O comentário anterior dizia "a v1.0.0 não tem CLI". Tem: `python -m webqa.sondagem`,
+      #     rodado no commit pinado. A premissa era falsa, e por isso ninguém procurou o erro.
+      #
+      # E o `cp` do escopo entregava um arquivo que a régua não lê: os dois se chamam
+      # `escopo-autorizado.yaml` e têm schemas incompatíveis (nosso: `authorized/scope.hosts`;
+      # dela: `alvos:` por origem). `webqa.escopo.carregar` recusaria com "escopo sem alvos
+      # declarados". A tradução agora é explícita, testada, e some com o runner.
       - name: Rodar modo segregado
         env:
           WEBQA_LOAD_AUTHORIZED: ${{ github.event.inputs.mode == 'load' && '1' || '' }}
@@ -217,9 +283,45 @@ jobs:
             exit 12
           }
           export WEBQA_TARGET_URL
-          cp tests/qa/escopo-autorizado.yaml "$RUNNER_TEMP/qa-suite/webqa-suite/" 2>/dev/null || true
-          cd "$RUNNER_TEMP/qa-suite/webqa-suite"
+          RAIZ="$PWD"
+          mkdir -p "$RAIZ/harness/reports"
+
           case "${{ github.event.inputs.mode }}" in
-            load)             pytest -m load ;;
-            active_discovery) pytest -m "seguranca and not load" ;;
+            load)
+              cd "$RUNNER_TEMP/qa-suite/webqa-suite"
+              pytest -m load
+              ;;
+            active_discovery)
+              # Fail-closed antes de qualquer requisição: sem tradução não há escopo, e sem
+              # escopo a sondagem não tem para onde apontar. Recusar aqui é mais barato — e
+              # mais honesto — do que descobrir na régua com o probe já no ar.
+              ESCOPO="$RUNNER_TEMP/escopo-da-regua.yaml"
+              python -m cockpit_harness escopo-regua --saida "$ESCOPO" || exit 12
+
+              cd "$RUNNER_TEMP/qa-suite/webqa-suite"
+              LAUDO="$RAIZ/harness/reports/sondagem-${GITHUB_RUN_ID}.json"
+              # C1: HEAD-only, sem seguir redirect, sem ler corpo. `--executar` porque o padrão
+              # da régua é dry-run; os portões dela decidem se algo sai.
+              python -m webqa.sondagem \
+                --escopo "$ESCOPO" \
+                --alvo "$(python -c 'import os,urllib.parse as u; p=u.urlsplit(os.environ["WEBQA_TARGET_URL"]); print(f"{p.scheme}://{p.netloc}")')" \
+                --executar \
+                --saida "$LAUDO" \
+                --sarif "$RAIZ/harness/reports/sondagem-${GITHUB_RUN_ID}.sarif"
+
+              # O veredito é NOSSO. A régua sai 0 mesmo com o laudo dizendo `inconclusivo: true`
+              # (medido: alvo fora do ar ⇒ "0/8 caminhos, 0 achado(s)", exit 0). 22 = não medido,
+              # 23 = medido e reprovou. Sem este passo, um alvo inalcançável passaria como limpo.
+              cd "$RAIZ"
+              python -m cockpit_harness veredito --laudo "$LAUDO"
+              ;;
           esac
+
+      # Evidência do modo segregado — é o run que mais precisa dela e o único que não a arquivava.
+      - name: Arquivar evidência da sondagem
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fase-c-reports
+          path: harness/reports/
+          if-no-files-found: ignore
