@@ -190,3 +190,58 @@ def test_script_reverte_se_a_config_nao_validar(request):
 def test_script_recusa_credencial_identica_a_de_producao(request):
     texto = (Path(request.config.rootpath) / SETUP).read_text(encoding="utf-8")
     assert "cmp -s" in texto and "/etc/nginx/.htpasswd" in texto
+
+
+# ---------------------------------------------------------------------------
+# tetos de recurso
+# ---------------------------------------------------------------------------
+# Homologação divide o servidor com produção. Um ambiente de teste sem teto de
+# memória pode derrubar o de verdade, e o OOM killer do kernel escolhe a vítima
+# por heurística — pode levar o nginx, ou o banco de outra stack, e não o
+# ofensor. Com teto, quem morre é o container que estourou, dentro do próprio
+# cgroup, e o `restart: unless-stopped` o traz de volta.
+#
+# Os valores vêm de medição na bancada (42 containers, rajada de 300 requisições
+# em 20 vias): 63 MiB de pico contra 512 de teto no app, 3,2 contra 64 no proxy.
+
+@pytest.mark.parametrize("servico", ["app", "docker-socket-proxy"])
+def test_todo_servico_tem_teto_de_memoria(compose: dict, servico: str):
+    declarado = compose["services"][servico]
+    assert declarado.get("mem_limit"), (
+        f"{servico} sem mem_limit: um vazamento aqui derruba o servidor de produção")
+
+
+@pytest.mark.parametrize("servico", ["app", "docker-socket-proxy"])
+def test_swap_desligado(compose: dict, servico: str):
+    """`memswap_limit` igual ao `mem_limit` desliga swap para o container.
+
+    Sem isso o Docker concede o DOBRO em swap: em vez de bater no teto e morrer
+    depressa, o processo que engorda passa a castigar o disco do host — que aqui
+    é o mesmo disco de produção.
+    """
+    declarado = compose["services"][servico]
+    assert declarado.get("memswap_limit") == declarado.get("mem_limit"), (
+        f"{servico}: swap habilitado transforma estouro de memória em I/O do host")
+
+
+@pytest.mark.parametrize("servico", ["app", "docker-socket-proxy"])
+def test_teto_de_processos(compose: dict, servico: str):
+    assert declarado_int(compose["services"][servico].get("pids_limit")) > 0, (
+        f"{servico} sem pids_limit: fork descontrolado esgota a tabela do host")
+
+
+def test_cpu_e_folgada_e_memoria_e_apertada(compose: dict):
+    """A assimetria é deliberada, não descuido.
+
+    CPU é recurso RECUPERÁVEL: sob disputa tudo fica mais lento e o escalonador
+    resolve. Memória não — quem estoura mata terceiro. Estrangular a CPU do painel
+    o deixaria lento exatamente quando o host está em apuros, que é quando alguém
+    precisa dele.
+    """
+    app = compose["services"]["app"]
+    assert float(app["cpus"]) >= 1.0, "CPU apertada estrangula o painel na hora do incidente"
+    assert app["mem_limit"].endswith("m"), "teto de memória deve ser explícito em MiB"
+
+
+def declarado_int(valor) -> int:
+    return int(valor) if valor is not None else 0

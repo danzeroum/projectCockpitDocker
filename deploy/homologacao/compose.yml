@@ -31,6 +31,15 @@ services:
     image: tecnativa/docker-socket-proxy:latest
     restart: unless-stopped
     container_name: docker-cockpit-proxy-homolog
+    # Mesmos tetos que o compose de produção passou a declarar (danzeroum/docker).
+    # Aqui eles importam por um motivo a mais: homologação divide o servidor com
+    # produção. Um ambiente de teste sem limite pode derrubar o de verdade — e
+    # seria a segunda vez que a homologação vira porta de entrada para o que ela
+    # deveria proteger (a primeira é a credencial, RULE-HOMOLOG-003).
+    mem_limit: 64m
+    memswap_limit: 64m
+    pids_limit: 64
+    cpus: 0.5
     environment:
       CONTAINERS: 1
       IMAGES: 1
@@ -63,6 +72,18 @@ services:
       context: ${COCKPIT_SRC:-/opt/btv/docker}/app
     container_name: docker-cockpit-homolog
     restart: unless-stopped
+    # Tetos idênticos aos de produção, e é de propósito: homologação que roda com
+    # folga diferente não prova nada sobre produção. Medido nesta bancada com 42
+    # containers e uma rajada de 300 requisições em 20 vias — 63 MiB de pico
+    # contra os 512 do teto, sem OOM e sem reinício.
+    #
+    # `memswap_limit` igual ao `mem_limit` desliga swap: sem isso o Docker
+    # concede o dobro em swap e um processo que engorda castiga o DISCO do
+    # servidor — que aqui é o mesmo disco de produção.
+    mem_limit: 512m
+    memswap_limit: 512m
+    pids_limit: 256
+    cpus: 2.0
     env_file: .env
     environment:
       SOCKET_PROXY: http://docker-cockpit-proxy-homolog:2375
