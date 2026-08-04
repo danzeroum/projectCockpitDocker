@@ -11,13 +11,22 @@
 #
 # Uso: bash deploy/homologacao/setup-ingress-homolog.sh homolog.docker.danzeroum.com
 # Pré-requisito: DNS A do domínio já apontando para este servidor, e o stack no ar.
+#
+# ESTE SCRIPT EDITA O nginx.conf QUE SERVE PRODUÇÃO. No servidor observado, aquele arquivo é
+# bind-mount de /opt/btv/ingress/nginx/nginx.conf e atende também docs-site, a demo de
+# governança, o portfólio e o educacional. Por isso: cópia de segurança antes, `nginx -t`
+# depois, e reversão automática se o teste reprovar. Um reload recusado por config inválida
+# não derruba o que está no ar, mas trava a PRÓXIMA alteração de quem vier depois.
 
 set -euo pipefail
 
 DOMAIN="${1:-}"
 UPSTREAM="http://docker-cockpit-homolog:8000"
-HTPASSWD="/etc/nginx/.htpasswd-homolog"
-INGRESS_CONF="/opt/btv/ingress/nginx/nginx.conf"
+# Caminho DENTRO do container do ingress. Configurável porque depende de como o arquivo de
+# credencial foi disponibilizado lá (ver docs/HOMOLOGACAO.md §2 — o .htpasswd de produção é
+# bind-mount de ARQUIVO, e bind-mount de arquivo não traz vizinhos).
+HTPASSWD="${HTPASSWD_HOMOLOG:-/etc/nginx/.htpasswd-homolog}"
+INGRESS_CONF="${INGRESS_CONF:-/opt/btv/ingress/nginx/nginx.conf}"
 CERTBOT_WWW="/var/www/certbot"
 CERTBOT_CONF="/etc/letsencrypt"
 EMAIL="${EMAIL:-admin@buildtovalue.cloud}"
@@ -53,8 +62,18 @@ echo "  OK: docker-cockpit-homolog no ar."
 echo "[3/5] Conferindo credencial própria em $HTPASSWD..."
 if ! docker exec btv-nginx-prod test -f "$HTPASSWD" 2>/dev/null; then
   echo "ERRO: $HTPASSWD não existe dentro de btv-nginx-prod."
-  echo "      Homologação NÃO reusa o .htpasswd de produção. Crie o arquivo com uma"
-  echo "      credencial nova (htpasswd -B -c <arquivo> <usuario>) e monte-o no ingress."
+  echo
+  echo "      Homologação NÃO reusa o .htpasswd de produção (RULE-HOMOLOG-003): credencial"
+  echo "      compartilhada faz um vazamento no ambiente de teste virar acesso à produção."
+  echo
+  echo "      ATENÇÃO à pegadinha: no ingress observado, o .htpasswd de produção é bind-mount"
+  echo "      de ARQUIVO (/opt/btv/ingress/.htpasswd -> /etc/nginx/.htpasswd). Criar um arquivo"
+  echo "      vizinho no host NÃO o faz aparecer no container. Ver docs/HOMOLOGACAO.md §2 para"
+  echo "      as duas saídas (montar um diretório e recriar o ingress, ou docker cp temporário)."
+  exit 1
+fi
+if docker exec btv-nginx-prod sh -c "cmp -s '$HTPASSWD' /etc/nginx/.htpasswd" 2>/dev/null; then
+  echo "ERRO: $HTPASSWD é idêntico ao .htpasswd de produção — isso não é credencial própria."
   exit 1
 fi
 echo "  OK: credencial de homologação separada da de produção."
@@ -72,6 +91,17 @@ docker run --rm \
     -d "$DOMAIN"
 
 echo "[5/5] Acrescentando bloco server{} em $INGRESS_CONF..."
+# Cópia de segurança ANTES de qualquer escrita. `cat >` preserva o inode — importante, porque
+# o arquivo é bind-mount: substituí-lo por rename quebraria o mount do container.
+BACKUP="${INGRESS_CONF}.bak-$(date +%Y%m%d-%H%M%S)"
+cp -a "$INGRESS_CONF" "$BACKUP"
+echo "  backup: $BACKUP"
+
+reverter() {
+  echo "::: revertendo $INGRESS_CONF a partir de $BACKUP"
+  cat "$BACKUP" > "$INGRESS_CONF"
+}
+
 if grep -q "server_name ${DOMAIN}" "$INGRESS_CONF"; then
   echo "  Bloco para $DOMAIN já existe — não vou reescrever."
   echo "  Confira à mão que o proxy_pass aponta para ${UPSTREAM}."
@@ -136,11 +166,19 @@ PYEOF
   rm -f "$TMPBLOCK"
 fi
 
-docker exec btv-nginx-prod nginx -t
+# A partir daqui o arquivo já mudou. Se a config não validar, reverte e sai — melhor a
+# homologação não subir do que deixar o ingress de produção com config que não recarrega.
+if ! docker exec btv-nginx-prod nginx -t; then
+  reverter
+  docker exec btv-nginx-prod nginx -t && echo "::: config anterior restaurada e válida"
+  echo "ERRO: bloco gerado não validou. Nada foi aplicado; produção intacta."
+  exit 1
+fi
 docker exec btv-nginx-prod nginx -s reload
 
 echo ""
 echo "Pronto! Homologação em https://${DOMAIN}"
+echo "Backup da config anterior: $BACKUP"
 echo ""
 echo "Próximo passo, no projectCockpitDocker: apontar tests/qa/config.yaml para este host"
 echo "e injetar o escopo autorizado como segredo do CI. Ver docs/HOMOLOGACAO.md §5."
