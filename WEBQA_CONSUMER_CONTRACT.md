@@ -52,8 +52,19 @@ target:
 thresholds:
   max_high: 0                    # inteiro >= 0; máximo de achados severidade alta tolerados
   max_medium: 5                  # inteiro >= 0
+active_discovery:                # opcional; default 0
+  unreachable_by_our_ingress: 3  # caminhos que o NOSSO ingress derruba antes do app
 active_gates: []                 # lista de gates que o consumidor autoriza explicitamente
 ```
+
+**`active_discovery.unreachable_by_our_ingress`** existe porque endurecimento correto e
+cobertura completa se contradizem: um `return 444` em `(wp-login|\.git|\.env)` fecha a conexão
+sem resposta, a régua não conta aqueles probes como executados, e o run fica permanentemente
+`inconclusivo` — 22 em todo disparo. Declarar o vão faz o `veredito` tolerar **exatamente**
+aquele tamanho: um caminho a mais faltando reprova, um a menos passa avisando que a declaração
+envelheceu, e `abortado_por` reprova sempre (nenhum vão cobre kill-switch ou circuit-breaker).
+A declaração fixa o **número**, não o conjunto: o laudo informa quantos caminhos faltaram, nunca
+quais.
 
 Regras:
 - `standard_version` **deve** casar exatamente com o pin de `requirements-qa.txt`. Divergência é

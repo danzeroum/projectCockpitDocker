@@ -55,36 +55,81 @@ def _ler_laudo(caminho: Path) -> dict:
     return dados
 
 
-def _tetos(raiz: Path) -> dict:
+def _config(raiz: Path) -> dict:
     config = raiz / "tests" / "qa" / "config.yaml"
     if not config.exists():
         raise ConfigInvalida(f"arquivo declarativo ausente: {config}")
-    dados = yaml.safe_load(config.read_text(encoding="utf-8")) or {}
+    return yaml.safe_load(config.read_text(encoding="utf-8")) or {}
+
+
+def _tetos(dados: dict) -> dict:
     limites = dados.get("thresholds") or {}
     return {sev: int(limites.get(chave, 0) or 0) for sev, chave in TETOS.items()}
 
 
-def _exigir_cobertura(alvos: list) -> None:
+def _vao_declarado(dados: dict) -> int:
+    """Caminhos que o NOSSO ingress derruba antes de chegarem ao app.
+
+    Medido: o ingress de homologação emite `location ~* (wp-login|\\.git|\\.env)
+    { return 444; }` (deploy/homologacao/setup-ingress-homolog.sh). Três caminhos da
+    lista curada caem nessa regra, a conexão é fechada sem resposta, e a régua não os
+    conta como executados — 5/8, inconclusivo, para sempre.
+
+    Sem esta declaração o modo sairia 22 em TODO run contra a superfície publicada. E
+    um check permanentemente vermelho é um check que se aprende a ignorar: trocaria um
+    exit 0 que mente por um exit 22 que grita sempre.
+
+    Default 0: quem não declara nada continua exigindo cobertura total.
+    """
+    return int((dados.get("active_discovery") or {}).get("unreachable_by_our_ingress", 0) or 0)
+
+
+def _exigir_cobertura(alvos: list, vao: int) -> list[str]:
     """Um alvo parcial condena o laudo inteiro. Não há média aqui.
 
     Dois alvos, um deles inconclusivo, não é "50% medido": é um laudo que não pode
     dizer se o alvo não-medido está limpo. Aprovar o conjunto porque a maioria
     passou é a média que esconde justamente o que não se olhou.
+
+    O `vao` declarado é a ÚNICA tolerância, e ela é assimétrica de propósito:
+
+    * vão MAIOR que o declarado → 22. Algo falhou além do que se sabia.
+    * vão MENOR → passa, avisando. Mediu-se MAIS do que se esperava, o que é um
+      resultado melhor; reprovar aqui puniria a melhora. Mas a declaração ficou
+      velha (o ingress pode ter parado de derrubar aqueles caminhos, e isso é do
+      interesse de quem lê), então o aviso sai nomeando o alvo.
+    * `abortado_por` → 22 SEMPRE, vão nenhum perdoa. Kill-switch, circuit-breaker e
+      falha de posse não são "o ingress derrubou três caminhos": são o run parando.
+
+    O que esta tolerância NÃO consegue ser: precisa. O laudo informa `esperado` e
+    `executado`, e a régua conta `falhas_rede`/`recuos` sem serializá-los — de fora
+    não dá para saber QUAIS caminhos faltaram. A declaração fixa o número, não o
+    conjunto. É mais fraco do que se gostaria e muito mais forte que o exit 0.
     """
-    quebrados = []
+    quebrados, avisos = [], []
     for alvo in alvos:
         nome = alvo.get("alvo", "?")
         esperado = int(alvo.get("esperado") or 0)
         executado = int(alvo.get("executado") or 0)
         abortado = str(alvo.get("abortado_por") or "")
-        if alvo.get("inconclusivo") or abortado or executado != esperado:
-            motivo = abortado or f"{executado}/{esperado} caminhos"
-            quebrados.append(f"{nome} ({motivo})")
+        faltando = esperado - executado
+
+        if abortado:
+            quebrados.append(f"{nome} (abortado por {abortado})")
+        elif faltando > vao:
+            quebrados.append(f"{nome} ({executado}/{esperado} caminhos, vão declarado {vao})")
+        elif faltando < vao:
+            avisos.append(
+                f"::warning::{nome} sondou {executado}/{esperado} — o vão declarado é {vao} e "
+                f"foram {faltando}. Mediu-se mais que o esperado; confirme se o ingress parou "
+                f"de derrubar caminhos e atualize active_discovery.unreachable_by_our_ingress."
+            )
     if quebrados:
         raise RunInconclusivo(
             "a sondagem não cobriu a superfície declarada: " + "; ".join(quebrados)
             + ". Isto NÃO é 'nenhum achado' — é 'não medido'."
         )
+    return avisos
 
 
 def _exigir_limites(alvos: list, tetos: dict) -> None:
@@ -116,10 +161,18 @@ def avaliar(laudo: Path, raiz: Path) -> str:
     if not alvos:
         raise RunInconclusivo(f"laudo sem alvo nenhum: {laudo}")
 
-    _exigir_cobertura(alvos)
-    _exigir_limites(alvos, _tetos(raiz))
+    config = _config(raiz)
+    vao = _vao_declarado(config)
+    avisos = _exigir_cobertura(alvos, vao)
+    _exigir_limites(alvos, _tetos(config))
 
     total = sum(len(a.get("findings") or []) for a in alvos)
     coberto = sum(int(a.get("executado") or 0) for a in alvos)
-    return (f"veredito: {len(alvos)} alvo(s), {coberto} caminho(s) sondado(s), "
-            f"{total} achado(s) dentro do tolerado")
+    esperado = sum(int(a.get("esperado") or 0) for a in alvos)
+    linhas = list(avisos)
+    linhas.append(
+        f"veredito: {len(alvos)} alvo(s), {coberto}/{esperado} caminho(s) sondado(s)"
+        + (f" (vão declarado: {vao} por alvo)" if vao else "")
+        + f", {total} achado(s) dentro do tolerado"
+    )
+    return "\n".join(linhas)
