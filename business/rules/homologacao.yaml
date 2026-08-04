@@ -10,14 +10,27 @@ capability: CAP-ALVO
 
 rules:
   - id: RULE-HOMOLOG-001
-    name: "Homologação não tem superfície de escrita"
+    name: "Homologação não age sobre a INFRAESTRUTURA"
     status: verified
     statement: >
-      O stack de homologação fixa ENABLE_ACTIONS="0" (rotas de mutação não são registradas:
-      404, não 403) e nega POST/DELETE no socket-proxy.
+      O stack de homologação fixa ENABLE_ACTIONS="0" (as rotas que tocam o daemon não são
+      registradas: 404, não 403) e nega POST/DELETE no socket-proxy.
     rationale: >
       Duas trancas em camadas diferentes: a de dentro é da aplicação, a de fora é do daemon.
       Uma tranca que o vigiado desliga sozinho não é uma tranca.
+
+      ONDE A REGRA PARA, e por que parar aí é o certo. Ela chamava-se "não tem superfície de
+      escrita", e isso era FALSO — descoberto ao medir o alvo, não ao ler o compose.
+      `POST /api/findings/{id}/ack` e `POST /api/tasks` NÃO passam por
+      ENABLE_ACTIONS: existem em qualquer instalação e aceitam escrita com um token de
+      destravamento válido. O que elas escrevem é o estado do PRÓPRIO painel (reconhecer um
+      achado, abrir um cartão), no banco de homologação, que é separado do de produção.
+
+      E devem continuar assim. `ENABLE_ACTIONS` responde "esta instância pode agir sobre a
+      infraestrutura?", não "esta instância aceita qualquer escrita". Triagem é leitura
+      qualificada: um observador que não pode reconhecer um achado não consegue exercitar o
+      fluxo que homologação existe para exercitar. Gatear ack/tasks tornaria homologação
+      incapaz de testar justamente o caminho que ela deveria validar.
     verified_by:
       - tests/integration/test_homologacao.py
 

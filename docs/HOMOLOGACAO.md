@@ -18,8 +18,14 @@ fiscalizadas por [`tests/integration/test_homologacao.py`](../tests/integration/
 | basic auth | `.htpasswd` | `.htpasswd-homolog`, **credencial diferente** |
 | retenção | 24h raw / 30d rollup | 6h raw / 7d rollup |
 
-Homologação nasce **mais travada** que produção. É onde a régua cutuca — superfície de escrita
-ali não deveria existir.
+Homologação nasce **mais travada** que produção. É onde a régua cutuca, e ali não se mexe na
+infraestrutura.
+
+O que `ENABLE_ACTIONS` **não** cobre, e vale saber antes de auditar: `POST /api/findings/{id}/ack`
+e `POST /api/tasks` existem em qualquer instalação e aceitam escrita com destravamento válido.
+Elas gravam o estado do próprio painel — reconhecer um achado, abrir um cartão — no banco de
+homologação, separado do de produção. É deliberado: triagem é leitura qualificada, e um ambiente
+que não pode reconhecer um achado não exercita o fluxo que ele existe para exercitar.
 
 ## 1. DNS
 
