@@ -9,8 +9,15 @@
 #  1. NOMES E VOLUME PRÓPRIOS — container, projeto e volume distintos. Sem isso, `compose up`
 #     aqui derrubaria o cockpit de produção pelo nome do container.
 #  2. ENABLE_ACTIONS: "0" — produção fixa "1" (o pin que sustenta unlock->reiniciar lá). Aqui
-#     fica desligado: com a flag off as rotas de mutação não são REGISTRADAS (404, não 403).
-#     Homologação é onde a auditoria cutuca; superfície de escrita não deveria existir.
+#     fica desligado: com a flag off as rotas que tocam o DAEMON não são REGISTRADAS (404,
+#     não 403). Homologação é onde a auditoria cutuca, e ali não se mexe na infraestrutura.
+#
+#     E o que a flag NÃO cobre, porque medir corrigiu o que este comentário dizia antes:
+#     `POST /api/findings/{id}/ack` e `POST /api/tasks` existem em qualquer instalação e
+#     aceitam escrita com destravamento válido. Elas escrevem o estado do PRÓPRIO painel,
+#     no banco de homologação — e devem continuar assim. Triagem é leitura qualificada;
+#     um ambiente que não pode reconhecer um achado não exercita o fluxo que ele existe
+#     para exercitar. Ver RULE-HOMOLOG-001 §escopo_exato.
 #  3. SOCKET-PROXY SEM POST/DELETE — segunda tranca, fora do alcance da aplicação. Mesmo que
 #     alguém ligue ENABLE_ACTIONS por engano, o proxy recusa a escrita no daemon. Uma tranca
 #     que o vigiado pode desligar sozinho não é uma tranca.

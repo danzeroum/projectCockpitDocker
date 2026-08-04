@@ -33,6 +33,25 @@ def compose(request) -> dict:
 
 
 @pytest.fixture(scope="module")
+def compose_texto(request) -> str:
+    return (Path(request.config.rootpath) / COMPOSE).read_text(encoding="utf-8")
+
+
+@pytest.fixture(scope="module")
+def regras(request) -> dict:
+    return yaml.safe_load(
+        (Path(request.config.rootpath) / "business" / "rules" / "homologacao.yaml")
+        .read_text(encoding="utf-8"))
+
+
+def _regra(regras: dict, ident: str) -> dict:
+    for r in regras.get("rules", []):
+        if r.get("id") == ident:
+            return r
+    raise AssertionError(f"{ident} sumiu de business/rules/homologacao.yaml")
+
+
+@pytest.fixture(scope="module")
 def ambiente(request) -> dict[str, str]:
     texto = (Path(request.config.rootpath) / ENV_EXEMPLO).read_text(encoding="utf-8")
     pares = {}
@@ -245,3 +264,42 @@ def test_cpu_e_folgada_e_memoria_e_apertada(compose: dict):
 
 def declarado_int(valor) -> int:
     return int(valor) if valor is not None else 0
+
+
+# ---------------------------------------------------------------------------
+# o escopo EXATO de "não age sobre a infraestrutura"
+# ---------------------------------------------------------------------------
+# A RULE-HOMOLOG-001 chamava-se "Homologação não tem superfície de escrita", e
+# isso era FALSO — descoberto ao medir o alvo, não ao ler o compose.
+# `POST /api/findings/{id}/ack` e `POST /api/tasks` não passam por
+# ENABLE_ACTIONS: existem em qualquer instalação e aceitam escrita com um token
+# de destravamento válido.
+#
+# O nome foi corrigido. Estes casos existem para que a correção não seja
+# "consertada" na direção errada por quem ler o nome antigo em algum lugar.
+
+def test_a_regra_declara_o_escopo_exato(regras: dict):
+    """Nome que promete mais do que a regra entrega é pior que nome vago: ele
+    dispensa a leitura do statement."""
+    r = _regra(regras, "RULE-HOMOLOG-001")
+    assert "INFRAESTRUTURA" in r["name"].upper(), (
+        "o nome voltou a prometer ausência total de escrita")
+    # O limite vai no `rationale`, e não num campo novo: acrescentar propriedade
+    # ao schema de regras mudaria o contrato da harness inteira por causa de uma
+    # regra. "Onde a regra para, e por que parar aí é o certo" é justificativa.
+    justificativa = r.get("rationale", "")
+    for termo in ("ack", "tasks", "ENABLE_ACTIONS"):
+        assert termo in justificativa, (
+            f"o rationale não cita {termo} — a exceção volta a ser surpresa")
+
+
+def test_o_compose_nao_promete_ausencia_de_escrita(compose_texto: str):
+    assert "superfície de escrita não deveria existir" not in compose_texto, (
+        "voltou a afirmação que a medição desmentiu")
+
+
+def test_a_excecao_esta_documentada_onde_o_operador_le(request):
+    """No doc de subida, não só na regra: quem sobe o ambiente lê o passo a passo."""
+    doc = (Path(request.config.rootpath) / "docs" / "HOMOLOGACAO.md").read_text(encoding="utf-8")
+    assert "/ack" in doc and "/api/tasks" in doc, (
+        "a exceção some do doc e vira surpresa na próxima auditoria")
