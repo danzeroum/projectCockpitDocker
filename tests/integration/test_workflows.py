@@ -78,7 +78,33 @@ def test_job_segregado_exige_confirmacao_humana(qa: dict):
 
 
 def test_fiscal_de_metadados_roda_no_ci(request):
+    """REANCORADO na fatia-3: o teste exigia a string `ci/validate_metadata.py` no workflow, e a
+    carcaça v1.0.0 roda `ci/validate_all.py`, que chama aquele fiscal in-process junto dos outros
+    oito.
+
+    A promessa do ADR-002 é "regra que precisa morder tem fiscal EXECUTÁVEL, e ele roda no CI" —
+    e ela continua verdadeira. O que estava errado era a âncora: presa à MENÇÃO de um comando em
+    vez de ao FATO de o fiscal rodar. É a mesma classe de erro que eu cometi quatro vezes nesta
+    migração, e reancorá-la aqui é fechá-la no caso que a originou.
+
+    A âncora nova é o FATO: importar o módulo do fiscal e conferir que o comando que o workflow
+    roda de fato o alcança. Se um dia `validate_all` deixar de chamá-lo, isto cai — e é isso que
+    a asserção antiga não conseguia detectar, porque a string continuaria lá.
+    """
     doc = yaml.safe_load((Path(request.config.rootpath) / META).read_text(encoding="utf-8"))
     comandos = " ".join(str(p.get("run", "")) for p in doc["jobs"]["validate-metadata"]["steps"])
-    assert "ci/validate_metadata.py" in comandos
-    assert "ci/generate_graph.py --check" in comandos
+
+    fiscal = next((c for c in ("ci/validate_all.py", "ci/validate_metadata.py") if c in comandos),
+                  None)
+    assert fiscal, f"nenhum fiscal de metadados roda no workflow: {comandos[:200]}"
+
+    if fiscal == "ci/validate_all.py":
+        fonte = (Path(request.config.rootpath) / "ci/validate_all.py").read_text(encoding="utf-8")
+        assert "validate_metadata" in fonte, (
+            "o workflow roda validate_all.py, que NÃO alcança validate_metadata — o fiscal saiu "
+            "do caminho e a string no workflow não denunciaria")
+        assert "generate_graph" in fonte, (
+            "o workflow roda validate_all.py, que NÃO confere o grafo derivado — e o grafo em "
+            "dia é o que impede docs/metadata-graph.md de virar ficção editada à mão")
+    else:
+        assert "ci/generate_graph.py --check" in comandos

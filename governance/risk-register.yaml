@@ -210,4 +210,65 @@ risks:
       - kind: local_path
         ref: governance/parecer-proporcionalidade.md
 
+  - id: RISK-CARCACA-001
+    area: governance
+    description: >
+      `harness/harness.yaml` deste repositório não satisfaz o schema da carcaça v1.0.0: faltam
+      `external_audit`, `repository.stages_manifest` e `env_hygiene.env_denylist_exact`. É trabalho
+      de carcaça não terminado, e o efeito não é cosmético — sem `env_denylist_exact` a higiene de
+      ambiente aqui não cobre a segunda família de variáveis (sequestro de proxy, de índice pip e
+      de import), que o molde acrescentou na CP-025 justamente porque um fiscal enganado reporta
+      verde com convicção.
+    likelihood: high
+    impact: medium
+    treatment: mitigate
+    owner: technical_owner
+    status: open
+    # ACHADO DATADO por decisão de danzeroum na CP-003 fatia-3, sobre a classificação da falha
+    # legada `test_harness_yaml_valida_contra_o_proprio_schema`. Ela não é expectativa obsoleta:
+    # o teste está certo e o repositório é que está incompleto. Fica FALHANDO de propósito, com
+    # data — um teste vermelho que aponta defeito real é o mapa, e apagá-lo seria trocar o
+    # problema pelo silêncio sobre o problema.
+    #
+    # Medido em 05/08/2026 por `python -m pytest tests/integration/test_repositorio.py` com o alvo
+    # materializado; os três campos ausentes vêm do erro de schema, não de leitura minha.
+    due: "2026-11-03"
+    controls:
+      - kind: local_path
+        ref: tests/integration/test_repositorio.py
+      - kind: local_path
+        ref: harness/harness.yaml
+
+  - id: RISK-ALVO-002
+    area: access
+    description: >
+      O socket-proxy do cockpit precisa MESMO de POST e DELETE — medido, não suposto. Sete
+      caminhos da API Docker são mutados através dele: POST /containers/{id}/stop, /start,
+      /restart, /exec; POST /exec/{id}/start; POST /images/prune; DELETE /containers/{id}. Zerar
+      os dois verbos quebraria CAP-AGIR inteira (parar, subir, reiniciar, remover, podar), então
+      a proposta `POST: 0`/`DELETE: 0` do RISK-SOCKET-001 está DESCARTADA por medição.
+    likelihood: low
+    impact: high
+    treatment: mitigate
+    owner: security_owner
+    status: open
+    # O QUE SOBRA COMO REDUÇÃO REAL, e é uma linha de compose: `ENABLE_TERMINAL=0` remove DOIS dos
+    # sete caminhos — `/containers/{id}/exec` e `/exec/{id}/start` —, que são exatamente os que
+    # concedem execução de comando arbitrário dentro de qualquer container. Os outros cinco são
+    # operações nomeadas e reversíveis; estes dois são shell.
+    #
+    # A redução por CAMINHO não é expressável no `tecnativa/docker-socket-proxy`: ele concede por
+    # RECURSO e VERBO (CONTAINERS, IMAGES, POST, DELETE), não por rota. Chegar aos sete caminhos
+    # exigiria um nginx com allowlist na frente do proxy, ou trocar o proxy — mudança de desenho
+    # do alvo, listada e não decidida aqui.
+    #
+    # Medido em 05/08/2026 contra danzeroum/docker @ d6ae70eafee9 por leitura de
+    # app/routers/_proxy.py, containers.py, prune.py e projects.py — não por execução.
+    due: "2026-11-03"
+    controls:
+      - kind: local_path
+        ref: security/threat-model.yaml
+      - kind: local_path
+        ref: governance/conformance-review.yaml
+
 risk_exemptions: []
