@@ -1,0 +1,81 @@
+# Registro TIPADO da validação semântica. Irmão do privacy-review, e pela mesma razão: o fiscal
+# determinístico não julga se uma descrição ainda condiz com o código — ele confere que alguém
+# julgou e que o julgamento cobre ESTE estado (scope_fingerprint, que inclui o SHA do alvo).
+#
+# Recalcular: python ci/audit_conformance.py --print-fingerprint
+# Schema: ../harness/schemas/conformance-review.schema.json
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+review:
+  produced_by: agent
+  agent: conformance
+  scope_fingerprint: "sha256:d021203176f6d94d3190c0064b065d73d2d5efc1e4f132426e9f099dea21f77e"
+
+  findings:
+    - id: CONF-001
+      severity: high
+      summary: >
+        Os metadados de negócio deste repositório — 4 capacidades, 5 componentes, 24 regras e 8
+        requisitos — ainda descrevem `src/cockpit_harness/`, a CLI de adoção, e não o Docker
+        Cockpit. Desde que `project.yaml` passou a declarar `kind: derived` com
+        `code_roots: [app]`, a raiz do inventário é `workspace/target/app/`, e essas declarações
+        apontam para fora dela: 46 achados de `[regra]`, `[REQ]`, `[I4]` e `[I5]`.
+      disposition: change_proposal
+      ref: harness/change-proposals/CP-003-virar-derivado-do-molde.yaml
+      consumed_by:
+        kind: change_proposal
+        ref: CP-003
+
+    - id: CONF-002
+      severity: high
+      summary: >
+        Nenhum arquivo do alvo pertence a componente algum: 133 achados de `[órfão]` sob
+        `workspace/target/app/` e 76 de `[teste órfão]` sob `workspace/target/tests/`. A cobertura
+        do código governado é zero — não porque o alvo seja opaco, mas porque a ingestão ainda não
+        autorou o mapa. É o trabalho das fatias 2..n da CP-003.
+      disposition: change_proposal
+      ref: harness/change-proposals/CP-003-virar-derivado-do-molde.yaml
+      consumed_by:
+        kind: change_proposal
+        ref: CP-003
+
+    - id: CONF-003
+      severity: medium
+      summary: >
+        `security/threat-model.yaml` aponta todas as sete ameaças para `STAGE-*` em vez de `CMP-*`,
+        porque os componentes do cockpit ainda não existem como metadado. É a escolha correta hoje
+        — ameaça contra componente inexistente é trava quebrada, não satisfeita (ADR-006 do MOLDE) — e é
+        dívida amanhã: quando os componentes chegarem, cada ameaça migra para o seu.
+      disposition: change_proposal
+      ref: harness/change-proposals/CP-003-virar-derivado-do-molde.yaml
+      consumed_by:
+        kind: change_proposal
+        ref: CP-003
+
+    - id: CONF-004
+      severity: low
+      summary: >
+        `docs/laudo-adocao.json`, `docs/laudo-adocao.md` e `docs/ADOCAO.md` descrevem a adoção de
+        2026-08-03 e citam números que não valem mais (113 testes deste repositório, régua
+        `v1.0.0` ainda não publicada). Estão corretos como registro histórico e errados como
+        descrição do presente.
+      disposition: accepted
+      rationale: >
+        São registro do que foi medido naquele dia, e a CP-003 os declarou intocáveis exatamente
+        por isso. Reescrevê-los para caber no estado de hoje apagaria a evidência de como este
+        repositório chegou aqui — e um histórico que se atualiza sozinho não é histórico. O que
+        descreve o presente é o metadado vivo, que os fiscais cobram.
+
+  not_assessed:
+    - >
+      O COMPORTAMENTO DO ALVO. Este julgamento é leitura de código em `workspace/target/` no SHA de
+      `target.lock`; nenhuma requisição foi emitida contra o cockpit publicado. Sem host de
+      homologação (`INCOMPLETE:target_url`), os modos de rede da régua são recusados com
+      SCOPE_MISSING — ver THREAT-ALVO-SEM-HOMOLOGACAO.
+    - >
+      A CORREÇÃO DAS 24 REGRAS DE NEGÓCIO enquanto descrevem a CLI antiga. Elas serão substituídas,
+      não corrigidas, e julgar a fidelidade de uma declaração que está saindo seria trabalho
+      jogado fora.

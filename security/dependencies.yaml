@@ -1,0 +1,59 @@
+# Inventário de dependências DESTE repositório — o gêmeo de governança, não o cockpit.
+#
+# A distinção não é sutil e o fiscal a impõe: `ci/validate_metadata.py::check_dependency_inventory`
+# compara este arquivo com o que `pyproject.toml` e `requirements-qa.txt` DECLARAM aqui, nos dois
+# sentidos. Declarada e não inventariada é supply chain que ninguém revisou; inventariada e não
+# declarada é "entrada morta [que] faz o inventário parecer mais completo do que é".
+#
+# Por isso as dependências do ALVO não entram aqui. O cockpit roda fastapi==0.115.5,
+# uvicorn[standard]==0.32.1, httpx==0.27.2, psutil==6.1.0, aiosqlite==0.22.1, PyYAML==6.0.2 e
+# cryptography==43.0.3 (workspace/target/app/requirements.txt @ d6ae70ea) — todas com pin exato.
+# Elas são objeto de auditoria do alvo, não superfície deste repositório, e pô-las aqui produziria
+# sete entradas mortas.
+#
+# Schema: ../harness/schemas/dependencies.schema.json
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+dependencies:
+  - name: pyyaml
+    scope: runtime
+    declared_in: pyproject.toml
+    # `>=6`, e o fiscal descreve o que É e não o que deveria ser. Faixa aqui é decisão auditável:
+    # este pacote é lido por todo fiscal desta casa, e travá-lo em patch exato obrigaria um PR a
+    # cada correção de segurança dele. O pin exato que importa é o da RÉGUA, não o do parser.
+    pin_kind: range
+    owner: technical_owner
+    purpose: >
+      Parser de todo metadado deste repositório. Sem ele nenhum fiscal roda — é a única
+      dependência de runtime, e a razão de `ci/bootstrap.py` ser stdlib puro até a etapa 2.
+
+  - name: pytest
+    scope: dev
+    declared_in: pyproject.toml
+    pin_kind: range
+    owner: technical_owner
+    purpose: >
+      Executor das mordidas — os testes que provam que os fiscais reprovam o que dizem reprovar.
+
+  - name: jsonschema
+    scope: dev
+    declared_in: pyproject.toml
+    pin_kind: range
+    owner: technical_owner
+    purpose: >
+      Valida cada metadado contra seu schema. É o que torna "o documento está errado" um achado
+      com localização em vez de um traceback.
+
+  - name: webqa-suite
+    scope: qa
+    declared_in: requirements-qa.txt
+    # EXACT, e é a única aqui que precisa ser. O contrato §2 exige fonte única com `==`: dois
+    # laudos só se comparam se a régua for a mesma, e faixa tornaria "a mesma régua" indecidível.
+    pin_kind: exact
+    owner: security_owner
+    purpose: >
+      A régua externa. Este repositório a DECLARA e nunca a copia — `webqa/`, `checks/` e
+      `data/caminhos-sensiveis.yaml` são ausências verificadas, não convenção.

@@ -110,21 +110,50 @@ def comparar(*, atual: dict[str, int], baseline: dict[str, int]) -> Veredito:
                     motivos=tuple(motivos))
 
 
-def nao_regrediu(*, novo: dict[str, int], anterior: dict[str, int]) -> list[str]:
+def nao_regrediu(*, novo: dict[str, int], anterior: dict[str, int],
+                 declaradas: dict[str, str] | None = None) -> list[str]:
     """O baseline do PR contra o da base. Sem isto, regravar para cima legalizaria a regressão.
 
-    Devolve a lista de violações — vazia quando o baseline novo é menor ou igual ao anterior em
-    toda categoria e não inventa categoria nenhuma.
+    A CATEGORIA NOVA DECLARADA é a correção de um falso positivo que esta função produziu contra o
+    PR que a estreou. `audit_lgpd` saía 2 ("não consegui fiscalizar") por falta do data-inventary;
+    quando o arquivo nasceu, o fiscal passou a RODAR e suas categorias apareceram do nada. A
+    catraca leu isso como regressão — e era progresso: um fiscal que começa a medir é exatamente o
+    que se quer.
+
+    Recusar sem escape teria ensinado a desligar a catraca no primeiro PR útil (princípio (e)).
+    Aceitar em silêncio teria aberto o buraco que ela existe para fechar. A saída é a mesma que
+    esta casa usa em toda parte — `env_hygiene.exceptions`, `scan.exclusions`, `stages:ungoverned`:
+    **exceção DECLARADA, nunca regra removida.** A categoria nova entra se, e só se, o baseline do
+    PR disser qual é e por quê; e a justificativa aparece no diff, onde alguém a contesta.
+
+    Elevar uma categoria EXISTENTE continua sem escape. Não é assimetria: "este fiscal passou a
+    medir" é uma afirmação verificável sobre o mundo, e "este número subiu" é a definição do que a
+    catraca impede.
     """
+    declaradas = declaradas or {}
     ruins = []
     for cat, n in sorted(novo.items()):
         antes = anterior.get(cat)
         if antes is None:
-            ruins.append(f"o baseline do PR inventa a categoria {cat!r} ({n}), ausente na base")
+            if cat not in declaradas:
+                ruins.append(
+                    f"o baseline do PR inventa a categoria {cat!r} ({n}), ausente na base — se ela "
+                    f"nasceu porque um fiscal passou a rodar, declare-a em "
+                    f"`categorias_novas_declaradas` com o motivo; categoria que aparece sem "
+                    f"explicação é indistinguível de dívida nova")
+            elif len(declaradas[cat].strip()) < 40:
+                ruins.append(f"a categoria nova {cat!r} está declarada com justificativa vazia ou "
+                             f"curta demais — declaração sem motivo é a exceção virando carimbo")
         elif n > antes:
             ruins.append(f"o baseline do PR eleva {cat!r} de {antes} para {n} — regravar para cima "
                          f"é a única forma de a catraca girar para trás, e é por isso que ela é "
                          f"conferida contra a base e não contra si mesma")
+    for cat in sorted(declaradas):
+        if cat in anterior:
+            ruins.append(f"{cat!r} está declarada como categoria nova e já existia na base — "
+                         f"declaração morta faz a próxima parecer revisada")
+        elif cat not in novo:
+            ruins.append(f"{cat!r} está declarada como categoria nova e não aparece na medição")
     return ruins
 
 
@@ -191,6 +220,12 @@ def _ler(caminho: str | Path) -> dict[str, int]:
     return {k: int(v) for k, v in (doc.get("por_categoria") or {}).items()}
 
 
+def _declaradas(caminho: str | Path) -> dict[str, str]:
+    doc = json.loads(Path(caminho).read_text(encoding="utf-8"))
+    return {d["categoria"]: d.get("justificativa", "")
+            for d in (doc.get("categorias_novas_declaradas") or [])}
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="A catraca da ingestão: o contador só desce.")
     p.add_argument("--gravar", action="store_true", help="regrava o baseline com o estado de agora")
@@ -209,6 +244,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.gravar:
         destino.parent.mkdir(parents=True, exist_ok=True)
+        # As declarações sobrevivem ao regravar. Elas são texto humano sobre POR QUE uma categoria
+        # nasceu; recalcular contagens não é motivo para apagá-lo.
+        anteriores = (json.loads(destino.read_text(encoding="utf-8")).get(
+            "categorias_novas_declaradas") or []) if destino.exists() else []
         destino.write_text(json.dumps({
             "schema_version": "1.0",
             "comentario": "Contagem de achados por categoria. Baseline da catraca (ci/catraca.py): "
@@ -217,6 +256,7 @@ def main(argv: list[str] | None = None) -> int:
                           "recusado pelo workflow, que compara este arquivo com o da branch base.",
             "total": total,
             "por_categoria": dict(sorted(atual.items())),
+            "categorias_novas_declaradas": anteriores,
         }, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         print(f"✓ catraca: baseline gravado — {total} achado(s) em {len(atual)} categoria(s).")
         return 0
@@ -231,7 +271,8 @@ def main(argv: list[str] | None = None) -> int:
     v = comparar(atual=atual, baseline=baseline)
 
     if args.anterior:
-        ruins = nao_regrediu(novo=baseline, anterior=_ler(args.anterior))
+        ruins = nao_regrediu(novo=baseline, anterior=_ler(args.anterior),
+                             declaradas=_declaradas(destino))
         for r in ruins:
             print(f"✗ catraca: {r}", file=sys.stderr)
         if ruins:

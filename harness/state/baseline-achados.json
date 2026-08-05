@@ -1,23 +1,28 @@
 {
   "schema_version": "1.0",
   "comentario": "Contagem de achados por categoria. Baseline da catraca (ci/catraca.py): este repositório está em incubação e vermelho de propósito; o que a catraca garante é que o vermelho não cresce. Regravar para CIMA é recusado pelo workflow, que compara este arquivo com o da branch base.",
-  "total": 299,
+  "total": 277,
   "por_categoria": {
-    "governance:adr_meta": 6,
     "governance:agent_pairing": 5,
-    "governance:change_buffer": 3,
+    "governance:change_buffer": 2,
     "governance:external_audit": 1,
-    "governance:policy_pointer": 2,
+    "governance:policy_pointer": 1,
     "governance:protected_path": 1,
     "governance:stage_coverage": 3,
     "governance:stage_partition": 4,
+    "lgpd:lgpd_judgment": 1,
     "meta:I4": 6,
     "meta:I5": 8,
     "meta:REQ": 8,
-    "meta:estrutural": 13,
-    "meta:falta": 6,
+    "meta:estrutural": 4,
     "meta:regra": 24,
     "meta:teste órfão": 76,
     "meta:órfão": 133
-  }
+  },
+  "categorias_novas_declaradas": [
+    {
+      "categoria": "lgpd:lgpd_judgment",
+      "justificativa": "Nasceu porque o fiscal PASSOU A RODAR, não porque surgiu dívida. Até este PR, audit_lgpd saía 2 ('não consegui fiscalizar') por falta de governance/data-inventory.yaml — e um fiscal que não roda não tem categoria. Com o inventário autorado, ele mede: o único achado é RISCO-001, o issue P1 aberto sobre exposição incidental em log de container, já consumido por RISK-ALVO-001."
+    }
+  ]
 }

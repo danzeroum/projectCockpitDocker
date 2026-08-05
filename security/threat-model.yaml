@@ -1,0 +1,160 @@
+# Modelo de ameaças do sistema governado — o Docker Cockpit, lido em d6ae70ea, e a máquina que o
+# governa. Autorado, nunca copiado: a EMENDA 1 da CP-002 mediu 9 achados fantasma ao transplantar o
+# threat-model do molde, e um threat-model de mentira é pior que nenhum.
+#
+# TODA AFIRMAÇÃO NÃO ÓBVIA CITA FONTE. Onde se lê `workspace/target/...`, o caminho é do alvo
+# materializado no SHA de target.lock — d6ae70eafee925e70f768f9c303229eb5673b6ba. Onde se lê
+# `docs/laudo-adocao.md`, é o reconhecimento de 2026-08-03, que continua sendo registro histórico e
+# não foi tocado.
+#
+# POR QUE OS ALVOS SÃO `STAGE-*` E NÃO `CMP-*`. As capacidades e componentes que descrevem o cockpit
+# ainda não foram autorados — são as fatias 2..n da CP-003, e hoje `architecture/components.yaml`
+# ainda descreve o `src/cockpit_harness/`, que está saindo. Apontar uma ameaça para um CMP-* que vai
+# deixar de existir seria trava que não encontra o que vigiar (ADR-006 DO MOLDE — conformidade como
+# asserção; o 006 deste repositório virou ADR-016 na fatia-1b): quebrada, não satisfeita.
+# `STAGE-CODE` cobre `src` e `workspace` — é o alvo verdadeiro enquanto os componentes não chegam, e
+# o schema do molde admite etapas exatamente por isto ("parte do que se ameaça é a própria máquina
+# de governar"). Quando os componentes existirem, cada ameaça abaixo migra para o seu, e a migração
+# é trabalho declarado — não silêncio.
+#
+# Schema: ../harness/schemas/threat-model.schema.json
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+threats:
+  # ─────────────────────────────────────────────────────────────────────────────────────────
+  - id: THREAT-SOCKET-ESCRITA
+    stride: elevation_of_privilege
+    target: STAGE-CODE
+    attack_vector: >
+      O cockpit não fala com o daemon Docker direto: fala com `tecnativa/docker-socket-proxy`, que
+      monta `/var/run/docker.sock:ro` (workspace/target/docker-compose.yml, linha 30). O `:ro` é do
+      ARQUIVO de socket, e não dos verbos da API — e o mesmo compose habilita `POST: 1` e
+      `DELETE: 1` no ambiente do proxy (linhas 27-28). Ou seja: quem alcançar a rede `internal`
+      alcança criação e remoção de containers no host, com o mount parecendo somente-leitura para
+      quem lê o arquivo depressa. Um `:ro` que não restringe o que se espera que ele restrinja é
+      pior que nenhum, porque encerra a investigação de quem revisa.
+    severity: high
+    mitigations:
+      - kind: local_path
+        ref: workspace/target/docker-compose.yml
+      - kind: local_path
+        ref: harness/harness.yaml
+    # Residual PRÓPRIO desde a fatia-1b: enquanto morava em RISK-ALVO-001 junto com outras duas
+    # ameaças, "o proxy aceita POST e DELETE" não tinha data nem correção nomeada. Agora tem.
+    residual_risk: RISK-SOCKET-001
+
+  # ─────────────────────────────────────────────────────────────────────────────────────────
+  - id: THREAT-LOG-DADO-PESSOAL
+    stride: information_disclosure
+    target: STAGE-CODE
+    attack_vector: >
+      `GET /api/containers/{id}/logs?tail=500` (workspace/target/app/routers/containers.py:96)
+      devolve a saída bruta de qualquer container do host. Log de aplicação de terceiro é onde dado
+      pessoal aparece por acidente — e-mail em stack trace, IP em log de acesso, token em URL — sem
+      que ninguém o tenha declarado como campo. É a razão de `classification.lgpd_relevance` ser
+      `incidental` e não `none`, e o gatilho de promoção para `operator` está declarado em
+      governance/privacy-review.yaml.
+    severity: high
+    mitigations:
+      - kind: local_path
+        ref: governance/data-inventory.yaml
+      - kind: local_path
+        ref: governance/privacy-review.yaml
+    residual_risk: RISK-ALVO-001
+
+  # ─────────────────────────────────────────────────────────────────────────────────────────
+  - id: THREAT-MASCARA-POR-REGEX
+    stride: information_disclosure
+    target: STAGE-CODE
+    attack_vector: >
+      `workspace/target/app/masking.py` mascara por NOME de chave, com um regex de sete termos
+      (`pass|secret|token|credential|apikey|_key$|private`) mais credencial embutida em URI. É
+      defesa real e é incompleta por construção: uma chave chamada `authorization`, `pwd`, `jwt` ou
+      `cookie` atravessa intacta. O modo de falha é o pior tipo — a máscara PARECE ter funcionado,
+      porque a saída vem mascarada em outros campos.
+    severity: medium
+    mitigations:
+      - kind: local_path
+        ref: workspace/target/app/masking.py
+    residual_risk: RISK-SEGREDO-001
+
+  # ─────────────────────────────────────────────────────────────────────────────────────────
+  - id: THREAT-UNLOCK-SEM-GATEWAY
+    stride: spoofing
+    target: STAGE-CODE
+    attack_vector: >
+      Toda mutação exige `X-Cockpit-Unlock` — token de sessão aleatório, guardado só como hash, com
+      30 min de prazo e o usuário do basic auth do ingress atrelado
+      (workspace/target/app/auth.py). O compose registra que `TRUSTED_GATEWAY_CIDR` ausente faz
+      `/session/unlock` responder 403 com warning, fail-closed (docker-compose.yml, linhas 92-96).
+      A ameaça é a configuração do CIDR ficar larga demais: um `/16` inteiro confiável transforma
+      "veio do gateway" em "veio da rede", e o unlock passa a depender só do basic auth.
+    severity: medium
+    mitigations:
+      - kind: local_path
+        ref: workspace/target/app/auth.py
+      - kind: local_path
+        ref: workspace/target/docker-compose.yml
+    residual_risk: RISK-ALVO-001
+
+  # ─────────────────────────────────────────────────────────────────────────────────────────
+  - id: THREAT-ALVO-SEM-HOMOLOGACAO
+    stride: denial_of_service
+    target: STAGE-QA-CONFIG
+    attack_vector: >
+      `danzeroum/docker` só publica `docker.danzeroum.com`, que é PRODUÇÃO
+      (docs/laudo-adocao.md, seção "O que NÃO foi medido"). Sem host de homologação, qualquer modo
+      de rede da régua apontaria a auditoria para o servidor real — e `load` é rajada de
+      requisições contra um cockpit que fala com o daemon Docker do host. A pendência
+      `INCOMPLETE:target_url` existe para que isso seja recusa declarada (`SCOPE_MISSING`, 12) em
+      vez de alvo inventado.
+    severity: high
+    mitigations:
+      - kind: local_path
+        ref: harness/harness.yaml
+      # O `.example`, e não o arquivo real: o escopo autorizado de verdade NÃO é comitado — ele é
+      # injetado como segredo do CI, e hoje sequer existe (`INCOMPLETE:escopo-autorizado`, ver
+      # docs/laudo-adocao.md). Apontar a mitigação para o caminho real seria trava que não encontra
+      # o que vigiar; o template é o que este repositório de fato controla.
+      - kind: local_path
+        ref: tests/qa/escopo-autorizado.yaml.example
+    residual_risk: RISK-HOMOLOG-001
+
+  # ─────────────────────────────────────────────────────────────────────────────────────────
+  - id: THREAT-REGUA-TROCADA
+    stride: tampering
+    target: STAGE-QA-CONFIG
+    attack_vector: >
+      A régua é externa e versionada; o laudo carimba `standard.commit` e
+      `sensitive_paths_hash` (docs/laudo-adocao.md, seção "Procedência"). Trocar a lista curada da
+      suíte por uma com uma linha a menos produziria "nenhum achado" sem erro e sem aviso. É o modo
+      de falha que a proibição de copiar `webqa/`, `checks/` e `data/caminhos-sensiveis.yaml`
+      existe para tornar detectável: dois laudos com a mesma versão e hashes diferentes respondem
+      `not_comparable` em vez de somar.
+    severity: high
+    mitigations:
+      - kind: local_path
+        ref: requirements-qa.txt
+      - kind: local_path
+        ref: WEBQA_CONSUMER_CONTRACT.md
+    residual_risk: RISK-WEBQA-001
+
+  # ─────────────────────────────────────────────────────────────────────────────────────────
+  - id: THREAT-ANCORA-MOVIDA
+    stride: tampering
+    target: STAGE-GOVERNANCE
+    attack_vector: >
+      `target.lock` ancora o alvo por SHA e o molde por tag mais `manifest_sha`. Mover a tag
+      `v1.0.0` no molde faria este repositório afirmar procedência sobre um conteúdo diferente do
+      que consumiu. O elo que detecta é o hash dos bytes do manifesto, não a tag — e ele foi
+      exercitado: com um dígito trocado, `verify_chain` rompe exatamente um elo.
+    severity: medium
+    mitigations:
+      - kind: local_path
+        ref: target.lock
+      - kind: local_path
+        ref: ci/mold_release.py
+    residual_risk: RISK-MOLDE-001

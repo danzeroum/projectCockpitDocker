@@ -97,6 +97,10 @@ risks:
     treatment: prevent
     owner: security_owner
     status: open
+    # 03/11/2026, a mesma data dos gêmeos do molde (RISK-EXT-001, RISK-CHANGE-002,
+    # RISK-INCUBA-001). Convergir os calendários é deliberado: risco com data própria é
+    # risco revisado sozinho, e revisado sozinho é esquecido.
+    due: "2026-11-03"
     controls:
       - kind: local_path
         ref: tests/qa/config.yaml
@@ -105,7 +109,7 @@ risks:
       - kind: local_path
         ref: tests/e2e/test_checklist_adocao.py
       - kind: local_path
-        ref: architecture/adr/ADR-006-pendencia-em-vez-de-alvo-inventado.md
+        ref: architecture/adr/ADR-016-pendencia-em-vez-de-alvo-inventado.md
 
   - id: RISK-HOMOLOG-001
     area: access
@@ -126,7 +130,7 @@ risks:
       - kind: local_path
         ref: deploy/homologacao/setup-ingress-homolog.sh
       - kind: local_path
-        ref: architecture/adr/ADR-007-stack-de-homologacao-no-consumidor.md
+        ref: architecture/adr/ADR-017-stack-de-homologacao-no-consumidor.md
 
   - id: RISK-SEGREDO-001
     area: access
@@ -146,7 +150,7 @@ risks:
       - kind: local_path
         ref: tests/e2e/test_checklist_adocao.py
       - kind: local_path
-        ref: architecture/adr/ADR-006-pendencia-em-vez-de-alvo-inventado.md
+        ref: architecture/adr/ADR-016-pendencia-em-vez-de-alvo-inventado.md
 
   - id: RISK-MOLDE-001
     area: governance
@@ -164,8 +168,46 @@ risks:
     # roda. Marcar como mitigado seria o próprio defeito que o risco descreve — dizer que se
     # olha para uma coisa que ninguém olha.
     status: open
+    # 03/11/2026, a mesma data dos gêmeos do molde (RISK-EXT-001, RISK-CHANGE-002,
+    # RISK-INCUBA-001). Convergir os calendários é deliberado: risco com data própria é
+    # risco revisado sozinho, e revisado sozinho é esquecido.
+    due: "2026-11-03"
     controls:
       - kind: local_path
         ref: harness/change-proposals/CP-002-atualizar-a-carcaca.yaml
       - kind: local_path
         ref: harness/change-proposals/CP-003-virar-derivado-do-molde.yaml
+
+# Ativos que deliberadamente NÃO precisam de risco associado. Vazia, e a lista vazia é declaração
+# válida: hoje toda capacidade e componente deste repositório está coberta. A propriedade que
+# torna isto honesto é a mesma das isenções de componente — isenção que não casa ativo algum é ela
+# própria um achado, então a lista não pode ser usada para fazer a cobertura parecer fechada.
+  - id: RISK-SOCKET-001
+    area: access
+    description: >
+      O socket-proxy do cockpit monta `/var/run/docker.sock:ro` e o MESMO compose habilita
+      `POST: 1` e `DELETE: 1` no ambiente do proxy. O `:ro` é do ARQUIVO de socket, não dos verbos
+      da API — quem alcançar a rede `internal` alcança criação e remoção de containers no host,
+      com o mount parecendo somente-leitura para quem revisa depressa. Um `:ro` que não restringe o
+      que se espera dele é pior que nenhum, porque encerra a investigação de quem lê.
+    likelihood: low
+    impact: high
+    treatment: mitigate
+    owner: security_owner
+    status: open
+    # A CORREÇÃO É NO ALVO, e por isso este risco fica aberto aqui em vez de ser fechado por um
+    # PR deste repositório: `POST: 0` e `DELETE: 0` em
+    # workspace/target/docker-compose.yml (linhas 27-28) — ou a justificativa de negócio para
+    # mantê-los, se alguma mutação operacional do cockpit depender deles. As duas são decisão do
+    # dono do produto; o que cabe a este repositório é não deixar a pergunta sem data.
+    #
+    # Medido em 05/08/2026 contra danzeroum/docker @ d6ae70eafee9, materializado em
+    # workspace/target/ por ci/bootstrap.py, por leitura do compose — não por execução.
+    due: "2026-11-03"
+    controls:
+      - kind: local_path
+        ref: security/threat-model.yaml
+      - kind: local_path
+        ref: governance/parecer-proporcionalidade.md
+
+risk_exemptions: []

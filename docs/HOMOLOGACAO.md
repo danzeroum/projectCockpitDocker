@@ -3,7 +3,7 @@
 Passo a passo para pôr no ar o alvo que esta harness tem permissão de auditar. Tudo roda **no
 servidor** — nada aqui é executado pelo CI, e nada aqui toca produção.
 
-Decisão de arquitetura por trás disto: [ADR-007](../architecture/adr/ADR-007-stack-de-homologacao-no-consumidor.md).
+Decisão de arquitetura por trás disto: [ADR-017](../architecture/adr/ADR-017-stack-de-homologacao-no-consumidor.md).
 Regras que o ambiente precisa satisfazer: [`business/rules/homologacao.yaml`](../business/rules/homologacao.yaml),
 fiscalizadas por [`tests/integration/test_homologacao.py`](../tests/integration/test_homologacao.py).
 
@@ -90,7 +90,7 @@ docker exec btv-nginx-prod test -f /etc/nginx/.htpasswd-homolog && echo "present
 
 > **O que NÃO fazer:** apontar a homologação para o `.htpasswd` de produção. É a saída fácil, e
 > o script recusa — ele compara os dois arquivos e aborta se forem idênticos. Mudar isso exige
-> mudar RULE-HOMOLOG-003 e a ADR-007, não um `-f`.
+> mudar RULE-HOMOLOG-003 e a ADR-017, não um `-f`.
 
 ## 3. Ambiente
 

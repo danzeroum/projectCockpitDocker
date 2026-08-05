@@ -1,4 +1,4 @@
-# ADR-005 — O alvo auditado mora em `danzeroum/docker`; este repositório é o plano de controle
+# ADR-015 — O alvo auditado mora em `danzeroum/docker`; este repositório é o plano de controle
 
 - **Status:** accepted
 - **Data:** 2026-08-03

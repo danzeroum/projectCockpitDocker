@@ -1,14 +1,14 @@
-# ADR-007 — O stack de homologação mora no consumidor; o produto continua upstream
+# ADR-017 — O stack de homologação mora no consumidor; o produto continua upstream
 
 - **Status:** accepted
 - **Data:** 2026-08-03
-- **Substitui:** ADR-005
+- **Substitui:** ADR-015
 - **Capacidades relacionadas:** CAP-ALVO
 - **Riscos relacionados:** RISK-ALVO-001, RISK-HOMOLOG-001
 
 ## Contexto
 
-A ADR-005 decidiu que nada do Docker Cockpit entraria neste repositório: nem o código, nem o
+A ADR-015 decidiu que nada do Docker Cockpit entraria neste repositório: nem o código, nem o
 deploy. O raciocínio continua válido para o **código** — uma cópia do produto envelheceria em
 silêncio, e o laudo mediria uma versão que já não é a publicada.
 
@@ -24,7 +24,7 @@ O dono do projeto pediu explicitamente para ver a harness e o ambiente juntos.
 ## Decisão
 
 `deploy/homologacao/` mora **neste** repositório: `compose.yml`, `.env.example` e o script de
-ingress do host de homologação. O que **não** muda de ADR-005:
+ingress do host de homologação. O que **não** muda de ADR-015:
 
 - o **código-fonte** do cockpit continua em `danzeroum/docker` e não é vendorizado — o compose
   constrói a partir do clone que já existe no servidor (`COCKPIT_SRC`);

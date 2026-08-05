@@ -1,0 +1,93 @@
+# O caminho do vermelho ao verde, fase a fase — e neste repositório ele não é hipótese: é o mapa
+# das fatias 2..n da CP-003, com 209 achados esperando cada uma.
+#
+# A REGRA QUE ATRAVESSA TODAS: a ingestão LÊ `workspace/target/**` e ESCREVE só aqui. Nenhum
+# `outputs` aponta para dentro do alvo, e o fiscal cobra — escrita no material de terceiro
+# disfarçada de metadado local é o modo de falha que o ADR-008 do molde recusa.
+#
+# Schema: ../schemas/ingest-pipeline.schema.json · Fiscal: ci/audit_governance.py
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+phases:
+  - id: ING-01-COMPONENTES
+    order: 1
+    name: "Mapear o código do alvo em componentes reais"
+    agent: cartographer
+    inputs:
+      - "workspace/target/app/**"
+      - "docs/laudo-adocao.md"
+    outputs:
+      - architecture/components.yaml
+      - business/capabilities.yaml
+    fiscal:
+      kind: ci_script
+      ref: ci/validate_metadata.py
+      symbol: check_orphan_code
+    gate: human_approval
+
+  - id: ING-02-TESTES
+    order: 2
+    name: "Vincular os testes do alvo aos componentes que eles exercitam"
+    agent: tester
+    inputs:
+      - "workspace/target/tests/**"
+      - architecture/components.yaml
+    outputs:
+      - architecture/components.yaml
+      - business/rules
+    fiscal:
+      kind: ci_script
+      ref: ci/validate_metadata.py
+      symbol: check_orphan_tests
+    gate: human_approval
+
+  - id: ING-03-INTERFACES
+    order: 3
+    name: "Declarar a superfície HTTP e a de UI"
+    agent: cartographer
+    inputs:
+      - "workspace/target/app/routers/**"
+      - "workspace/target/app/static/js/screens/**"
+    outputs:
+      - architecture/interfaces.yaml
+      - design/ui-surfaces.yaml
+    fiscal:
+      kind: schema
+      ref: harness/schemas/interfaces.schema.json
+    gate: human_approval
+
+  - id: ING-04-AMEACAS
+    order: 4
+    name: "Reancorar as ameaças nos componentes que passaram a existir"
+    agent: reviewer
+    inputs:
+      - security/threat-model.yaml
+      - architecture/components.yaml
+    outputs:
+      - security/threat-model.yaml
+    fiscal:
+      kind: ci_script
+      ref: ci/validate_metadata.py
+      symbol: check_threat_model
+    gate: human_approval
+
+  - id: ING-05-JULGAMENTO
+    order: 5
+    name: "Rejulgar privacidade e conformidade contra o mapa novo"
+    agent: privacy
+    inputs:
+      - governance/data-inventory.yaml
+      - architecture/components.yaml
+      - "workspace/target/app/**"
+    outputs:
+      - governance/privacy-review.yaml
+      - governance/parecer-proporcionalidade.md
+      - governance/conformance-review.yaml
+    fiscal:
+      kind: ci_script
+      ref: ci/audit_lgpd.py
+      symbol: check_judgment_currency
+    gate: human_approval
