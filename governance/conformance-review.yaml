@@ -12,7 +12,7 @@ generated_from: null
 review:
   produced_by: agent
   agent: conformance
-  scope_fingerprint: "sha256:2a2fd20711bfe9051168431301f0d531bd6580f5ddc586e3188427f286b731b8"
+  scope_fingerprint: "sha256:e9b42e08aa3ba9783fe2cbbf6d1d6d06a03df930c9ac9e90d044610d6a3376a2"
 
   findings:
     - id: CONF-001
@@ -69,12 +69,61 @@ review:
         repositório chegou aqui — e um histórico que se atualiza sozinho não é histórico. O que
         descreve o presente é o metadado vivo, que os fiscais cobram.
 
+    - id: CONF-005
+      severity: high
+      summary: >
+        VEREDITO DA SUÍTE LEGADA, e a primeira linha é uma correção minha: a `main` tem CINCO
+        falhas, não sete. O "7" que reportei no PR da fatia-2a comparava contra uma `main`
+        anterior ao merge da fatia-1, e as duas que eu disse ter reduzido já tinham sido reduzidas
+        por ela. Duas ficaram assim depois desta fatia, por motivos opostos —
+        (1) test_env_real_nao_esta_comitado e (2) test_escopo_real_nao_esta_comitado NÃO eram
+        expectativa obsoleta: eram REGRESSÃO MINHA. O transplante da carcaça (4a5d238) sobrescreveu
+        o .gitignore pelo do molde e perdeu `deploy/homologacao/.env` e
+        `tests/qa/escopo-autorizado.yaml`. Entre aquele commit e este, um `git add -A` teria
+        comitado credencial de homologação ou o escopo autorizado real. Restauradas nesta fatia,
+        porque consertar regressão própria não é "consertar falha legada em silêncio" — é a suíte
+        legada tendo feito o trabalho dela.
+        AS TRÊS QUE SOBRAM, classificadas: (3) test_metadados_coerentes_com_o_repositorio exige
+        `validate_metadata` sair 0 — EXPECTATIVA OBSOLETA, porque o modelo de incubação diz que o
+        derivado nasce vermelho e a catraca é quem guarda o encolhimento; (4)
+        test_harness_yaml_valida_contra_o_proprio_schema aponta `external_audit`, `stages_manifest`
+        e `env_denylist_exact` ausentes — DEFEITO REAL de carcaça não terminada, já contado em
+        `meta:estrutural`; (5) test_fiscal_de_metadados_roda_no_ci exige a string
+        `ci/validate_metadata.py` no workflow, que roda `ci/validate_all.py` — EXPECTATIVA
+        OBSOLETA, e é literalmente o mesmo erro que eu cometi em ADR-002-A1: âncora contra a
+        MENÇÃO do comando em vez de contra o FATO de o fiscal rodar.
+      disposition: change_proposal
+      ref: harness/change-proposals/CP-003-virar-derivado-do-molde.yaml
+      consumed_by:
+        kind: change_proposal
+        ref: CP-003
+
+    - id: CONF-006
+      severity: low
+      summary: >
+        `app/static/js/notificacoes.js` e `app/static/js/notifications.js` coexistem — dois
+        arquivos com o mesmo nome em idiomas diferentes. É candidato a código morto e está listado
+        em vez de resolvido: decidir qual morre é leitura de domínio do dono do produto, e apagar
+        por palpite num alvo que este repositório não pode consertar seria pior que declarar.
+      disposition: accepted
+      rationale: >
+        Ambos estão declarados em CMP-UI-INFRA e nenhum é órfão, então a governança não perde
+        cobertura. O que fica registrado é a suspeita, com o endereço exato — que é o que um
+        derivado pode oferecer sobre o alvo sem escrever nele.
+
   not_assessed:
     - >
       O COMPORTAMENTO DO ALVO. Este julgamento é leitura de código em `workspace/target/` no SHA de
       `target.lock`; nenhuma requisição foi emitida contra o cockpit publicado. Sem host de
       homologação (`INCOMPLETE:target_url`), os modos de rede da régua são recusados com
       SCOPE_MISSING — ver THREAT-ALVO-SEM-HOMOLOGACAO.
+    - >
+      OS 10 ARQUIVOS DE APOIO SOB tests/ que não exercitam nada: conftest.py,
+      requirements-test.txt, os dois stubs de DOM (dom_min.mjs, dom_stub.mjs), os três .conf de
+      nginx mais o snapshot, e os dois shims de deploy (stub_deploy/curl, stub_deploy/docker).
+      São entrada e apoio dos testes, não testes. Vinculá-los a um componente seria inventar que
+      testam algo — e a alternativa, isentá-los, exige decisão de quem governa. Ficam contados
+      como `teste órfão` de propósito, que é dívida visível em vez de escondida.
     - >
       A CORREÇÃO DAS 24 REGRAS DE NEGÓCIO enquanto descrevem a CLI antiga. Elas serão substituídas,
       não corrigidas, e julgar a fidelidade de uma declaração que está saindo seria trabalho
