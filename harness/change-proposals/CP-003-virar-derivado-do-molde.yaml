@@ -18,6 +18,57 @@
 # fiscaliza a adoção (4 capacidades, 4 componentes, 12 regras, todas com evidência em testes
 # nossos). Depois passariam a descrever o Docker Cockpit — outro objeto, com outras capacidades.
 #
+# ─────────────────────────────────────────────────────────────────────────────────────────────
+# EMENDA (2026-08-05): executada até o ponto em que o playbook do molde manda parar, e com uma
+# correção importante — a pergunta que esta proposta submetia JÁ TEM RESPOSTA no molde, e não é
+# a que eu recomendei como mais barata.
+#
+# O `/adotar` do molde tem um passo 5 intitulado, textualmente:
+#
+#     "### 5. CP-000 — o derivado nasce sem código próprio"
+#
+# e ele manda REMOVER `src/project/`, `tests/unit/` e os metadados do exemplo. O molde carrega um
+# negócio de mentira só para as asserções morderem; no derivado isso é "metadado de um negócio que
+# não existe ali". Ou seja: no modelo do molde, um derivado NÃO TEM código próprio — e a opção
+# "declarar o cockpit_harness como isenção", que eu listei como a saída honesta e mais barata,
+# simplesmente não existe. Não há campo para ela.
+#
+# A diferença entre o nosso caso e o do exemplo é que `src/cockpit_harness/` não é substrato de
+# mentira: o CI o chama de verdade (`alvo`, `escopo-regua`, `veredito`, `laudo`). Removê-lo sem
+# destino quebra o workflow. Então sobra a divisão em dois, e ela precisa saber o que vai para
+# onde. Medi a sobreposição com a carcaça nova, por termo, dentro do `ci/` do molde:
+#
+#   requirements-qa / version_source / quality_standard .... JÁ EXISTE (validate_metadata,
+#                                                            audit_governance) -> contrato.py
+#                                                            virou em grande parte redundante
+#   montar_laudo / provenance / procedencia ................ NÃO EXISTE no ci/ do molde
+#   pode_disparar / runner_kind / execution-modes .......... NÃO EXISTE no ci/ do molde
+#
+# Isto muda a conta. A divisão não é "mover uma biblioteca para fora": é reconhecer que parte do
+# que construímos o molde passou a fazer, e parte (procedência do laudo, matriz de modos por
+# runner, e a ponte da fase C) é ORIGINAL e não tem equivalente lá. A pergunta certa deixou de ser
+# "onde guardar o cockpit_harness" e passou a ser "o que dele é genérico e devolve ao molde, o que
+# é da adoção webqa, e o que já pode morrer".
+#
+# RECONHECIMENTO DO ALVO (passo 2 do /adotar), descoberto e não presumido:
+#
+#   branch padrão .... main            (lido de `git remote show origin`, não assumido)
+#   target_sha ....... d6ae70eafee925e70f768f9c303229eb5673b6ba
+#   linguagens ....... python (65 arquivos em app/, 59 em tests/), javascript (52 em
+#                      app/static/js/, 10 .mjs em tests/), 1 .ts
+#   raiz de código ... app/  (145 arquivos versionados; 12 são app/node_modules/, que o
+#                      harness_lib do molde já exclui -> 133 a declarar ou isentar)
+#   testes ........... tests/ plano, 61 entradas, `test_*.py` direto na raiz, sem subpastas
+#                      por tipo; mais tests/fixtures/ e 10 .mjs de teste de frontend
+#   EM ABERTO ........ `scripts/` (3 .sh de deploy) e `init.sh` na raiz são raiz de código ou
+#                      ferramenta? É leitura de domínio, não dedução — e a política diz que
+#                      raiz chutada torna a invariante do órfão verdadeira POR VACUIDADE, que
+#                      é a pior falha possível porque é indistinguível de cobertura real.
+#
+# O passo 2 termina com "Apresente o reconhecimento e confirme com a pessoa antes do passo 3".
+# É onde isto para. Nada foi ancorado, nada foi removido, nenhuma escrita foi feita no alvo.
+# ─────────────────────────────────────────────────────────────────────────────────────────────
+#
 # Schema: harness/schemas/change-proposal.schema.json · Fiscal: ci/validate_metadata.py
 schema_version: "1.0"
 metadata_version: "1.0"
