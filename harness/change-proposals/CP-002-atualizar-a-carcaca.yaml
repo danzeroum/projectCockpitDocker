@@ -24,6 +24,41 @@
 # metadado abertos nesta semana, em código que já está no main, e o fiscal atual não os vê.
 # Um repositório cujo fiscal não enxerga o código novo está verde por não estar olhando.
 #
+# ─────────────────────────────────────────────────────────────────────────────────────────────
+# EMENDA (2026-08-05): esta proposta NÃO É EXECUTÁVEL como escrita. Medido ao tentar executá-la.
+#
+# Ela promete "não declarar kind: derived". Mas o project.schema.json novo torna `kind`
+# OBRIGATÓRIO, com enum fechado de dois valores, e o target-lock.schema.json trava o par
+# kind/target_sha nos dois sentidos. Não há terceiro estado — e o comentário do schema diz por
+# quê: "não existe 'derivado quase pronto' — estado que, uma vez tolerado, dura para sempre".
+#
+# Então "CP-002 sem CP-003" só pode significar `kind: mold`. Executei assim, numa cópia:
+#
+#   45 achados -> 37. E os 37 param aí, porque 21 deles são INFECHÁVEIS nessa leitura:
+#
+#     ci/inventory_code.py:38   RAIZES_MOLDE = {"code": ["src"], "test": ["tests/unit"]}
+#
+#   É constante do ci/ do molde. Com kind: mold, a única raiz de teste é tests/unit/, e as
+#   nossas 12 regras, 4 REQ e 5 capacidades apontam também para tests/integration/ e tests/e2e/.
+#   Fechá-los exigiria editar o ci/ do molde — que é exatamente o fork que RISK-MOLDE-001
+#   descreve — ou mudar o layout de testes deste repositório para caber num molde que ele não é.
+#
+# E `kind: mold` seria falso de qualquer forma. O molde define mold como "a casca genérica, que
+# não governa alvo algum"; este repositório existe para governar danzeroum/docker, e é o que o
+# próprio project.yaml:business.purpose declara. Declarar mold para não decidir a CP-003 seria
+# mentir no campo mais estrutural do modelo novo, para adiar uma pergunta.
+#
+# SEGUNDO ERRO desta proposta, no parágrafo final do rationale: "primeiro fechar os 13 apertos de
+# schema contra o fiscal atual, depois trocar os fiscais". Não dá. Os schemas ATUAIS têm
+# additionalProperties: false — `assertions`, `due`, `exemptions` e `risk_exemptions` são
+# REJEITADOS hoje. Eles só entram junto com a troca, nunca antes. O caminho aditivo que eu
+# descrevi não existe.
+#
+# O que sobra de verdadeiro aqui: o modelo do molde não tem estado para "repositório com código e
+# testes PRÓPRIOS que também governa um alvo", e é isso que este repositório é. A escolha real
+# está na CP-003, e não há meio-caminho que a evite.
+# ─────────────────────────────────────────────────────────────────────────────────────────────
+#
 # Schema: harness/schemas/change-proposal.schema.json · Fiscal: ci/validate_metadata.py
 schema_version: "1.0"
 metadata_version: "1.0"
@@ -32,7 +67,7 @@ generated_from: null
 
 proposal:
   id: CP-002
-  title: "Atualizar a carcaça para a do molde, sem mudar o que os metadados descrevem"
+  title: "BLOQUEADA — atualizar a carcaça sem decidir a CP-003 não é possível (ver emenda)"
   author_kind: agent
   created_at: "2026-08-05T00:00:00Z"
   # As quatro, e não por inflação: os schemas que validam capacidade, regra, requisito e
