@@ -32,9 +32,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      # 3.11 e não 3.12, e a razão é uma linha de requirements-ci.txt: o lockfile carrega UM hash
+      # por pacote — o do wheel daquela versão de Python. Pedir 3.12 baixa o wheel cp312, cujo
+      # hash não é o listado, e o pip aborta com "THESE PACKAGES DO NOT MATCH THE HASHES". O
+      # lockfile é travado por versão de interpretador, e todo workflow do molde usa 3.11.
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.11"
 
       - run: pip install -r requirements-ci.txt
 
