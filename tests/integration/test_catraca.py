@@ -147,3 +147,50 @@ def test_o_baseline_esta_VERSIONADO_e_nao_so_no_disco():
     assert r.returncode == 0, (
         f"{catraca.BASELINE} não está versionado — provavelmente engolido por `harness/state/*` "
         f"no .gitignore. A exceção precisa ser explícita, como a do ledger.")
+
+
+# --------------------------------------------------------------------------------------
+# A categoria nova DECLARADA — o escape que a própria catraca exigiu ao reprovar quem a criou
+# --------------------------------------------------------------------------------------
+
+def test_categoria_nova_SEM_declaracao_e_recusada():
+    """O comportamento original, que continua valendo por padrão."""
+    novo = dict(BASE); novo["lgpd:lgpd_judgment"] = 1
+    ruins = catraca.nao_regrediu(novo=novo, anterior=dict(BASE))
+    assert ruins and "inventa a categoria" in ruins[0]
+
+
+def test_categoria_nova_DECLARADA_passa():
+    """O caso real que reprovou o PR da fatia-1a: `audit_lgpd` saía 2 por falta do
+    data-inventory, e quando o arquivo nasceu o fiscal passou a RODAR. A categoria apareceu do
+    nada — e era progresso, não regressão."""
+    novo = dict(BASE); novo["lgpd:lgpd_judgment"] = 1
+    ok = {"lgpd:lgpd_judgment": "O fiscal passou a rodar: audit_lgpd saía 2 por falta do "
+                                "data-inventory, e com ele autorado passou a medir."}
+    assert catraca.nao_regrediu(novo=novo, anterior=dict(BASE), declaradas=ok) == []
+
+
+def test_declaracao_VAZIA_nao_vale_declaracao():
+    """Exceção sem motivo é a exceção virando carimbo — o mesmo defeito que a lista de exclusões
+    do data-inventory teve, e pelo qual o fiscal do molde a recusou."""
+    novo = dict(BASE); novo["lgpd:lgpd_judgment"] = 1
+    ruins = catraca.nao_regrediu(novo=novo, anterior=dict(BASE),
+                                 declaradas={"lgpd:lgpd_judgment": "porque sim"})
+    assert ruins and "curta demais" in ruins[0]
+
+
+def test_declaracao_MORTA_e_achado():
+    """Mesma propriedade das isenções do molde: declaração que não casa nada faz a próxima parecer
+    revisada."""
+    ruins = catraca.nao_regrediu(novo=dict(BASE), anterior=dict(BASE),
+                                 declaradas={"meta:órfão": "x" * 60})
+    assert ruins and "já existia na base" in ruins[0]
+
+
+def test_SUBIDA_continua_sem_escape():
+    """A assimetria é deliberada: 'este fiscal passou a medir' é afirmação verificável sobre o
+    mundo; 'este número subiu' é a definição do que a catraca impede."""
+    novo = dict(BASE); novo["meta:órfão"] = 200
+    ruins = catraca.nao_regrediu(novo=novo, anterior=dict(BASE),
+                                 declaradas={"meta:órfão": "x" * 60})
+    assert any("eleva" in r for r in ruins)

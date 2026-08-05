@@ -19,5 +19,11 @@
     "meta:regra": 24,
     "meta:teste órfão": 76,
     "meta:órfão": 133
-  }
+  },
+  "categorias_novas_declaradas": [
+    {
+      "categoria": "lgpd:lgpd_judgment",
+      "justificativa": "Nasceu porque o fiscal PASSOU A RODAR, não porque surgiu dívida. Até este PR, audit_lgpd saía 2 ('não consegui fiscalizar') por falta de governance/data-inventory.yaml — e um fiscal que não roda não tem categoria. Com o inventário autorado, ele mede: o único achado é RISCO-001, o issue P1 aberto sobre exposição incidental em log de container, já consumido por RISK-ALVO-001."
+    }
+  ]
 }
