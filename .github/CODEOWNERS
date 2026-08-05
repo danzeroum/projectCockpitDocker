@@ -1,0 +1,46 @@
+# Fiscal REAL dos protected_paths declarados em harness/harness.yaml.
+#
+# harness.yaml diz, em comentário, que a lista de caminhos protegidos "só muda com revisão
+# humana — o fiscal REAL é CODEOWNERS + branch protection". Até aqui esse fiscal não existia:
+# a declaração apontava para um arquivo ausente. Este arquivo é ele.
+#
+# O que este arquivo faz, e faz com um dono só: responder QUEM responde por cada caminho
+# protegido. É a pergunta que harness.yaml levanta ao declarar protected_paths, e
+# ci/audit_governance.py::check_protected_paths reprova todo caminho protegido sem dono.
+#
+# O que ele deliberadamente NÃO faz é forçar aprovação. Ligar "Require review from Code Owners"
+# num repositório de um único dono não acrescentaria revisor: o GitHub não permite aprovar o
+# próprio PR, então a regra trancaria a main para a única pessoa que pode destrancá-la. Não é
+# lacuna a fechar — é aritmética. Quatro olhos exigem duas pessoas.
+#
+# O que vincula o dono aqui é outra coisa, e existe: o ruleset de `main` com bypass list VAZIA
+# (push direto e force push recusados com GH013, para todos) mais os fiscais de ci/, que
+# reprovam divergência entre o declarado e o real sem depender de ninguém lembrar de olhar.
+# Revisão humana pega intenção; fiscal automático pega desvio. Este projeto tem o segundo, e
+# o construiu de modo que se aplique também a quem o escreveu.
+#
+# Se um dia houver mais de um dono, marcar "Require review from Code Owners" e subir
+# "Required approvals" para 1 passa a fazer sentido. Até lá, este arquivo é o registro de
+# responsabilidade — que é o papel que ele de fato tem.
+
+# Fallback: qualquer mudança tem dono.
+*                       @danzeroum
+
+# A régua e quem a aplica. Editar um fiscal é mudar o que o CI consegue enxergar.
+/ci/                    @danzeroum
+/.github/               @danzeroum
+/harness/               @danzeroum
+
+# Governança: riscos, inventário de dado pessoal e o julgamento de privacidade.
+/governance/            @danzeroum
+
+# Decisões versionadas e suas asserções executáveis.
+/architecture/adr/      @danzeroum
+
+# Escopo de autorização de sondagem e o pin do padrão externo.
+/tests/qa/              @danzeroum
+/requirements-qa.txt    @danzeroum
+
+# Doutrina carregada em toda sessão de agente, e os hooks que a aplicam.
+/CLAUDE.md              @danzeroum
+/.claude/               @danzeroum

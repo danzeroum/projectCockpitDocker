@@ -1,51 +1,51 @@
-# Manifesto de identidade do projeto. Completa (não substitui) o pyproject.toml com o que
-# Python não expressa: propósito, domínio, criticidade, donos, governança.
-# Schema: harness/schemas/project.schema.json
-schema_version: "1.0"
-metadata_version: "1.0"
+schema_version: '1.0'
+metadata_version: '1.0'
 source_of_truth: true
 generated_from: null
-
 project:
-  id: "danzeroum-projectcockpitdocker"
-  name: "Docker Cockpit sob a harness padrão"
-  type: "quality-harness-consumer"
-  lifecycle: "incubating"
-  status: "active"
-
+  id: danzeroum-projectcockpitdocker
+  name: Docker Cockpit sob a harness padrão
+  type: quality-harness-consumer
+  lifecycle: incubating
+  status: active
+  kind: derived
 business:
-  domain: "observabilidade de infraestrutura (Docker)"
-  purpose: >
-    Plano de controle da adoção do Docker Cockpit (github.com/danzeroum/docker — dashboard
-    somente-leitura de containers, FastAPI servido por HTTPS) sob a harness de
-    github.com/danzeroum/project, consumindo a WebQA Suite (github.com/danzeroum/qa-suite) como
-    padrão externo e versionado. Declara a régua, autoriza modos de execução e carimba a
-    procedência do laudo; não hospeda o cockpit nem reimplementa a régua.
-  criticality: "medium"
-  stakeholders:
-    product_owner: "danzeroum"
-    technical_owner: "danzeroum"
-    security_owner: "danzeroum"
+  domain: observabilidade de infraestrutura (Docker)
+  purpose: 'Plano de controle da adoção do Docker Cockpit (github.com/danzeroum/docker — dashboard somente-leitura
+    de containers, FastAPI servido por HTTPS) sob a harness de github.com/danzeroum/project, consumindo
+    a WebQA Suite (github.com/danzeroum/qa-suite) como padrão externo e versionado. Declara a régua, autoriza
+    modos de execução e carimba a procedência do laudo; não hospeda o cockpit nem reimplementa a régua.
 
-# Declara QUAL padrão e ONDE a versão mora — nunca o número (fonte única fecha o risco H3).
+    '
+  criticality: medium
+  stakeholders:
+    product_owner: danzeroum
+    technical_owner: danzeroum
+    security_owner: danzeroum
 quality_standard:
   name: webqa-suite
   version_source: requirements-qa.txt
-
 governance:
-  default_change_mode: "pull_request"
+  default_change_mode: pull_request
   human_approval_required_for:
-    - dependency_update
-    - production_deploy
-    - load
-    - active_discovery
-    - protected_path_change
+  - dependency_update
+  - production_deploy
+  - load
+  - active_discovery
+  - protected_path_change
   evidence_retention_days: 90
-
 classification:
-  # O cockpit lê o daemon Docker de um servidor real e expõe logs de containers — logs podem
-  # conter dado pessoal por acidente (LGPD art. 5º I). O alvo é exposto à internet; ESTE
-  # repositório, não: aqui só há declaração.
-  data_classification: "operacional-sensivel (logs de container do alvo)"
-  lgpd_relevance: "indireta — o alvo pode expor dado pessoal em logs; a auditoria observa de fora"
+  data_classification: confidential
+  lgpd_relevance: incidental
   internet_exposed: false
+target:
+  repo: danzeroum/docker
+  ref: main
+  lock_source: target.lock
+  code_roots:
+  - app
+  test_roots:
+  - tests
+  languages:
+  - python
+  - javascript
