@@ -89,6 +89,41 @@
 # ela descreve (os 21 achados estruturais) vai junto com a reancoragem, porque nenhum dos dois
 # atravessa sozinho.
 # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+# ─────────────────────────────────────────────────────────────────────────────────────────────
+# EMENDA 3 (2026-08-05, fatia-1b): a estimativa de renumeração desta proposta estava errada em
+# tamanho E em natureza. Medido: **49 referências em 26 arquivos**, não 35 em 17.
+#
+# Medido com: `grep -rn "ADR-00[567]"` sobre os arquivos VERSIONADOS (`git ls-files`), extensões
+# .py/.yaml/.md/.json, excluindo `workspace/` (alvo materializado, não versionado aqui) e
+# `.git/`. Contagem por arquivo, não por linha.
+#
+# E O QUE A ESTIMATIVA NÃO VIA: são DUAS POPULAÇÕES, e a mesma string significa coisas opostas.
+#
+#   população          onde                                              "ADR-006" quer dizer
+#   ─────────────────  ────────────────────────────────────────────────  ──────────────────────
+#   local (44 refs)    business/, design/, governance/, docs/,           pendência em vez de
+#                      architecture/adr/*.md, README.md, tests/          alvo inventado
+#   molde (13 refs)    ci/, harness/policies/, .claude/commands/         conformidade como
+#                                                                        asserção (do MOLDE)
+#
+# Renomear SÓ a primeira É a resolução da colisão — e um `sed` cego teria corrompido as duas, o
+# que é pior que não renumerar: as mensagens dos fiscais transplantados passariam a apontar para
+# as decisões erradas deste repositório, e o CI ficaria verde.
+#
+# O CRITÉRIO NÃO É O CAMINHO, e foi a leitura referência por referência que mostrou. Dois arquivos
+# que MORAM em caminho local — `security/threat-model.yaml` e `governance/conformance-review.yaml`,
+# escritos na fatia-1a — citavam "ADR-006" querendo dizer o do MOLDE. Não foram renumerados:
+# foram DESAMBIGUADOS ("ADR-006 do MOLDE"), porque número nu num repositório com dois namespaces
+# de ADR é ambiguidade que o próximo leitor resolve errado.
+#
+# Registro histórico intocado por definição: docs/laudo-adocao.*, docs/ADOCAO.md e esta própria
+# CP mantêm os números antigos. Eles descrevem o que era verdade quando foram escritos.
+#
+# Guarda: tests/integration/test_renumeracao_adr.py, com oito mordidas — incluindo a que reverte
+# UMA referência local numa cópia e exige que a reversão seja detectada, e a que reprova se a
+# população do molde tiver ZERO ocorrências (sinal de que a renumeração a atropelou).
+# ─────────────────────────────────────────────────────────────────────────────────────────────
 #
 # Schema: harness/schemas/change-proposal.schema.json · Fiscal: ci/validate_metadata.py
 schema_version: "1.0"

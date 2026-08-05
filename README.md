@@ -22,7 +22,7 @@ E o corolário que justifica tudo:
 | **Consumidor** | **este repositório** | autorização + configuração | alvo, thresholds, escopo, versão exata da régua |
 
 `webqa/`, `checks/` e `data/caminhos-sensiveis.yaml` **nunca** existem aqui: a régua é declarada
-por versão, não copiada. O código do cockpit também não é vendorizado (ADR-005) — este repositório
+por versão, não copiada. O código do cockpit também não é vendorizado (ADR-015) — este repositório
 é o plano de controle da adoção, não um fork do produto.
 
 ## Estado atual: fail-closed, por falta de alvo
@@ -36,7 +36,7 @@ INCOMPLETE:escopo-autorizado
 O Docker Cockpit publica um único host — `docker.danzeroum.com`, que é **produção**. Enquanto não
 houver uma URL de homologação declarada, nenhum modo de rede roda: `passive`, `load` e
 `active_discovery` são recusados com `SCOPE_MISSING` (12). O inventário (Trabalho B), esse sim,
-roda sempre. Ver [ADR-006](architecture/adr/ADR-006-pendencia-em-vez-de-alvo-inventado.md) e
+roda sempre. Ver [ADR-016](architecture/adr/ADR-016-pendencia-em-vez-de-alvo-inventado.md) e
 [`CP-001`](harness/change-proposals/CP-001-declarar-alvo-de-homologacao.yaml).
 
 A bancada para destravar já está pronta em [`deploy/homologacao/`](deploy/homologacao/) — falta

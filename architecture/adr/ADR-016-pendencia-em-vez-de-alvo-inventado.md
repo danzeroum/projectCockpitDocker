@@ -1,4 +1,4 @@
-# ADR-006 — Sem homologação declarada, a saída é uma pendência; nunca produção
+# ADR-016 — Sem homologação declarada, a saída é uma pendência; nunca produção
 
 - **Status:** accepted
 - **Data:** 2026-08-03

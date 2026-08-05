@@ -2,8 +2,8 @@
 # Critérios de aceite explícitos dão ao modo ux/frontend uma régua de experiência, não um palpite.
 # Schema: harness/schemas/ui-surfaces.schema.json
 #
-# status: proposed — o código da UI mora em danzeroum/docker (ADR-005) e a auditoria está
-# bloqueada por INCOMPLETE:target_url (ADR-006). O fiscal não exige arquivo local; exige apenas
+# status: proposed — o código da UI mora em danzeroum/docker (ADR-015) e a auditoria está
+# bloqueada por INCOMPLETE:target_url (ADR-016). O fiscal não exige arquivo local; exige apenas
 # que a capacidade referenciada exista.
 schema_version: "1.0"
 metadata_version: "1.0"

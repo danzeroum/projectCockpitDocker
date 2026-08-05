@@ -10,7 +10,8 @@
 # POR QUE OS ALVOS SÃO `STAGE-*` E NÃO `CMP-*`. As capacidades e componentes que descrevem o cockpit
 # ainda não foram autorados — são as fatias 2..n da CP-003, e hoje `architecture/components.yaml`
 # ainda descreve o `src/cockpit_harness/`, que está saindo. Apontar uma ameaça para um CMP-* que vai
-# deixar de existir seria trava que não encontra o que vigiar (ADR-006): quebrada, não satisfeita.
+# deixar de existir seria trava que não encontra o que vigiar (ADR-006 DO MOLDE — conformidade como
+# asserção; o 006 deste repositório virou ADR-016 na fatia-1b): quebrada, não satisfeita.
 # `STAGE-CODE` cobre `src` e `workspace` — é o alvo verdadeiro enquanto os componentes não chegam, e
 # o schema do molde admite etapas exatamente por isto ("parte do que se ameaça é a própria máquina
 # de governar"). Quando os componentes existirem, cada ameaça abaixo migra para o seu, e a migração
@@ -41,7 +42,9 @@ threats:
         ref: workspace/target/docker-compose.yml
       - kind: local_path
         ref: harness/harness.yaml
-    residual_risk: RISK-ALVO-001
+    # Residual PRÓPRIO desde a fatia-1b: enquanto morava em RISK-ALVO-001 junto com outras duas
+    # ameaças, "o proxy aceita POST e DELETE" não tinha data nem correção nomeada. Agora tem.
+    residual_risk: RISK-SOCKET-001
 
   # ─────────────────────────────────────────────────────────────────────────────────────────
   - id: THREAT-LOG-DADO-PESSOAL

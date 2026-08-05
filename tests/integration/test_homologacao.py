@@ -114,7 +114,7 @@ def test_montagens_do_host_sao_somente_leitura(compose: dict):
 
 
 def test_codigo_do_cockpit_nao_foi_vendorizado(request):
-    """ADR-007: o compose constrói do clone no servidor; o produto não mora aqui."""
+    """ADR-017: o compose constrói do clone no servidor; o produto não mora aqui."""
     raiz = Path(request.config.rootpath)
     assert not (raiz / "app").exists()
     compose_texto = (raiz / COMPOSE).read_text(encoding="utf-8")

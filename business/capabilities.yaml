@@ -76,8 +76,8 @@ capabilities:
   - id: CAP-ALVO
     name: "Auditoria do Docker Cockpit publicado"
     # planned, não verified: deste lado ela é auditoria A EXECUTAR, e segue bloqueada por
-    # INCOMPLETE:target_url (ADR-006) até o ambiente subir. O CÓDIGO do alvo continua em
-    # danzeroum/docker (ADR-007, que manteve essa parte da ADR-005), e a BANCADA
+    # INCOMPLETE:target_url (ADR-016) até o ambiente subir. O CÓDIGO do alvo continua em
+    # danzeroum/docker (ADR-017, que manteve essa parte da ADR-015), e a BANCADA
     # (deploy/homologacao/) não é source_path de capacidade.
     #
     # `source_paths` deixou de ser vazio quando a fase C ganhou peças NOSSAS: traduzir o

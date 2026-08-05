@@ -1,7 +1,8 @@
+<!-- GENERATED: não editar; rodar ci/generate_graph.py -->
 # Mapa de relacionamento dos metadados
 
-> **Gerado** por `ci/generate_graph.py` a partir dos metadados reais. Não editar à mão —
-> regenerar com `python ci/generate_graph.py`. É um artefato derivado, não fonte de verdade.
+> Artefato DERIVADO dos metadados reais, não fonte de verdade. Editar aqui é trabalho
+> perdido: o `--check` do CI contradiz a edição na hora mais cara.
 
 Legenda: azul-escuro = projeto · azul = capacidade (`CAP-`) · ciano = componente (`CMP-`) ·
 roxo = interface (`IFC-`) · verde = regra (`RULE-`) · rosa = superfície de UI (`UI-`) ·
@@ -194,6 +195,7 @@ graph TD
   RISK_META_001["RISK-META-001"]
   RISK_MOLDE_001["RISK-MOLDE-001"]
   RISK_SEGREDO_001["RISK-SEGREDO-001"]
+  RISK_SOCKET_001["RISK-SOCKET-001"]
   RISK_WEBQA_001["RISK-WEBQA-001"]
   ADR_001["ADR-001"]
   ADR_001 -->|decide| CAP_CONTRATO
@@ -208,19 +210,19 @@ graph TD
   ADR_003 -->|mitiga| RISK_DEP_001
   ADR_004["ADR-004"]
   ADR_004 -->|mitiga| RISK_CHANGE_001
-  ADR_005["ADR-005"]
-  ADR_005 -->|decide| CAP_ALVO
-  ADR_005 -->|mitiga| RISK_ALVO_001
-  ADR_006["ADR-006"]
-  ADR_006 -->|decide| CAP_ALVO
-  ADR_006 -->|decide| CAP_CONTRATO
-  ADR_006 -->|decide| CMP_CONTRATO
-  ADR_006 -->|mitiga| RISK_ALVO_001
-  ADR_006 -->|mitiga| RISK_SEGREDO_001
-  ADR_007["ADR-007"]
-  ADR_007 -->|decide| CAP_ALVO
-  ADR_007 -->|mitiga| RISK_ALVO_001
-  ADR_007 -->|mitiga| RISK_HOMOLOG_001
+  ADR_015["ADR-015"]
+  ADR_015 -->|decide| CAP_ALVO
+  ADR_015 -->|mitiga| RISK_ALVO_001
+  ADR_016["ADR-016"]
+  ADR_016 -->|decide| CAP_ALVO
+  ADR_016 -->|decide| CAP_CONTRATO
+  ADR_016 -->|decide| CMP_CONTRATO
+  ADR_016 -->|mitiga| RISK_ALVO_001
+  ADR_016 -->|mitiga| RISK_SEGREDO_001
+  ADR_017["ADR-017"]
+  ADR_017 -->|decide| CAP_ALVO
+  ADR_017 -->|mitiga| RISK_ALVO_001
+  ADR_017 -->|mitiga| RISK_HOMOLOG_001
   classDef project fill:#1f2937,stroke:#111827,color:#fff;
   class PROJ_danzeroum_projectcockpitdocker project;
   classDef cap fill:#2563eb,stroke:#1e40af,color:#fff;
@@ -240,7 +242,7 @@ graph TD
   classDef test fill:#57534e,stroke:#44403c,color:#fff;
   class TEST_tests_e2e_test_checklist_adocao_py,TEST_tests_e2e_test_cli_laudo_py,TEST_tests_integration_test_fase_c_py,TEST_tests_integration_test_homologacao_py,TEST_tests_integration_test_repositorio_py,TEST_tests_integration_test_workflows_py,TEST_tests_unit_test_contrato_py,TEST_tests_unit_test_escopo_regua_py,TEST_tests_unit_test_plano_py,TEST_tests_unit_test_procedencia_py,TEST_tests_unit_test_veredito_py test;
   classDef adr fill:#ca8a04,stroke:#a16207,color:#fff;
-  class ADR_001,ADR_002,ADR_003,ADR_004,ADR_005,ADR_006,ADR_007 adr;
+  class ADR_001,ADR_002,ADR_003,ADR_004,ADR_015,ADR_016,ADR_017 adr;
   classDef risk fill:#dc2626,stroke:#991b1b,color:#fff;
-  class RISK_ALVO_001,RISK_CHANGE_001,RISK_DEP_001,RISK_HOMOLOG_001,RISK_META_001,RISK_MOLDE_001,RISK_SEGREDO_001,RISK_WEBQA_001 risk;
+  class RISK_ALVO_001,RISK_CHANGE_001,RISK_DEP_001,RISK_HOMOLOG_001,RISK_META_001,RISK_MOLDE_001,RISK_SEGREDO_001,RISK_SOCKET_001,RISK_WEBQA_001 risk;
 ```

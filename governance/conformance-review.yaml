@@ -47,7 +47,7 @@ review:
       summary: >
         `security/threat-model.yaml` aponta todas as sete ameaças para `STAGE-*` em vez de `CMP-*`,
         porque os componentes do cockpit ainda não existem como metadado. É a escolha correta hoje
-        — ameaça contra componente inexistente é trava quebrada, não satisfeita (ADR-006) — e é
+        — ameaça contra componente inexistente é trava quebrada, não satisfeita (ADR-006 do MOLDE) — e é
         dívida amanhã: quando os componentes chegarem, cada ameaça migra para o seu.
       disposition: change_proposal
       ref: harness/change-proposals/CP-003-virar-derivado-do-molde.yaml

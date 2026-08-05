@@ -16,6 +16,23 @@ adrs:
     related_risks:
       - RISK-WEBQA-001
 
+    assertions:
+      - id: ADR-001-A1
+        kind: path_absent
+        severity: critical
+        risk: RISK-WEBQA-001
+        description: "A régua é DECLARADA e nunca copiada. Uma cópia local da lista curada pode ter uma linha removida, e o laudo passa a dizer 'nenhum achado' sem erro nem aviso — que é o estado que esta decisão inteira existe para impedir."
+        paths:
+          - webqa
+          - checks
+          - data/caminhos-sensiveis.yaml
+      - id: ADR-001-A2
+        kind: file_matches
+        severity: critical
+        risk: RISK-WEBQA-001
+        description: "O pin é EXATO, com `==`. Faixa tornaria 'a mesma régua' indecidível, e dois laudos só se comparam se a régua for a mesma."
+        files: ["requirements-qa.txt"]
+        pattern: "^webqa-suite=="
   - id: ADR-002
     title: "Enforcement mora em schema, CI e gates — não em markdown"
     status: accepted
@@ -23,6 +40,22 @@ adrs:
     related_risks:
       - RISK-META-001
 
+    assertions:
+      - id: ADR-002-A1
+        kind: file_matches
+        severity: critical
+        risk: RISK-META-001
+        description: "A promessa central: regra que precisa morder tem fiscal EXECUTÁVEL, e ele roda no CI. Sem este passo, todo schema desta casa vira documentação — e documentação não reprova PR."
+        files: [".github/workflows/validate-metadata.yml"]
+        pattern: "python ci/validate_all\\.py"
+      - id: ADR-002-A2
+        kind: path_present
+        severity: high
+        risk: RISK-META-001
+        description: "A camada estrutural existe como schema, não como prosa: forma, tipos, enums e padrões são recusados pela máquina antes de qualquer leitura humana."
+        paths:
+          - harness/schemas/project.schema.json
+          - harness/schemas/change-proposal.schema.json
   - id: ADR-003
     title: "Versão do padrão em fonte única e procedência carimbada"
     status: accepted
@@ -36,6 +69,29 @@ adrs:
     related_risks:
       - RISK-DEP-001
 
+    assertions:
+      - id: ADR-003-A1
+        kind: file_matches
+        severity: critical
+        risk: RISK-WEBQA-001
+        description: "A versão mora em UM lugar e os demais REFERENCIAM. `project.yaml` aponta para o arquivo de pin em vez de repetir o número — restatar cria uma segunda fonte, e a primeira divergência entre as duas passa despercebida."
+        files: ["project.yaml"]
+        pattern: "version_source: requirements-qa\\.txt"
+      - id: ADR-003-A2
+        kind: file_lacks
+        severity: critical
+        risk: RISK-WEBQA-001
+        description: "E o outro lado da mesma decisão: o NÚMERO não aparece em project.yaml. Sem esta asserção, `version_source` poderia conviver com um `version: 1.0.0` logo abaixo, e o documento estaria formalmente certo e materialmente com duas fontes."
+        files: ["project.yaml"]
+        pattern: "version: [0-9]"
+        # Mutação DECLARADA: a derivação mecânica não constrói texto que case `[0-9]`, e uma
+        # asserção bloqueante sem mutação não pode provar que morde. O texto injetado é o gesto
+        # real de quem restata — a linha que alguém acrescenta "só para ficar explícito", e que
+        # cria a segunda fonte de verdade sem remover a primeira.
+        mutation:
+          op: injetar_texto
+          alvo: project.yaml
+          texto: "version: 1.0.0"
   - id: ADR-004
     title: "Toda mudança proposta é declarada e validada antes de executada"
     status: accepted
@@ -43,22 +99,38 @@ adrs:
     related_risks:
       - RISK-CHANGE-001
 
-  - id: ADR-005
+    assertions:
+      - id: ADR-004-A1
+        kind: schema_lock
+        severity: critical
+        risk: RISK-CHANGE-001
+        description: "Risco high/critical EXIGE aval humano, e a trava é estrutural: um if/then no schema, não uma convenção que alguém lembra. É o que impede um agente de se auto-aprovar mudança de alto risco."
+        file: harness/schemas/change-proposal.schema.json
+        pointer: /allOf/0/then/properties/proposal/properties/human_approval_required/const
+        expected: true
+      - id: ADR-004-A2
+        kind: path_present
+        severity: high
+        risk: RISK-CHANGE-001
+        description: "A mudança é declarada ANTES de executada, e as propostas são artefato versionado — não conversa. Sem o diretório, `change_mode: pull_request` seria promessa sem lugar onde morar."
+        paths:
+          - harness/change-proposals
+  - id: ADR-015
     title: "O alvo auditado mora em danzeroum/docker; este repositório é o plano de controle"
-    # Substituída por ADR-007: o CÓDIGO do cockpit segue upstream (parte que se manteve), mas o
+    # Substituída por ADR-017: o CÓDIGO do cockpit segue upstream (parte que se manteve), mas o
     # stack de homologação passou a morar aqui. Fica no índice porque decisão substituída não
     # se apaga — se apagasse, o repositório perderia a memória de por que já foi diferente.
     status: superseded
-    file: architecture/adr/ADR-005-alvo-fora-do-consumidor.md
+    file: architecture/adr/ADR-015-alvo-fora-do-consumidor.md
     related_capabilities:
       - CAP-ALVO
     related_risks:
       - RISK-ALVO-001
 
-  - id: ADR-006
+  - id: ADR-016
     title: "Sem homologação declarada, a saída é uma pendência; nunca produção"
     status: accepted
-    file: architecture/adr/ADR-006-pendencia-em-vez-de-alvo-inventado.md
+    file: architecture/adr/ADR-016-pendencia-em-vez-de-alvo-inventado.md
     related_capabilities:
       - CAP-ALVO
       - CAP-CONTRATO
@@ -68,14 +140,52 @@ adrs:
       - RISK-ALVO-001
       - RISK-SEGREDO-001
 
-  - id: ADR-007
+    assertions:
+      - id: ADR-016-A1
+        kind: file_matches
+        severity: critical
+        risk: RISK-HOMOLOG-001
+        description: "A pendência é DECLARADA em vez de o alvo ser inventado: o host termina em `.invalid` (RFC 2606, nunca resolve), e é isso que faz a ausência de homologação ser um estado nomeado em vez de um apontamento para produção."
+        files: ["tests/qa/config.yaml"]
+        pattern: "\\.invalid"
+      - id: ADR-016-A2
+        kind: file_lacks
+        severity: critical
+        risk: RISK-HOMOLOG-001
+        description: "E o que a decisão PROÍBE, que é a metade que importa: o `base_url` não aponta para produção. Ancorada na CONFIGURAÇÃO e não na menção — o host de produção É citado no comentário que explica por que não se aponta para ele, e um padrão que acusasse a menção acusaria o documento que declara a decisão."
+        files: ["tests/qa/config.yaml"]
+        pattern: "^\\s*base_url:.*docker\\.danzeroum\\.com"
+        # Mutação DECLARADA: o padrão é ancorado e a derivação não constrói texto que o case. O
+        # gesto injetado é o real — alguém trocando o host `.invalid` pelo de produção "só para
+        # rodar a suíte uma vez", que é exatamente o acidente que a pendência declarada impede.
+        mutation:
+          op: injetar_texto
+          alvo: tests/qa/config.yaml
+          texto: "  base_url: \"https://docker.danzeroum.com\""
+  - id: ADR-017
     title: "O stack de homologação mora no consumidor; o produto continua upstream"
     status: accepted
-    file: architecture/adr/ADR-007-stack-de-homologacao-no-consumidor.md
+    file: architecture/adr/ADR-017-stack-de-homologacao-no-consumidor.md
     supersedes:
-      - ADR-005
+      - ADR-015
     related_capabilities:
       - CAP-ALVO
     related_risks:
       - RISK-ALVO-001
       - RISK-HOMOLOG-001
+
+    assertions:
+      - id: ADR-017-A1
+        kind: path_present
+        severity: high
+        risk: RISK-HOMOLOG-001
+        description: "O stack de homologação mora AQUI — é a mudança que este ADR fez sobre a ADR-015."
+        paths:
+          - deploy/homologacao/compose.yml
+      - id: ADR-017-A2
+        kind: file_matches
+        severity: critical
+        risk: RISK-ALVO-001
+        description: "E o que NÃO mudou: o código do cockpit não é vendorizado. O compose CONSTRÓI a partir do clone que já existe no servidor (`COCKPIT_SRC`) em vez de carregar uma cópia — uma cópia versionada derivaria do original em silêncio."
+        files: ["deploy/homologacao/compose.yml"]
+        pattern: "COCKPIT_SRC"
