@@ -1,0 +1,90 @@
+# Atualizar a CARCAÇA (schemas, fiscais, políticas) para a do molde, sem mudar o que os
+# metadados DESCREVEM. A virada para `kind: derived` é decisão separada: CP-003.
+#
+# A medição que originou esta proposta (2026-08-05, molde em 6ce9309 vs. este repositório):
+#
+#   arquivos do molde ..... 186        compartilhados ..... 69, dos quais 30 idênticos
+#   arquivos aqui ......... 107        só no molde ........ 117
+#                                      só aqui ............ 38 (o nosso trabalho)
+#
+# Transplantando a carcaça estrita por cima de uma cópia deste repositório, SEM tocar em nenhum
+# metadado, o fiscal novo aponta 45 achados. Agrupados por causa:
+#
+#   13  aperto de schema ....... project.kind obrigatório, classification virou enum fechado,
+#                                assertions por ADR, exemptions em components, risk_exemptions,
+#                                stages_manifest em harness.yaml
+#    6  arquivos exigidos ...... target.lock, harness/stages.yaml, security/threat-model.yaml,
+#                                security/dependencies.yaml, governance/data-inventory.yaml,
+#                                governance/privacy-review.yaml
+#   21  raízes declaradas ...... 12 regras + 4 REQ + 5 capacidades apontando para
+#                                tests/integration/ e tests/e2e/, fora da raiz tests/unit/
+#    5  CÓDIGO ÓRFÃO ........... escopo_regua.py, veredito.py e os dois testes dos PRs #7 e #8
+#
+# A última linha é a razão de a proposta existir e não ser só higiene: são cinco buracos de
+# metadado abertos nesta semana, em código que já está no main, e o fiscal atual não os vê.
+# Um repositório cujo fiscal não enxerga o código novo está verde por não estar olhando.
+#
+# Schema: harness/schemas/change-proposal.schema.json · Fiscal: ci/validate_metadata.py
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+proposal:
+  id: CP-002
+  title: "Atualizar a carcaça para a do molde, sem mudar o que os metadados descrevem"
+  author_kind: agent
+  created_at: "2026-08-05T00:00:00Z"
+  # As quatro, e não por inflação: os schemas que validam capacidade, regra, requisito e
+  # componente mudam todos, e a raiz de teste declarada muda para todas.
+  capabilities_affected:
+    - CAP-CONTRATO
+    - CAP-MODOS
+    - CAP-PROCEDENCIA
+    - CAP-ALVO
+  components_affected:
+    - CMP-CONTRATO
+    - CMP-PLANO
+    - CMP-PROCEDENCIA
+    - CMP-CLI
+  risk_assessment:
+    level: high
+    risks:
+      - RISK-MOLDE-001
+      - RISK-META-001
+      - RISK-CHANGE-001
+    rationale: >
+      Alto porque troca o FISCAL, e trocar quem mede é diferente de mudar o que é medido: um
+      erro aqui não aparece como erro, aparece como verde. O fiscal novo é mais rigoroso em
+      seis pontos e mais permissivo em nenhum — mas a comparação foi feita por transplante numa
+      cópia, não por leitura, e um transplante que passa não prova que o repositório de verdade
+      passa com o histórico junto.
+
+      O que a proposta NÃO faz, e é o que a mantém neste nível de risco em vez de acima dele:
+      não declara `kind: derived`, não cria `target.lock` e não muda a raiz do inventário. Os
+      metadados continuam descrevendo o código DESTE repositório. A virada de significado — em
+      que o derivado passa a descrever o alvo materializado em workspace/ e a nossa própria CLI
+      sai do campo de visão do fiscal — é a CP-003, e pode ser recusada sem desfazer esta.
+
+      Duas colisões conhecidas, com custo medido. Os ADR-005, 006 e 007 do molde são decisões
+      inteiramente outras (catalogo-via-porta, conformidade-como-assercao,
+      lgpd-sempre-em-dois-niveis) e colidem em número com os nossos: renumerar para 015-017
+      alcança 35 referências em 17 arquivos. E `security/` e `governance/*.yaml` chegam do molde
+      com dados de exemplo (CMP-CATALOG, CMP-PRICING) — precisam ser AUTORADOS para o cockpit,
+      não copiados; copiá-los produziu 9 achados fantasma na medição, e um threat-model de
+      mentira é pior que nenhum.
+
+      O caminho é aditivo e reversível por partes: primeiro fechar os 5 órfãos e os 13 apertos
+      de schema contra o fiscal atual (mudança de metadado que vale por si), depois trocar os
+      fiscais. Nesta ordem, o CI reprova cedo se a declaração e o repositório discordarem.
+  required_gates:
+    - inventory
+    - unit-tests
+    - metadata-validation
+  tests_required:
+    - tests/integration/test_fiscal.py
+    - tests/integration/test_repositorio.py
+    - tests/integration/test_workflows.py
+    - tests/e2e/test_checklist_adocao.py
+  human_approval_required: true
+  change_mode: pull_request

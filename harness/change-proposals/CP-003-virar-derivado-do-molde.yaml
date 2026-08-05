@@ -1,0 +1,89 @@
+# Declarar `kind: derived` e ancorar o alvo — a virada de SIGNIFICADO dos metadados.
+# Depende da CP-002 (a carcaça precisa estar atualizada), mas a CP-002 não depende desta.
+#
+# O que muda, e está em cinco linhas de ci/inventory_code.py:
+#
+#     def _roots(project_doc):
+#         target = (project_doc or {}).get("target")
+#         if not target:
+#             return "", RAIZES_MOLDE["code"], RAIZES_MOLDE["test"]
+#         return (WORKSPACE + "/", target["code_roots"], target["test_roots"])
+#
+# Sem `target`, o fiscal inventaria o código DESTE repositório. Com `target`, ele muda de raiz:
+# passa a inventariar o alvo materializado em workspace/target/ no SHA de target.lock, e
+# src/cockpit_harness/ deixa de ser varrido. Não vira órfão — vira INVISÍVEL.
+#
+# É por isso que esta proposta é separada da CP-002 e não um passo dela. Não é uma migração
+# técnica: é decidir o que os metadados deste repositório descrevem. Hoje descrevem a CLI que
+# fiscaliza a adoção (4 capacidades, 4 componentes, 12 regras, todas com evidência em testes
+# nossos). Depois passariam a descrever o Docker Cockpit — outro objeto, com outras capacidades.
+#
+# Schema: harness/schemas/change-proposal.schema.json · Fiscal: ci/validate_metadata.py
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+proposal:
+  id: CP-003
+  title: "Virar derivado do molde: declarar o alvo e reancorar o que os metadados descrevem"
+  author_kind: agent
+  created_at: "2026-08-05T00:00:00Z"
+  capabilities_affected:
+    - CAP-CONTRATO
+    - CAP-MODOS
+    - CAP-PROCEDENCIA
+    - CAP-ALVO
+  components_affected:
+    - CMP-CONTRATO
+    - CMP-PLANO
+    - CMP-PROCEDENCIA
+    - CMP-CLI
+  risk_assessment:
+    level: high
+    risks:
+      - RISK-MOLDE-001
+      - RISK-META-001
+      - RISK-ALVO-001
+    rationale: >
+      Alto porque reancora o repositório inteiro: todo `source_path`, `test_path`, `verified_by`
+      e `validated_by` passa a resolver contra outro código. Uma reancoragem malfeita não falha
+      alto — ela produz um conjunto de metadados internamente coerente que descreve um sistema
+      diferente do que se pensa estar descrevendo.
+
+      O ganho é real e não é burocrático. Destrava `/sincronizar` (drift entre o metadado e o
+      alvo vira trabalho declarado em vez de suposição), `/ingerir` com procedência ancorada, e
+      os departamentos que o molde ganhou nas fases D-G: conformidade contínua, segurança como
+      departamento, e LGPD em dois níveis — que aqui não é hipótese, porque o cockpit expõe
+      logs de container e log é onde dado pessoal aparece por acidente (é o que
+      project.yaml:classification já diz, em prosa que nenhum fiscal lê).
+
+      A perda também é real, e é a razão de esta decisão ser humana. O `src/cockpit_harness/`
+      sai do campo de visão do fiscal: a harness pararia de governar a própria CLI que fiscaliza
+      a adoção. Hoje ela é governada — 4 componentes, 12 regras, evidência em 16 arquivos de
+      teste. Depois seria território não declarado num repositório cujo produto é justamente
+      não ter território não declarado.
+
+      Há uma saída para isso, e ela precisa ser decidida ANTES de executar, não depois: ou o
+      `cockpit_harness` vira isenção declarada com justificativa em components.yaml:exemptions
+      (honesto, e assume a perda), ou este repositório se divide em dois — o gêmeo de governança
+      do cockpit, e a ferramenta que ele usa. A segunda é mais fiel ao modelo do molde e custa
+      um repositório a mais. Nenhuma das duas é obviamente certa, e é isso que a proposta
+      submete a aval em vez de resolver sozinha.
+
+      Pré-requisitos que não são nossos: o alvo precisa de `ref` e `code_roots` DESCOBERTOS no
+      reconhecimento (a política proíbe presumir que a branch é `main` ou que o código mora em
+      `src/`), e raiz declarada que não existe no alvo é achado — um `code_roots` chutado torna
+      a invariante do código órfão verdadeira por vacuidade, que é a pior falha possível aqui
+      porque é indistinguível de cobertura real.
+  required_gates:
+    - inventory
+    - unit-tests
+    - metadata-validation
+  tests_required:
+    - tests/integration/test_fiscal.py
+    - tests/integration/test_repositorio.py
+    - tests/e2e/test_checklist_adocao.py
+    - tests/e2e/test_cli_laudo.py
+  human_approval_required: true
+  change_mode: pull_request

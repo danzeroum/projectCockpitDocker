@@ -147,3 +147,25 @@ risks:
         ref: tests/e2e/test_checklist_adocao.py
       - kind: local_path
         ref: architecture/adr/ADR-006-pendencia-em-vez-de-alvo-inventado.md
+
+  - id: RISK-MOLDE-001
+    area: governance
+    description: >
+      A carcaça deriva do molde e o derivado vira fork em silêncio: fiscais que o molde ganhou
+      nunca chegam, e o repositório fica verde porque ninguém está olhando aquilo. Medido em
+      2026-08-05 contra github.com/danzeroum/project@6ce9309: dos 69 arquivos compartilhados,
+      só 30 são idênticos; transplantando a carcaça atual, o fiscal novo aponta 45 achados —
+      dos quais 5 são código e teste deste repositório que nenhum metadado reivindica.
+    likelihood: high
+    impact: medium
+    treatment: mitigate
+    owner: technical_owner
+    # `status: open` e não `mitigated`: o controle é uma proposta declarada, não um fiscal que
+    # roda. Marcar como mitigado seria o próprio defeito que o risco descreve — dizer que se
+    # olha para uma coisa que ninguém olha.
+    status: open
+    controls:
+      - kind: local_path
+        ref: harness/change-proposals/CP-002-atualizar-a-carcaca.yaml
+      - kind: local_path
+        ref: harness/change-proposals/CP-003-virar-derivado-do-molde.yaml
