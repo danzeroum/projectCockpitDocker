@@ -194,3 +194,34 @@ def test_SUBIDA_continua_sem_escape():
     ruins = catraca.nao_regrediu(novo=novo, anterior=dict(BASE),
                                  declaradas={"meta:órfão": "x" * 60})
     assert any("eleva" in r for r in ruins)
+
+
+def test_declaracao_vive_UM_PR_e_a_poda_e_automatica(tmp_path, monkeypatch):
+    """A declaração tem prazo, e descobri isso levando reprovação.
+
+    Ela diz "esta categoria é nova EM RELAÇÃO À BASE, e eis o motivo". Assim que a base a absorve
+    — isto é, no PR seguinte —, a categoria deixou de ser nova e a declaração vira DECLARAÇÃO
+    MORTA, que `nao_regrediu` recusa pelo mesmo princípio das isenções desta casa.
+
+    `--gravar` preservava as declarações para sempre, então o PR seguinte reprovava carregando a
+    justificativa do anterior. Com `--anterior`, a poda é automática.
+    """
+    import json, subprocess, sys
+    base = tmp_path / "base.json"
+    base.write_text(json.dumps({"por_categoria": {"meta:órfão": 68, "lgpd:lgpd_judgment": 1}}),
+                    encoding="utf-8")
+
+    doc = json.loads((RAIZ / catraca.BASELINE).read_text(encoding="utf-8"))
+    doc["categorias_novas_declaradas"] = [
+        {"categoria": "lgpd:lgpd_judgment", "justificativa": "x" * 60}]
+    guardado = (RAIZ / catraca.BASELINE).read_text(encoding="utf-8")
+    (RAIZ / catraca.BASELINE).write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n",
+                                         encoding="utf-8")
+    try:
+        r = subprocess.run([sys.executable, "ci/catraca.py", "--gravar", "--anterior", str(base)],
+                           cwd=str(RAIZ), capture_output=True, text=True)
+        depois = json.loads((RAIZ / catraca.BASELINE).read_text(encoding="utf-8"))
+        assert depois["categorias_novas_declaradas"] == [], "a declaração absorvida não foi podada"
+        assert "podada" in r.stdout, "a poda tem de ser dita em voz alta, nunca silenciosa"
+    finally:
+        (RAIZ / catraca.BASELINE).write_text(guardado, encoding="utf-8")
