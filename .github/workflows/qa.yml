@@ -200,6 +200,11 @@ jobs:
           name: qa-reports
           path: harness/reports/
           if-no-files-found: ignore
+          # Declarado, e não deixado no default: sem esta linha a retenção efetiva da evidência
+          # vem de uma setting do GitHub — fora do repositório e fora do alcance de qualquer
+          # fiscal. 90 é project.yaml:governance.evidence_retention_days, e é o fiscal de LGPD
+          # que cobra a igualdade entre os dois números.
+          retention-days: 90
 
   # ---------------------------------------------------------------------------
   # Modos segregados. SÓ workflow_dispatch, disparados por pessoa. Agente/CI automático
@@ -325,3 +330,8 @@ jobs:
           name: fase-c-reports
           path: harness/reports/
           if-no-files-found: ignore
+          # Declarado, e não deixado no default: sem esta linha a retenção efetiva da evidência
+          # vem de uma setting do GitHub — fora do repositório e fora do alcance de qualquer
+          # fiscal. 90 é project.yaml:governance.evidence_retention_days, e é o fiscal de LGPD
+          # que cobra a igualdade entre os dois números.
+          retention-days: 90

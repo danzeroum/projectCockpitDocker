@@ -1,0 +1,81 @@
+# Parecer de proporcionalidade — não RIPD. A escolha é consequência, não preferência:
+# governance/data-inventory.yaml inventaria ZERO campos, e o julgamento exigido só sobe para RIPD
+# completo quando o primeiro campo entra. Emitir RIPD sobre um sistema sem campo inventariado seria
+# cerimônia com aparência de rigor.
+#
+# Schema: ../harness/schemas/privacy-review.schema.json
+# Recalcular o fingerprint: python ci/audit_lgpd.py --print-fingerprint
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+review:
+  kind: parecer_proporcionalidade
+  document: governance/parecer-proporcionalidade.md
+  produced_by: agent
+  skill: revisao-lgpd
+  scope_fingerprint: "sha256:0c4517619783e510fd0db53b6cb8572781e2ec64806a4b750b600121566c83df"
+
+  issues:
+    - id: RISCO-001
+      severity: P1
+      location: workspace/target/app/routers/containers.py:96
+      category: exposicao_incidental_em_log
+      lgpd_article: "Art. 6º, III (necessidade)"
+      pbd_principle: Privacy by Default
+      status: open
+      risk: RISK-ALVO-001
+      summary: >
+        `GET /api/containers/{id}/logs?tail=500` devolve a saída bruta de qualquer container do
+        host. O cockpit não decide o que a aplicação de terceiro escreve no stdout — então dado
+        pessoal chega aqui sem ter sido coletado por ninguém. É incidental por natureza e não por
+        configuração, o que significa que nenhum ajuste do cockpit o elimina: só a redução do que
+        se expõe (janela, autorização, retenção) muda o quadro.
+      consumed_by:
+        kind: risk
+        ref: RISK-ALVO-001
+
+    - id: RISCO-002
+      severity: P2
+      location: workspace/target/app/masking.py
+      category: mascaramento_incompleto
+      lgpd_article: "Art. 46 (segurança)"
+      pbd_principle: Segurança Ponta-a-Ponta
+      status: open
+      risk: RISK-SEGREDO-001
+      summary: >
+        A máscara é por NOME de chave, com sete termos
+        (`pass|secret|token|credential|apikey|_key$|private`) mais credencial embutida em URI.
+        Chaves como `authorization`, `pwd`, `jwt` ou `cookie` atravessam intactas — e o modo de
+        falha é o pior tipo, porque a saída VEM mascarada em outros campos e parece ter funcionado.
+      consumed_by:
+        kind: risk
+        ref: RISK-SEGREDO-001
+
+  # O GATILHO. Está aqui e não em prosa solta porque é a única parte deste parecer que muda o
+  # regime inteiro: `incidental` -> `operator` promove o julgamento a RIPD completo, exige
+  # encarregado (Art. 41) e os quatro endpoints do Art. 18. A condição é SISTEMÁTICO, não presente:
+  # um e-mail num stack trace é incidente; um pipeline que despeja registros de titulares no stdout
+  # de um container observado pelo cockpit é tratamento, e aí o papel mudou de fato.
+  #
+  # Quem observa: a varredura do léxico de ci/audit_lgpd.py sobre o alvo materializado, e qualquer
+  # achado da régua em modo passive quando houver host de homologação (hoje bloqueado por
+  # INCOMPLETE:target_url — ver THREAT-ALVO-SEM-HOMOLOGACAO).
+  # Como sobe: change-proposal alterando project.yaml:classification.lgpd_relevance e
+  # governance/data-inventory.yaml:controller.role no MESMO PR, com os campos inventariados.
+  not_assessed:
+    - >
+      GATILHO DECLARADO — se a varredura encontrar dado pessoal SISTEMÁTICO nos logs expostos (e não
+      incidental), `lgpd_relevance` sobe de `incidental` para `operator` por change-proposal, e o
+      data-inventory ganha campos. Enquanto for incidental, `incidental` é a resposta verdadeira.
+    - >
+      O ALVO NÃO FOI AUDITADO EM REDE. Nenhuma requisição foi emitida contra o cockpit publicado:
+      `danzeroum/docker` só expõe produção, e sem host de homologação os modos de rede são recusados
+      com SCOPE_MISSING (docs/laudo-adocao.md). Este parecer é leitura de código, não medição de
+      comportamento — e a diferença precisa ficar escrita, porque um parecer que não diz o que não
+      olhou é indistinguível de um que olhou tudo.
+    - >
+      OS COMPONENTES DO COCKPIT AINDA NÃO EXISTEM como metadado (fatias 2..n da CP-003). Sem eles,
+      `owning_component` não tem para onde apontar, e é por isso que `fields` está vazio em vez de
+      preenchido com um CMP-* inventado.

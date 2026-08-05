@@ -1,0 +1,58 @@
+# Inventário de dados pessoais do sistema governado — o Docker Cockpit em d6ae70ea.
+#
+# ZERO CAMPOS INVENTARIADOS, E ISSO É UM RESULTADO. O cockpit não coleta dado pessoal: não tem
+# cadastro, não tem perfil, não tem formulário. O que ele tem é uma rota que devolve a saída bruta
+# de containers de terceiros (`GET /api/containers/{id}/logs`,
+# workspace/target/app/routers/containers.py:96) — e log de aplicação alheia é onde dado pessoal
+# aparece POR ACIDENTE: e-mail em stack trace, IP em log de acesso, token em URL de query.
+#
+# Isso é exatamente `incidental`, e não `operator`: o cockpit não trata dado pessoal por conta de
+# ninguém, ele EXIBE o que outro processo escreveu. Inventariar um campo aqui hoje seria pior que
+# inútil — o primeiro campo inventariado promove o julgamento exigido de Parecer para RIPD completo,
+# passa a exigir encarregado (Art. 41) e os quatro endpoints de direitos do titular (Art. 18), e
+# `owning_component` exige um `CMP-*` que ainda não existe (as capacidades e componentes do cockpit
+# são as fatias 2..n da CP-003). Três travas disparariam sobre um campo inventado.
+#
+# O GATILHO DE PROMOÇÃO está declarado em governance/privacy-review.yaml, e não é convenção: se a
+# varredura encontrar dado pessoal SISTEMÁTICO nos logs — não incidental —, `lgpd_relevance` sobe
+# para `operator` por change-proposal, e este arquivo ganha campos.
+#
+# Schema: ../harness/schemas/data-inventory.schema.json
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+controller:
+  # Espelha project.yaml:classification.lgpd_relevance, arbitrado em 2026-08-05.
+  role: incidental
+
+purposes:
+  - id: PURP-001
+    description: >
+      Observar containers, imagens, redes, volumes e eventos do daemon Docker de um host, e expor
+      esse estado numa interface somente-leitura mais as mutações operacionais explicitamente
+      destravadas. Nenhuma finalidade envolve pessoa natural: o objeto observado é infraestrutura.
+    legal_basis: legitimo_interesse
+
+fields: []
+
+# Nulos porque não há campo a exercer direito sobre. Não é omissão: é a consequência declarada de
+# `fields: []`. No dia em que o primeiro campo entrar, o schema do molde passa a exigir os quatro
+# endpoints preenchidos, e é assim que a promessa fica presa ao fato.
+subject_rights:
+  confirmation: null
+  access: null
+  deletion: null
+  portability: null
+
+scan:
+  # VAZIO, e isto é resultado. Escrevi três exclusões defensivas — laudo histórico, código do alvo,
+  # o próprio threat-model — e o fiscal do molde recusou as três: "exclusão morta: não suprime
+  # achado algum — isenção que não protege nada só serve para parecer limpo". Ele está certo, e a
+  # recusa é a razão de a lista ficar vazia em vez de decorativa.
+  #
+  # Suprimir continua sendo DECLARAR, nunca apagar termo do léxico. Só que não há o que declarar:
+  # o léxico não acusa nada aqui hoje. No dia em que acusar um falso positivo, a exclusão nasce
+  # com o achado que ela suprime — que é a única forma de ela não ser mentira.
+  exclusions: []

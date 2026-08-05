@@ -97,6 +97,10 @@ risks:
     treatment: prevent
     owner: security_owner
     status: open
+    # 03/11/2026, a mesma data dos gêmeos do molde (RISK-EXT-001, RISK-CHANGE-002,
+    # RISK-INCUBA-001). Convergir os calendários é deliberado: risco com data própria é
+    # risco revisado sozinho, e revisado sozinho é esquecido.
+    due: "2026-11-03"
     controls:
       - kind: local_path
         ref: tests/qa/config.yaml
@@ -164,8 +168,18 @@ risks:
     # roda. Marcar como mitigado seria o próprio defeito que o risco descreve — dizer que se
     # olha para uma coisa que ninguém olha.
     status: open
+    # 03/11/2026, a mesma data dos gêmeos do molde (RISK-EXT-001, RISK-CHANGE-002,
+    # RISK-INCUBA-001). Convergir os calendários é deliberado: risco com data própria é
+    # risco revisado sozinho, e revisado sozinho é esquecido.
+    due: "2026-11-03"
     controls:
       - kind: local_path
         ref: harness/change-proposals/CP-002-atualizar-a-carcaca.yaml
       - kind: local_path
         ref: harness/change-proposals/CP-003-virar-derivado-do-molde.yaml
+
+# Ativos que deliberadamente NÃO precisam de risco associado. Vazia, e a lista vazia é declaração
+# válida: hoje toda capacidade e componente deste repositório está coberta. A propriedade que
+# torna isto honesto é a mesma das isenções de componente — isenção que não casa ativo algum é ela
+# própria um achado, então a lista não pode ser usada para fazer a cobertura parecer fechada.
+risk_exemptions: []
