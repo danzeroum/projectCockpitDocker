@@ -12,12 +12,15 @@ graph TD
   PROJ_danzeroum_projectcockpitdocker["danzeroum-projectcockpitdocker"]
   TEST_tests_e2e_test_checklist_adocao_py{{"test_checklist_adocao.py"}}
   TEST_tests_e2e_test_cli_laudo_py{{"test_cli_laudo.py"}}
+  TEST_tests_integration_test_fase_c_py{{"test_fase_c.py"}}
   TEST_tests_integration_test_homologacao_py{{"test_homologacao.py"}}
   TEST_tests_integration_test_repositorio_py{{"test_repositorio.py"}}
   TEST_tests_integration_test_workflows_py{{"test_workflows.py"}}
   TEST_tests_unit_test_contrato_py{{"test_contrato.py"}}
+  TEST_tests_unit_test_escopo_regua_py{{"test_escopo_regua.py"}}
   TEST_tests_unit_test_plano_py{{"test_plano.py"}}
   TEST_tests_unit_test_procedencia_py{{"test_procedencia.py"}}
+  TEST_tests_unit_test_veredito_py{{"test_veredito.py"}}
   CAP_ALVO["CAP-ALVO<br/>Auditoria do Docker Cockpit publicado"]
   PROJ_danzeroum_projectcockpitdocker -->|capacidade| CAP_ALVO
   CAP_CONTRATO["CAP-CONTRATO<br/>Conformidade com o contrato de consumo"]
@@ -38,6 +41,12 @@ graph TD
   CMP_CONTRATO -.->|implementa| REQ_001
   CMP_CONTRATO -.->|testa| TEST_tests_integration_test_repositorio_py
   CMP_CONTRATO -.->|testa| TEST_tests_unit_test_contrato_py
+  CMP_FASE_C["CMP-FASE-C<br/>escopo_regua.py"]
+  CMP_FASE_C -->|realiza| CAP_ALVO
+  CMP_FASE_C -->|depende| CMP_CONTRATO
+  CMP_FASE_C -.->|testa| TEST_tests_integration_test_fase_c_py
+  CMP_FASE_C -.->|testa| TEST_tests_unit_test_escopo_regua_py
+  CMP_FASE_C -.->|testa| TEST_tests_unit_test_veredito_py
   CMP_PLANO["CMP-PLANO<br/>plano.py"]
   CMP_PLANO -->|realiza| CAP_MODOS
   CMP_PLANO -->|depende| CMP_CONTRATO
@@ -183,6 +192,7 @@ graph TD
   RISK_DEP_001["RISK-DEP-001"]
   RISK_HOMOLOG_001["RISK-HOMOLOG-001"]
   RISK_META_001["RISK-META-001"]
+  RISK_MOLDE_001["RISK-MOLDE-001"]
   RISK_SEGREDO_001["RISK-SEGREDO-001"]
   RISK_WEBQA_001["RISK-WEBQA-001"]
   ADR_001["ADR-001"]
@@ -216,7 +226,7 @@ graph TD
   classDef cap fill:#2563eb,stroke:#1e40af,color:#fff;
   class CAP_ALVO,CAP_CONTRATO,CAP_MODOS,CAP_PROCEDENCIA cap;
   classDef cmp fill:#0891b2,stroke:#0e7490,color:#fff;
-  class CMP_CLI,CMP_CONTRATO,CMP_PLANO,CMP_PROCEDENCIA cmp;
+  class CMP_CLI,CMP_CONTRATO,CMP_FASE_C,CMP_PLANO,CMP_PROCEDENCIA cmp;
   classDef ifc fill:#7c3aed,stroke:#5b21b6,color:#fff;
   class IFC_CLI,IFC_CONTRATO,IFC_PLANO,IFC_PROCEDENCIA ifc;
   classDef rule fill:#16a34a,stroke:#15803d,color:#fff;
@@ -228,9 +238,9 @@ graph TD
   classDef met fill:#ea580c,stroke:#c2410c,color:#fff;
   class MET_COMPARAVEL,MET_FRONTEIRA,MET_PENDENCIA met;
   classDef test fill:#57534e,stroke:#44403c,color:#fff;
-  class TEST_tests_e2e_test_checklist_adocao_py,TEST_tests_e2e_test_cli_laudo_py,TEST_tests_integration_test_homologacao_py,TEST_tests_integration_test_repositorio_py,TEST_tests_integration_test_workflows_py,TEST_tests_unit_test_contrato_py,TEST_tests_unit_test_plano_py,TEST_tests_unit_test_procedencia_py test;
+  class TEST_tests_e2e_test_checklist_adocao_py,TEST_tests_e2e_test_cli_laudo_py,TEST_tests_integration_test_fase_c_py,TEST_tests_integration_test_homologacao_py,TEST_tests_integration_test_repositorio_py,TEST_tests_integration_test_workflows_py,TEST_tests_unit_test_contrato_py,TEST_tests_unit_test_escopo_regua_py,TEST_tests_unit_test_plano_py,TEST_tests_unit_test_procedencia_py,TEST_tests_unit_test_veredito_py test;
   classDef adr fill:#ca8a04,stroke:#a16207,color:#fff;
   class ADR_001,ADR_002,ADR_003,ADR_004,ADR_005,ADR_006,ADR_007 adr;
   classDef risk fill:#dc2626,stroke:#991b1b,color:#fff;
-  class RISK_ALVO_001,RISK_CHANGE_001,RISK_DEP_001,RISK_HOMOLOG_001,RISK_META_001,RISK_SEGREDO_001,RISK_WEBQA_001 risk;
+  class RISK_ALVO_001,RISK_CHANGE_001,RISK_DEP_001,RISK_HOMOLOG_001,RISK_META_001,RISK_MOLDE_001,RISK_SEGREDO_001,RISK_WEBQA_001 risk;
 ```

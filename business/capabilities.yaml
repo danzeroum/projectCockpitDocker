@@ -77,16 +77,26 @@ capabilities:
     name: "Auditoria do Docker Cockpit publicado"
     # planned, não verified: deste lado ela é auditoria A EXECUTAR, e segue bloqueada por
     # INCOMPLETE:target_url (ADR-006) até o ambiente subir. O CÓDIGO do alvo continua em
-    # danzeroum/docker (ADR-007, que manteve essa parte da ADR-005) — por isso source_paths
-    # está vazio: o que mora aqui é a BANCADA (deploy/homologacao/), não o produto, e
-    # bancada não é source_path de capacidade.
+    # danzeroum/docker (ADR-007, que manteve essa parte da ADR-005), e a BANCADA
+    # (deploy/homologacao/) não é source_path de capacidade.
+    #
+    # `source_paths` deixou de ser vazio quando a fase C ganhou peças NOSSAS: traduzir o
+    # escopo entre os dois schemas de mesmo nome e emitir o veredito que a régua não emite.
+    # Elas rodam de verdade (medidas na bancada), mas a CAPACIDADE segue `planned` porque o
+    # que falta não é código — é alvo declarado. Promovê-la a `verified` por causa do código
+    # seria dizer que se audita um host que ninguém declarou.
     status: planned
     owners:
       business_owner: danzeroum
       technical_owner: danzeroum
     risk_level: high
-    source_paths: []
+    source_paths:
+      - src/cockpit_harness/escopo_regua.py
+      - src/cockpit_harness/veredito.py
     test_paths:
       - tests/integration/test_homologacao.py
+      - tests/integration/test_fase_c.py
+      - tests/unit/test_escopo_regua.py
+      - tests/unit/test_veredito.py
     business_rules:
       - business/rules/homologacao.yaml
