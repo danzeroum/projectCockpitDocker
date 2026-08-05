@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "comentario": "Contagem de achados por categoria. Baseline da catraca (ci/catraca.py): este repositório está em incubação e vermelho de propósito; o que a catraca garante é que o vermelho não cresce. Regravar para CIMA é recusado pelo workflow, que compara este arquivo com o da branch base.",
+  "total": 299,
+  "por_categoria": {
+    "governance:adr_meta": 6,
+    "governance:agent_pairing": 5,
+    "governance:change_buffer": 3,
+    "governance:external_audit": 1,
+    "governance:policy_pointer": 2,
+    "governance:protected_path": 1,
+    "governance:stage_coverage": 3,
+    "governance:stage_partition": 4,
+    "meta:I4": 6,
+    "meta:I5": 8,
+    "meta:REQ": 8,
+    "meta:estrutural": 13,
+    "meta:falta": 6,
+    "meta:regra": 24,
+    "meta:teste órfão": 76,
+    "meta:órfão": 133
+  }
+}

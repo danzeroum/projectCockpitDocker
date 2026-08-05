@@ -128,3 +128,22 @@ def test_o_baseline_ainda_bate_com_a_medicao():
     doc = json.loads((RAIZ / catraca.BASELINE).read_text(encoding="utf-8"))
     v = catraca.comparar(atual=catraca.medir(), baseline=doc["por_categoria"])
     assert v.segurou, "\n".join(v.motivos)
+
+
+def test_o_baseline_esta_VERSIONADO_e_nao_so_no_disco():
+    """A trava contra o modo de falha que já custou três correções nesta série.
+
+    `.gitignore` tem `harness/state/*` — evidência derivada não se versiona. O baseline NÃO é
+    derivado: é fonte de verdade, como o ledger. Sem a exceção explícita, `git add -A` pula o
+    arquivo em SILÊNCIO, o commit sai limpo, e a catraca chega ao runner reclamando de um arquivo
+    que existe na máquina de quem a escreveu. Foi exatamente o que aconteceu no PR que a instituiu.
+
+    O teste olha o índice do git, não o disco — que é a diferença entre "existe aqui" e "existe
+    para quem for rodar isto".
+    """
+    import subprocess
+    r = subprocess.run(["git", "-C", str(RAIZ), "ls-files", "--error-unmatch", catraca.BASELINE],
+                       capture_output=True, text=True)
+    assert r.returncode == 0, (
+        f"{catraca.BASELINE} não está versionado — provavelmente engolido por `harness/state/*` "
+        f"no .gitignore. A exceção precisa ser explícita, como a do ledger.")

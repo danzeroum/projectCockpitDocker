@@ -11,6 +11,12 @@ harness/state/*
 # existe onde escrever dado pessoal. Minimização estrutural, não promessa.
 !harness/state/ledger.jsonl
 
+# Baseline da catraca (ci/catraca.py). Pela MESMA razão do ledger acima: `harness/state/*` ignora
+# evidência derivada, e estes dois não são derivados — são fonte de verdade versionada. Sem esta
+# linha o `git add -A` pula o arquivo em silêncio e a catraca chega ao runner sem o baseline que
+# ela existe para comparar. Aconteceu, no primeiro PR que a instituiu.
+!harness/state/baseline-achados.json
+
 # Código do ALVO materializado por ci/bootstrap.py no SHA de target.lock. Não é versionado
 # porque o derivado DECLARA o alvo e nunca o copia (ADR-008): uma cópia versionada derivaria do
 # original em silêncio, e o metadado passaria a descrever um sistema que não existe mais.
