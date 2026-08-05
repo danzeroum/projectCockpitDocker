@@ -12,7 +12,7 @@ generated_from: null
 review:
   produced_by: agent
   agent: conformance
-  scope_fingerprint: "sha256:e9b42e08aa3ba9783fe2cbbf6d1d6d06a03df930c9ac9e90d044610d6a3376a2"
+  scope_fingerprint: "sha256:29e57912ddae8f6fbd8912205dbd5dd9229c840c105586f281592cbd14172987"
 
   findings:
     - id: CONF-001
@@ -101,15 +101,41 @@ review:
     - id: CONF-006
       severity: low
       summary: >
-        `app/static/js/notificacoes.js` e `app/static/js/notifications.js` coexistem — dois
-        arquivos com o mesmo nome em idiomas diferentes. É candidato a código morto e está listado
-        em vez de resolvido: decidir qual morre é leitura de domínio do dono do produto, e apagar
-        por palpite num alvo que este repositório não pode consertar seria pior que declarar.
+        CORRIGIDO POR MEDIÇÃO — o achado anterior estava errado, e o erro era meu. Eu havia
+        registrado `notificacoes.js` e `notifications.js` como "candidato a código morto",
+        inferindo de nomes confundíveis. Medido: NÃO são duplicatas, são módulos com
+        responsabilidades distintas. `notifications.js` (304 linhas) é a camada de toast e modal —
+        `showToast`, `showAckModal`, `showUnlockModal` —, referenciada por seis arquivos incluindo
+        `main.js` e quatro telas. `notificacoes.js` (87 linhas) é o SELO "notificado hh:mm · canal"
+        ao lado do achado (B7), referenciado por uma tela e importando o outro. Nenhum é morto.
+        O que sobra é risco de LEITURA, e ele é real: `screens/attention.js` importa os dois em
+        linhas adjacentes, e quem ler depressa vai achar que uma das duas é sobra. É achado de
+        nomenclatura para o canal de retorno do alvo, não de remoção — e a evidência é a contagem
+        de referências acima, não a semelhança dos nomes.
       disposition: accepted
       rationale: >
-        Ambos estão declarados em CMP-UI-INFRA e nenhum é órfão, então a governança não perde
-        cobertura. O que fica registrado é a suspeita, com o endereço exato — que é o que um
-        derivado pode oferecer sobre o alvo sem escrever nele.
+        Registrar a correção em vez de reescrever o achado é deliberado: o erro de método importa
+        mais que o resultado. Eu inferi de nome num repositório cuja disciplina inteira é medir
+        antes de afirmar — e é a mesma classe da quarta reincidência, âncora na menção em vez de
+        no fato. A decisão do dono do produto sobre renomear um dos dois é obra no alvo.
+
+    - id: CONF-007
+      severity: medium
+      summary: >
+        A ISENÇÃO DE APOIO DE TESTE NÃO É EXPRESSÁVEL na carcaça v1.0.0, e isto foi medido ao
+        tentar executá-la. `architecture/components.yaml:exemptions` cobre "arquivos sob
+        code_roots"; `check_orphan_code` é o único fiscal que a lê. Os dez arquivos de apoio
+        (conftest, requirements-test, dois stubs de DOM, três .conf de nginx, um snapshot e dois
+        shims de deploy) vivem sob TEST_ROOTS, e `check_orphan_tests` não consulta `exemptions`.
+        Declará-los produziu exatamente dez achados de "isenção morta" — a própria trava do molde
+        recusando a declaração — e zero redução nos dez `teste órfão`. Líquido: +10.
+        Não existe, na carcaça, instrumento para "arquivo de apoio de teste, declarado, que não é
+        teste". Os dez ficam contados como dívida VISÍVEL, que é o segundo melhor estado.
+      disposition: change_proposal
+      ref: harness/change-proposals/CP-003-virar-derivado-do-molde.yaml
+      consumed_by:
+        kind: change_proposal
+        ref: CP-003
 
   not_assessed:
     - >
