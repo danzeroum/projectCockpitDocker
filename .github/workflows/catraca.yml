@@ -1,0 +1,73 @@
+name: catraca da ingestão
+
+# Este repositório está em INCUBAÇÃO e vermelho de propósito: virou `derived` com 299 achados,
+# dos quais 209 são o mapa de componentes e testes de um sistema real que ainda não foi autorado.
+# A doutrina do molde diz que isso é correto — `/ingerir` é o caminho do vermelho ao verde, e o
+# ADR-019 chama o vermelho de mapa.
+#
+# O que a doutrina NÃO dá é a garantia de que o mapa encolhe, e é isso que este workflow guarda.
+# Sem ele, "vermelho declarado" e "vermelho esquecido" são o mesmo estado observável — e um
+# achado novo dentro de um CI já vermelho não é notado por ninguém.
+#
+# Ele NÃO substitui a validação total. `governance.yml` continua rodando `ci/validate_all.py` e
+# continua vermelho: é o mapa, e apagá-lo para o CI ficar bonito seria trocar o problema pelo
+# silêncio sobre o problema. Este job responde outra pergunta, e só ela: *o mapa encolheu ou
+# cresceu?*
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  catraca:
+    runs-on: ubuntu-latest
+    steps:
+      # fetch-depth: 0 é necessário: o passo decisivo compara o baseline DESTE PR com o da branch
+      # base, e um clone raso não tem a base para comparar.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r requirements-ci.txt
+
+      # Sem o alvo materializado as invariantes de órfão ficam SILENCIOSAS — e uma catraca que
+      # mede um repositório sem o alvo mediria 65 em vez de 299 e chamaria isso de progresso.
+      # Foi assim que a primeira medição desta migração errou por 4x.
+      - name: Materializar o alvo
+        run: |
+          python ci/bootstrap.py --only-workspace || {
+            echo "::error::materialização do alvo falhou — sem ela a catraca mede o repositório errado."
+            exit 2
+          }
+
+      # O baseline da BASE, não o do PR. Comparar o baseline com ele mesmo deixaria a fraude
+      # óbvia passar: subir o contador e regravar o baseline no mesmo commit.
+      - name: Trazer o baseline da branch base
+        id: base
+        run: |
+          alvo="${{ github.event.pull_request.base.sha || 'HEAD^' }}"
+          if git show "$alvo:harness/state/baseline-achados.json" > /tmp/baseline-anterior.json 2>/dev/null; then
+            echo "existe=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "existe=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::a base não tem baseline — este é o PR que o institui, e não há contra o que comparar."
+          fi
+
+      - name: A catraca segurou?
+        run: |
+          if [ "${{ steps.base.outputs.existe }}" = "true" ]; then
+            python ci/catraca.py --anterior /tmp/baseline-anterior.json
+          else
+            python ci/catraca.py
+          fi
+
+      - name: Mordidas da catraca
+        run: python -m pytest tests/integration/test_catraca.py -q

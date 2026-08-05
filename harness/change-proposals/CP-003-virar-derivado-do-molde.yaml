@@ -180,6 +180,71 @@
 #   (b) metadados autorados    — os seis, do sistema real
 #   (c) renumeração dos ADRs   — mecânica
 # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+# ─────────────────────────────────────────────────────────────────────────────────────────────
+# EMENDA 3 (2026-08-05, noite): EXECUTADA na parte estrutural. E o número mudou de tamanho outra
+# vez, pelo mesmo tipo de erro que já custou duas correções nesta série.
+#
+# A EMENDA 2 mediu 68 achados SEM `workspace/target/` materializado. Sem o alvo no disco, as
+# invariantes de órfão não têm o que percorrer e ficam CALADAS — não reprovam, não avisam, não
+# aparecem. Com o alvo de verdade em d6ae70ea:
+#
+#     [órfão] .............. 133   cada arquivo de app/ precisa de componente ou isenção
+#     [teste órfão] .........  76   cada arquivo de tests/ precisa ser referenciado
+#     [regra][REQ][I4][I5] ..  46   as declarações antigas, a reancorar
+#     [estrutural][falta] ...  19   carcaça
+#     ─────────────────────────
+#     validate_metadata .... 274
+#     audit_governance ......  25   (adr_meta, agent_pairing, change_buffer, stage_*, ...)
+#     ─────────────────────────
+#     TOTAL ................ 299
+#
+# 68 -> 299 não é o repositório piorando: é a medição passando a enxergar. E vale registrar o
+# padrão, porque ele se repetiu três vezes nesta migração — fixture que herda estado, workspace
+# ausente, laudo antigo. Um fiscal que não alcança o que deveria medir reporta VERDE, e verde por
+# não ter olhado é indistinguível de verde por estar certo.
+#
+# O VERMELHO É O MAPA, E AGORA TEM CATRACA. O molde já diz que derivado em incubação nasce
+# vermelho e que `/ingerir` é o caminho até o verde. O que ele não dá é a garantia de que o mapa
+# ENCOLHE — e dentro de um CI já vermelho, um achado novo não é notado por ninguém. `ci/catraca.py`
+# fecha isso: o baseline por categoria fica versionado em `harness/state/baseline-achados.json`, e
+# o workflow recusa SUBIDA e CATEGORIA NOVA.
+#
+# Duas propriedades dela, escolhidas e não herdadas:
+#
+#   - compara por IGUALDADE, não por teto. Teto deixaria o baseline alto para sempre: o primeiro
+#     PR desce 40, ninguém regrava, e o seguinte sobe 40 de volta sem a catraca girar. Exigir
+#     igualdade força quem desce a regravar, e o diff do baseline é o registro de que girou.
+#   - o baseline do PR é conferido contra o da BASE. Sem isso bastaria subir o contador e regravar
+#     no mesmo commit: o arquivo passaria a descrever fielmente um repositório pior.
+#
+# Ela NÃO exige descida por PR. Exigir pedágio faria alguém apagar uma declaração para pagá-lo,
+# que é o oposto do que se quer.
+#
+# GAP DO MOLDE, NOMEADO E NÃO CONTORNADO: a v1.0.0 tem modo de incubação, mas ele é ESTREITO —
+# `audit_governance.py::check_stage_coverage` respeita `lifecycle: incubating`, e mais nada. As
+# invariantes de ingestão de `validate_metadata` (órfão, teste órfão, regra, REQ, I4, I5) não o
+# consultam, e `audit_lgpd` só registra o campo. Resultado: um derivado em incubação não tem, na
+# carcaça, nenhum estado em que `validate_all` não seja vermelho. Isso vira CP no molde — junto
+# com o truncamento de 12 chars da mensagem de manifest_sha — e não gambiarra aqui. Não bloqueia
+# esta execução porque a `main` deste repositório não tem required checks: o vermelho pousa, e a
+# catraca é o gate real.
+#
+# O QUE PASSOU A SER VERDADE, conferido de dentro do derivado:
+#
+#     cadeia tag->commit->manifesto->hash ... 0 elos rompidos
+#     borda: manifest_sha adulterado ........ 1 elo rompido
+#     orient.py ............................. papel derived, alvo d6ae70eafee9, workspace materializado
+#
+# ORDEM REVISADA DO QUE FALTA, e a revisão é uma escolha, não um deslize: as (b) e (c) que a
+# arbitragem punha neste PR — os seis metadados autorados, as asserções dos 6 ADRs, a renumeração
+# — todas REDUZEM o contador. Pô-las aqui as tiraria da catraca justamente no PR que a institui.
+# Elas passam a ser as primeiras fatias de autoria, medidas pela catraca como todas as outras.
+#
+#   PR-1 (este) ... carcaça, kind derived, âncora, baseline de 299, catraca
+#   PR-2 .......... os seis metadados autorados do sistema real + asserções de ADR + renumeração
+#   PR-3+ ......... os 209: componentes reais do app/ e os testes que os exercitam
+# ─────────────────────────────────────────────────────────────────────────────────────────────
 #
 # Schema: harness/schemas/change-proposal.schema.json · Fiscal: ci/validate_metadata.py
 schema_version: "1.0"
