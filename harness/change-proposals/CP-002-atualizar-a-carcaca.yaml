@@ -58,6 +58,37 @@
 # testes PRÓPRIOS que também governa um alvo", e é isso que este repositório é. A escolha real
 # está na CP-003, e não há meio-caminho que a evite.
 # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+# ─────────────────────────────────────────────────────────────────────────────────────────────
+# EMENDA 2 (2026-08-05, tarde): medição refeita contra a RELEASE v1.0.0 do molde, e não contra o
+# `6ce9309` da emenda anterior. Os números mudam de tamanho e não mudam de conclusão.
+#
+# Transplante da carcaça v1.0.0 sobre uma cópia deste repositório, fiscais da v1.0.0 rodados:
+#
+#                          achados   reancoragem                                   carcaça
+#   kind: derived .......    68      47  (24 regra + 8 REQ + 8 I5 + 6 I4 + 1 inv.)     21
+#   kind: mold ..........    42      21  INFECHÁVEIS                                   21
+#
+# Os 21 infecháveis do `kind: mold` batem EXATAMENTE com o número que a emenda anterior previu
+# medindo outro commit. Duas medições independentes, contra árvores diferentes, mesmo resultado:
+# a leitura "CP-002 sem CP-003" continua sem saída, e agora está confirmada contra a versão
+# publicada em vez de contra um commit de trabalho.
+#
+# O QUE FECHA A PORTA DE VEZ, e não estava na emenda anterior: `target-lock.schema.json` da
+# v1.0.0 trava `mold_release` nos dois sentidos —
+#
+#     if kind == "derived"  then required: [mold_release]
+#     else                       mold_release: {"type": "null"}
+#
+# Ou seja, ancorar este repositório numa versão do molde é ESTRUTURALMENTE IMPOSSÍVEL enquanto
+# `kind` não for `derived`. O `/atualizar-carcaca` da v1.0.0 diz a mesma coisa na primeira linha:
+# "Pare antes de começar se project.yaml:project.kind não for derived". Não existe atualizar a
+# carcaça e adiar a CP-003: a âncora é a CP-003.
+#
+# STATUS: esta proposta permanece BLOQUEADA e é ABSORVIDA pela CP-003. O trabalho de carcaça que
+# ela descreve (os 21 achados estruturais) vai junto com a reancoragem, porque nenhum dos dois
+# atravessa sozinho.
+# ─────────────────────────────────────────────────────────────────────────────────────────────
 #
 # Schema: harness/schemas/change-proposal.schema.json · Fiscal: ci/validate_metadata.py
 schema_version: "1.0"
@@ -67,7 +98,7 @@ generated_from: null
 
 proposal:
   id: CP-002
-  title: "BLOQUEADA — atualizar a carcaça sem decidir a CP-003 não é possível (ver emenda)"
+  title: "ABSORVIDA pela CP-003 — atualizar a carcaça sem ancorar não é possível (ver emendas)"
   author_kind: agent
   created_at: "2026-08-05T00:00:00Z"
   # As quatro, e não por inflação: os schemas que validam capacidade, regra, requisito e

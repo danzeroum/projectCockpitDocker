@@ -79,6 +79,107 @@
 #
 # Nada foi ancorado, nada foi removido, nenhuma escrita foi feita no alvo.
 # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+# ─────────────────────────────────────────────────────────────────────────────────────────────
+# EMENDA 2 (2026-08-05, tarde): APROVADA PARA EXECUÇÃO por danzeroum, com as seis decisões
+# arbitradas abaixo. E com uma correção à própria proposta, medida e não opinada.
+#
+# 1. A SAÍDA MAIS BARATA QUE ESTA PROPOSTA OFERECEU NÃO EXISTE.
+#
+#    O rationale acima diz: "ou o cockpit_harness vira isenção declarada com justificativa em
+#    components.yaml:exemptions (honesto, e assume a perda)". Lido o schema da v1.0.0:
+#
+#      exemptions: "Arquivos sob code_roots que deliberadamente NÃO pertencem a componente algum.
+#                   (...) isenção que não casa arquivo nenhum é ela própria um achado, porque
+#                   serve só para fazer a cobertura parecer fechada."
+#
+#    A direção é a OPOSTA da que a proposta presumiu. `exemptions` dispensa um ARQUIVO de ter
+#    componente; não dispensa um COMPONENTE de apontar para arquivo que existe. E isentar
+#    `src/cockpit_harness/` sob raiz `workspace/target/app/` casaria zero arquivos — viraria
+#    achado por si só. Das duas opções submetidas a aval, uma era inexistente; sobrou a divisão.
+#
+# 2. MEDIÇÃO CONTRA A v1.0.0 (ver EMENDA 2 da CP-002): 68 achados com `kind: derived`, dos quais
+#    47 são a reancoragem e 21 são carcaça. Os 47 têm todos a mesma forma —
+#
+#      [I4] CAP-CONTRATO: source_path fora das raízes declaradas ['workspace/target/app/']:
+#           src/cockpit_harness/contrato.py
+#
+#    — e são 77 referências em business/, architecture/ e design/. Este é o mapa da migração, no
+#    sentido do ADR-019 do molde: vermelho que descreve trabalho, não defeito.
+#
+# 3. RECONHECIMENTO DO ALVO, RECONFERIDO CONTRA O REMOTO (a política proíbe presumir; atualizar
+#    com prova é outra coisa):
+#
+#      HEAD de danzeroum/docker ... d6ae70eafee925e70f768f9c303229eb5673b6ba
+#      branch padrão .............. main   (git symbolic-ref, não assumido)
+#      delta desde o passo 2 ...... NENHUM — o SHA do reconhecimento continua sendo o HEAD
+#
+#    Não há delta a registrar. O reconhecimento de 2026-08-05 vale como está.
+#
+# 4. CADEIA DA v1.0.0 VERIFICADA CONTRA OS OBJETOS REMOTOS, ANTES DE QUALQUER ESCRITA:
+#
+#      tag v1.0.0            -> commit  5631106937d7...
+#      pai do commit release ->         9b8071c146e2...
+#      manifesto declara validado       9b8071c146e2...   (o manifesto declara o PAI)
+#      sha256 dos bytes do manifesto    8d5986b6ad3c...a84708
+#      commit de release toca           ['harness/releases/v1.0.0.manifest.json'] e nada mais
+#      => 0 elos rompidos.  Borda conferida: 1 dígito trocado no manifest_sha => 1 elo rompido.
+#
+# 5. DESTINO DO src/cockpit_harness/ — a divisão, com a auditoria de redundância que a decisão
+#    exige. E ela INVERTE o exemplo com que a decisão veio ("veredito/exit-codes morre"):
+#
+#      módulo            a carcaça v1.0.0 cobre?                                       destino
+#      ────────────────  ────────────────────────────────────────────────────────────  ───────
+#      contrato.py       SIM em parte: harness_lib.exact_pin (pin único, com ==) e     divide
+#                        audit_governance (proibição de webqa/, checks/, data/)
+#      procedencia.py    SIM em parte: report.schema.json e provenance.schema.json     divide
+#                        são da carcaça; a validação do envelope morre
+#      codigos.py        NÃO: o contrato do molde tem a tabela §6 EM PROSA, e sem os      vai
+#                        códigos 22/23, que nasceram de medição nossa
+#      veredito.py       NÃO: o molde não roda a suíte nem traduz laudo inconclusivo     vai
+#                        em exit != 0
+#      escopo_regua.py   NÃO: tradução entre dois escopo-autorizado.yaml de schemas      vai
+#                        incompatíveis
+#      plano.py          NÃO: execution_modes é DECLARADO no harness.yaml do molde,      vai
+#                        e nenhum fiscal de lá decide "este runner pode disparar este modo"
+#      cli.py/__main__   NÃO                                                             vai
+#
+#    O EXEMPLO DA DECISÃO ESTAVA INVERTIDO, e registrar isso importa mais que o resultado.
+#    `veredito.py` existe por um defeito MEDIDO na régua: `webqa.sondagem` sai 0 mesmo quando o
+#    laudo diz `inconclusivo: true` / `abortado_por: circuit-breaker`. Um gate de CI lê o código
+#    de saída, não o JSON — e receberia "limpo" de um run que não mediu nada. A carcaça v1.0.0
+#    não cobre isso porque não é problema dela: ela não executa a régua. Matar `veredito` por ser
+#    "o que a carcaça já cobre" restauraria em silêncio exatamente o buraco que ele fecha.
+#
+#    A REGRA da decisão ("o que a carcaça já cobre morre; o resto vai") foi aplicada como escrita.
+#    Só o exemplo não sobreviveu à medição.
+#
+# 6. AS DEMAIS DECISÕES ARBITRADAS:
+#
+#      data_classification .... confidential   (log de container pode carregar dado pessoal; na
+#                                               dúvida, a classe mais protetiva)
+#      lgpd_relevance ......... incidental      COM GATILHO DECLARADO no privacy-review: se o
+#                                               data-inventory encontrar dado pessoal sistemático
+#                                               nos logs, sobe para `operator` via CP
+#      seis metadados ......... AUTORAR do sistema real (reconhecimento + laudo), maturidade
+#                               honesta, cada um submetido a aval no PR. Copiar do molde está
+#                               proibido: a EMENDA 1 da CP-002 mediu 9 achados fantasma, e um
+#                               threat-model de mentira é pior que nenhum.
+#      asserções dos 6 ADRs ... rascunhadas do que cada decisão promete; decisão sem promessa
+#                               executável é LISTADA no PR, nunca inventada
+#      due dos 2 riscos ....... 2026-11-03, convergindo com RISK-EXT-001 e RISK-CHANGE-002 do
+#                               molde — datas separadas fazem a segunda ser esquecida
+#      renumeração ADR ........ mecânica, executar (35 referências em 17 arquivos)
+#
+# 7. O QUE CONTINUA INTOCÁVEL: docs/laudo-adocao.json, docs/laudo-adocao.md e docs/ADOCAO.md.
+#    São registro histórico da adoção antiga, não descrição do presente. Reescrevê-los para
+#    caber no schema novo seria apagar a evidência de como o repositório chegou aqui.
+#
+# EXECUÇÃO EM PRs FATIADOS, cada um verde sozinho:
+#   (a) reancoragem estrutural — kind, target, target.lock, workspace/, carcaça
+#   (b) metadados autorados    — os seis, do sistema real
+#   (c) renumeração dos ADRs   — mecânica
+# ─────────────────────────────────────────────────────────────────────────────────────────────
 #
 # Schema: harness/schemas/change-proposal.schema.json · Fiscal: ci/validate_metadata.py
 schema_version: "1.0"
