@@ -36,6 +36,16 @@ HISTORICO = {"docs/laudo-adocao.md", "docs/laudo-adocao.json", "docs/ADOCAO.md",
 # Caminho local, significado do molde: desambiguados em vez de renumerados.
 AMBIGUAS = {"security/threat-model.yaml", "governance/conformance-review.yaml"}
 
+# ESTE ARQUIVO. Ele DEFINE o padrão `ADR-00[567]`, então casa consigo mesmo — e a primeira versão
+# não se excluía. Passou assim mesmo, porque na primeira execução ainda não estava versionado e
+# `git ls-files` não o via: verde pelo motivo errado, que é o estado que esta casa mais recusa.
+#
+# É a quarta ocorrência da mesma classe nesta migração: ADR-026-A6 no molde, o comentário sobre a
+# flag administrativa, o `docker.danzeroum.com` no config, e agora esta. O padrão do erro é sempre
+# o mesmo — escrevo a proibição contra a MENÇÃO em vez de contra o FATO, e o documento que explica
+# a regra vira o primeiro a violá-la.
+EU_MESMO = {"tests/integration/test_renumeracao_adr.py"}
+
 ANTIGO = re.compile(r"ADR-00[567]")
 
 
@@ -63,7 +73,7 @@ def test_refs_locais_antigas_so_sobrevivem_no_registro_historico():
     """A outra metade: fora do histórico e da população do molde, o número antigo não existe."""
     sobras = []
     for rel in _versionados():
-        if rel.startswith(POP_MOLDE) or rel in HISTORICO or rel in AMBIGUAS:
+        if rel.startswith(POP_MOLDE) or rel in HISTORICO or rel in AMBIGUAS or rel in EU_MESMO:
             continue
         if Path(rel).suffix not in (".py", ".yaml", ".md", ".json"):
             continue
@@ -111,6 +121,7 @@ def test_MUTACAO_reverter_uma_referencia_local_e_detectada(tmp_path):
 
     sobras = [rel for rel in _versionados()
               if not rel.startswith(POP_MOLDE) and rel not in HISTORICO and rel not in AMBIGUAS
+              and rel not in EU_MESMO
               and Path(rel).suffix in (".py", ".yaml", ".md", ".json")
               and (copia / rel).exists()
               and ANTIGO.search((copia / rel).read_text(encoding="utf-8", errors="replace"))]

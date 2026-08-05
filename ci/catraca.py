@@ -244,10 +244,26 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.gravar:
         destino.parent.mkdir(parents=True, exist_ok=True)
-        # As declarações sobrevivem ao regravar. Elas são texto humano sobre POR QUE uma categoria
-        # nasceu; recalcular contagens não é motivo para apagá-lo.
+        # As declarações sobrevivem ao regravar — mas SÓ ENQUANTO SÃO NOVAS, e a distinção custou
+        # uma reprovação real. Uma declaração diz "esta categoria é nova em relação à BASE, e eis
+        # o motivo": ela vive exatamente um PR. Assim que a base a absorve, a categoria deixou de
+        # ser nova e a declaração vira DECLARAÇÃO MORTA — que `nao_regrediu` recusa, com razão,
+        # pelo mesmo princípio das isenções desta casa: o que não protege nada só serve para
+        # parecer revisado.
+        #
+        # Preservar sem podar as tornava eternas, e o PR seguinte reprovava por carregar a
+        # justificativa do anterior. Com `--anterior`, a poda é automática; sem ele, `--gravar`
+        # preserva e quem abrir o PR seguinte recebe a recusa e apaga à mão — barulhento, mas
+        # nunca silencioso.
         anteriores = (json.loads(destino.read_text(encoding="utf-8")).get(
             "categorias_novas_declaradas") or []) if destino.exists() else []
+        if args.anterior:
+            ja_na_base = set(_ler(args.anterior))
+            podadas = [d["categoria"] for d in anteriores if d["categoria"] in ja_na_base]
+            anteriores = [d for d in anteriores if d["categoria"] not in ja_na_base]
+            for c in podadas:
+                print(f"• catraca: declaração de {c!r} podada — a base já tem a categoria, "
+                      f"então ela deixou de ser nova.")
         destino.write_text(json.dumps({
             "schema_version": "1.0",
             "comentario": "Contagem de achados por categoria. Baseline da catraca (ci/catraca.py): "
