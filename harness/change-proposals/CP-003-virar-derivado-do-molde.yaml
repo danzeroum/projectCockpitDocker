@@ -60,13 +60,24 @@
 #                      harness_lib do molde já exclui -> 133 a declarar ou isentar)
 #   testes ........... tests/ plano, 61 entradas, `test_*.py` direto na raiz, sem subpastas
 #                      por tipo; mais tests/fixtures/ e 10 .mjs de teste de frontend
-#   EM ABERTO ........ `scripts/` (3 .sh de deploy) e `init.sh` na raiz são raiz de código ou
-#                      ferramenta? É leitura de domínio, não dedução — e a política diz que
-#                      raiz chutada torna a invariante do órfão verdadeira POR VACUIDADE, que
-#                      é a pior falha possível porque é indistinguível de cobertura real.
+#   fora da raiz ..... `scripts/` (3 .sh de deploy) e `init.sh` NÃO são raiz de código —
+#                      decidido por danzeroum em 2026-08-05, quando apresentado. Fica
+#                      registrado quem decidiu porque é leitura de domínio e não dedução: o
+#                      fiscal reprova raiz inexistente, mas não descobre raiz esquecida, e um
+#                      code_roots chutado tornaria a invariante do órfão verdadeira POR
+#                      VACUIDADE — indistinguível de cobertura real. Consequência declarada:
+#                      esses arquivos ficam como território não declarado, visível e sem
+#                      componente, que é o tratamento correto para ferramenta de deploy.
+#
+#   => target.code_roots: [app]      target.languages: [python, javascript]
 #
 # O passo 2 termina com "Apresente o reconhecimento e confirme com a pessoa antes do passo 3".
-# É onde isto para. Nada foi ancorado, nada foi removido, nenhuma escrita foi feita no alvo.
+# O reconhecimento está confirmado; o que ainda trava o passo 4 (ancorar) é o destino do
+# `src/cockpit_harness/`: declarar `target` move a raiz do inventário e invalida, no mesmo
+# instante, as 4 capacidades e 4 componentes que hoje descrevem a nossa CLI. Ancorar antes de
+# saber para onde ela vai deixaria o repositório vermelho sem caminho de saída.
+#
+# Nada foi ancorado, nada foi removido, nenhuma escrita foi feita no alvo.
 # ─────────────────────────────────────────────────────────────────────────────────────────────
 #
 # Schema: harness/schemas/change-proposal.schema.json · Fiscal: ci/validate_metadata.py
