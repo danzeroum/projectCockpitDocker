@@ -1,102 +1,240 @@
-# Capacidades de negócio com rastreabilidade física: cada capacidade aponta para código e teste
-# reais. IDs estáveis (CAP-...) formam as arestas duráveis do grafo.
-# Schema: harness/schemas/capabilities.schema.json
-# O fiscal semântico só exige que source_paths/test_paths existam para status implemented/verified.
-schema_version: "1.0"
-metadata_version: "1.0"
+schema_version: '1.0'
+metadata_version: '1.0'
 source_of_truth: true
 generated_from: null
-
 capabilities:
-  - id: CAP-CONTRATO
-    name: "Conformidade com o contrato de consumo"
-    status: verified
-    owners:
-      business_owner: danzeroum
-      technical_owner: danzeroum
-    risk_level: high
-    source_paths:
-      - src/cockpit_harness/contrato.py
-      - src/cockpit_harness/codigos.py
-    test_paths:
-      - tests/unit/test_contrato.py
-      - tests/integration/test_repositorio.py
-      - tests/e2e/test_checklist_adocao.py
-    business_rules:
-      - business/rules/contrato.yaml
-    evidence:
-      tests:
-        - tests/unit/test_contrato.py
-      architecture:
-        - architecture/adr/ADR-003-versao-em-fonte-unica.md
-
-  - id: CAP-MODOS
-    name: "Roteamento de modo e higiene de ambiente"
-    status: verified
-    owners:
-      business_owner: danzeroum
-      technical_owner: danzeroum
-    risk_level: critical
-    source_paths:
-      - src/cockpit_harness/plano.py
-    test_paths:
-      - tests/unit/test_plano.py
-      - tests/integration/test_workflows.py
-      - tests/e2e/test_cli_laudo.py
-    business_rules:
-      - business/rules/modos.yaml
-    evidence:
-      tests:
-        - tests/unit/test_plano.py
-      architecture:
-        - architecture/adr/ADR-001-webqa-como-padrao-externo.md
-
-  - id: CAP-PROCEDENCIA
-    name: "Procedência e comparabilidade do laudo"
-    status: verified
-    owners:
-      business_owner: danzeroum
-      technical_owner: danzeroum
-    risk_level: high
-    source_paths:
-      - src/cockpit_harness/procedencia.py
-      - src/cockpit_harness/cli.py
-      - src/cockpit_harness/__main__.py
-    test_paths:
-      - tests/unit/test_procedencia.py
-      - tests/e2e/test_cli_laudo.py
-    business_rules:
-      - business/rules/procedencia.yaml
-    evidence:
-      tests:
-        - tests/unit/test_procedencia.py
-      quality_reports:
-        - docs/laudo-adocao.json
-
-  - id: CAP-ALVO
-    name: "Auditoria do Docker Cockpit publicado"
-    # planned, não verified: deste lado ela é auditoria A EXECUTAR, e segue bloqueada por
-    # INCOMPLETE:target_url (ADR-016) até o ambiente subir. O CÓDIGO do alvo continua em
-    # danzeroum/docker (ADR-017, que manteve essa parte da ADR-015), e a BANCADA
-    # (deploy/homologacao/) não é source_path de capacidade.
-    #
-    # `source_paths` deixou de ser vazio quando a fase C ganhou peças NOSSAS: traduzir o
-    # escopo entre os dois schemas de mesmo nome e emitir o veredito que a régua não emite.
-    # Elas rodam de verdade (medidas na bancada), mas a CAPACIDADE segue `planned` porque o
-    # que falta não é código — é alvo declarado. Promovê-la a `verified` por causa do código
-    # seria dizer que se audita um host que ninguém declarou.
-    status: planned
-    owners:
-      business_owner: danzeroum
-      technical_owner: danzeroum
-    risk_level: high
-    source_paths:
-      - src/cockpit_harness/escopo_regua.py
-      - src/cockpit_harness/veredito.py
-    test_paths:
-      - tests/integration/test_homologacao.py
-      - tests/integration/test_fase_c.py
-      - tests/unit/test_escopo_regua.py
-      - tests/unit/test_veredito.py
-    business_rules:
-      - business/rules/homologacao.yaml
+- id: CAP-CONTRATO
+  name: Conformidade com o contrato de consumo
+  status: verified
+  owners:
+    business_owner: danzeroum
+    technical_owner: danzeroum
+  risk_level: high
+  source_paths:
+  - src/cockpit_harness/contrato.py
+  - src/cockpit_harness/codigos.py
+  test_paths:
+  - tests/unit/test_contrato.py
+  - tests/integration/test_repositorio.py
+  - tests/e2e/test_checklist_adocao.py
+  business_rules:
+  - business/rules/contrato.yaml
+  evidence:
+    tests:
+    - tests/unit/test_contrato.py
+    architecture:
+    - architecture/adr/ADR-003-versao-em-fonte-unica.md
+- id: CAP-MODOS
+  name: Roteamento de modo e higiene de ambiente
+  status: verified
+  owners:
+    business_owner: danzeroum
+    technical_owner: danzeroum
+  risk_level: critical
+  source_paths:
+  - src/cockpit_harness/plano.py
+  test_paths:
+  - tests/unit/test_plano.py
+  - tests/integration/test_workflows.py
+  - tests/e2e/test_cli_laudo.py
+  business_rules:
+  - business/rules/modos.yaml
+  evidence:
+    tests:
+    - tests/unit/test_plano.py
+    architecture:
+    - architecture/adr/ADR-001-webqa-como-padrao-externo.md
+- id: CAP-PROCEDENCIA
+  name: Procedência e comparabilidade do laudo
+  status: verified
+  owners:
+    business_owner: danzeroum
+    technical_owner: danzeroum
+  risk_level: high
+  source_paths:
+  - src/cockpit_harness/procedencia.py
+  - src/cockpit_harness/cli.py
+  - src/cockpit_harness/__main__.py
+  test_paths:
+  - tests/unit/test_procedencia.py
+  - tests/e2e/test_cli_laudo.py
+  business_rules:
+  - business/rules/procedencia.yaml
+  evidence:
+    tests:
+    - tests/unit/test_procedencia.py
+    quality_reports:
+    - docs/laudo-adocao.json
+- id: CAP-ALVO
+  name: Auditoria do Docker Cockpit publicado
+  status: planned
+  owners:
+    business_owner: danzeroum
+    technical_owner: danzeroum
+  risk_level: high
+  source_paths:
+  - src/cockpit_harness/escopo_regua.py
+  - src/cockpit_harness/veredito.py
+  test_paths:
+  - tests/integration/test_homologacao.py
+  - tests/integration/test_fase_c.py
+  - tests/unit/test_escopo_regua.py
+  - tests/unit/test_veredito.py
+  business_rules:
+  - business/rules/homologacao.yaml
+- id: CAP-OBSERVAR
+  name: Observar o estado do daemon Docker de um host
+  status: implemented
+  owners:
+    business_owner: danzeroum
+    technical_owner: danzeroum
+  risk_level: medium
+  source_paths:
+  - workspace/target/app/routers/containers.py
+  - workspace/target/app/routers/overview.py
+  - workspace/target/app/routers/system.py
+  - workspace/target/app/routers/projects.py
+  - workspace/target/app/routers/_proxy.py
+  - workspace/target/app/stats_util.py
+  test_paths:
+  - workspace/target/tests/test_api.py
+  - workspace/target/tests/test_container_history.py
+  - workspace/target/tests/test_history_route.py
+  - workspace/target/tests/test_logs_texto.py
+  - workspace/target/tests/test_projects_security.py
+  - workspace/target/tests/test_security.py
+  - workspace/target/tests/test_session.py
+  - workspace/target/tests/test_telas_renderizam.py
+  - workspace/target/tests/test_updates_v14.py
+- id: CAP-DIAGNOSTICAR
+  name: Transformar o estado observado em achados acionáveis
+  status: implemented
+  owners:
+    business_owner: danzeroum
+    technical_owner: danzeroum
+  risk_level: high
+  source_paths:
+  - workspace/target/app/findings/engine.py
+  - workspace/target/app/routers/findings.py
+  - workspace/target/app/routers/security.py
+  - workspace/target/app/drift.py
+  - workspace/target/app/routers/drift.py
+  - workspace/target/app/certs.py
+  - workspace/target/app/routers/certs.py
+  - workspace/target/app/updates.py
+  - workspace/target/app/routers/updates.py
+  - workspace/target/app/ingress/parser.py
+  - workspace/target/app/routers/ingress.py
+  test_paths:
+  - workspace/target/tests/test_certs_sprint5.py
+  - workspace/target/tests/test_config_ingress_path.py
+  - workspace/target/tests/test_drift_b8.py
+  - workspace/target/tests/test_f6_palette.py
+  - workspace/target/tests/test_findings.py
+  - workspace/target/tests/test_guarda_docs_registro.py
+  - workspace/target/tests/test_guarda_schema_literal.py
+  - workspace/target/tests/test_ingress_parser.py
+  - workspace/target/tests/test_kernel_cockpit.py
+  - workspace/target/tests/test_no_backup.py
+  - workspace/target/tests/test_regras_container_parado.py
+  - workspace/target/tests/test_render_vivo.py
+  - workspace/target/tests/test_rotas_rail.py
+  - workspace/target/tests/test_telas_topologia_plantao.py
+  - workspace/target/tests/test_updates_ui.py
+  - workspace/target/tests/test_updates_v14.py
+- id: CAP-AGIR
+  name: Executar mutação operacional sob barreira e auditoria
+  status: implemented
+  owners:
+    business_owner: danzeroum
+    technical_owner: danzeroum
+  risk_level: high
+  source_paths:
+  - workspace/target/app/actions.py
+  - workspace/target/app/auth.py
+  - workspace/target/app/hardening.py
+  - workspace/target/app/routers/session.py
+  - workspace/target/app/routers/prune.py
+  - workspace/target/app/routers/tasks.py
+  - workspace/target/app/routers/audit.py
+  test_paths:
+  - workspace/target/tests/test_ack_audit.py
+  - workspace/target/tests/test_ciclo_acao_sintetico.py
+  - workspace/target/tests/test_deploy_credencial.py
+  - workspace/target/tests/test_hardening_b11.py
+  - workspace/target/tests/test_no_backup.py
+  - workspace/target/tests/test_prune_sintetico.py
+  - workspace/target/tests/test_prune_v12.py
+  - workspace/target/tests/test_session.py
+  - workspace/target/tests/test_summary.py
+  - workspace/target/tests/test_tasks.py
+  - workspace/target/tests/test_tasks_api.py
+  - workspace/target/tests/test_unlock_v8.py
+- id: CAP-NARRAR
+  name: 'Entregar o estado ao operador: fluxo, séries e notificação'
+  status: implemented
+  owners:
+    business_owner: danzeroum
+    technical_owner: danzeroum
+  risk_level: medium
+  source_paths:
+  - workspace/target/app/events.py
+  - workspace/target/app/routers/events.py
+  - workspace/target/app/logs_ingest.py
+  - workspace/target/app/sampler.py
+  - workspace/target/app/telemetry.py
+  - workspace/target/app/routers/metrics.py
+  - workspace/target/app/routers/metrics_prom.py
+  - workspace/target/app/routers/executive.py
+  - workspace/target/app/summary.py
+  - workspace/target/app/notify.py
+  - workspace/target/app/routers/notificacoes.py
+  - workspace/target/app/routers/backend.py
+  - workspace/target/app/routers/storage.py
+  test_paths:
+  - workspace/target/tests/test_cabecalhos_seguranca.py
+  - workspace/target/tests/test_capacidade_serie_curta.py
+  - workspace/target/tests/test_events_rota.py
+  - workspace/target/tests/test_events_v11.py
+  - workspace/target/tests/test_executive.py
+  - workspace/target/tests/test_frescor_amostra.py
+  - workspace/target/tests/test_kernel_cockpit.py
+  - workspace/target/tests/test_logs_fts_v13.py
+  - workspace/target/tests/test_metrics.py
+  - workspace/target/tests/test_metrics_prom.py
+  - workspace/target/tests/test_notify_v15.py
+  - workspace/target/tests/test_offline.py
+  - workspace/target/tests/test_sampler.py
+  - workspace/target/tests/test_storage.py
+  - workspace/target/tests/test_summary.py
+- id: CAP-SUSTENTAR
+  name: Servir a aplicação com política declarada de resposta e dados
+  status: implemented
+  owners:
+    business_owner: danzeroum
+    technical_owner: danzeroum
+  risk_level: medium
+  source_paths:
+  - workspace/target/app/app.py
+  - workspace/target/app/db.py
+  - workspace/target/app/backup.py
+  - workspace/target/app/cache.py
+  - workspace/target/app/cache_http.py
+  - workspace/target/app/compressao.py
+  - workspace/target/app/cabecalhos_seguranca.py
+  - workspace/target/app/masking.py
+  test_paths:
+  - workspace/target/tests/test_acessibilidade.py
+  - workspace/target/tests/test_api.py
+  - workspace/target/tests/test_cabecalhos_seguranca.py
+  - workspace/target/tests/test_cache.py
+  - workspace/target/tests/test_cache_http.py
+  - workspace/target/tests/test_capacidade_cards.py
+  - workspace/target/tests/test_container_history.py
+  - workspace/target/tests/test_db.py
+  - workspace/target/tests/test_events_v11.py
+  - workspace/target/tests/test_migration.py
+  - workspace/target/tests/test_no_backup.py
+  - workspace/target/tests/test_offline.py
+  - workspace/target/tests/test_sinais_de_maturidade.py
+  - workspace/target/tests/test_telas_renderizam.py

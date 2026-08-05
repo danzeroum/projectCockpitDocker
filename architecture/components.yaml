@@ -113,3 +113,518 @@ components:
     implements:
       - REQ-003
     owner: danzeroum
+
+  # ─────────────────────────────────────────────────────────────────────────────────────────
+  # O COCKPIT (CP-003 fatia-2a) — os 65 arquivos Python de `workspace/target/app/`, lidos em
+  # d6ae70ea. Os cinco componentes acima descrevem `src/cockpit_harness/`, a CLI de adoção que
+  # está saindo deste repositório; NÃO foram removidos aqui porque 24 regras de negócio os
+  # referenciam, e removê-los produziria regra apontando para componente inexistente — uma
+  # SUBIDA, que a catraca recusa com razão. Saem junto com o código, na sub-fatia da divisão.
+  #
+  # `status: verified` em todos, e o critério é literal: cada `tested_by` é um arquivo de
+  # `workspace/target/tests/` cujo texto referencia o módulo do componente. O vínculo foi obtido
+  # mecanicamente (regex do nome do módulo no corpo do teste) e conferido por amostra — não por
+  # semelhança de nome.
+  # ─────────────────────────────────────────────────────────────────────────────────────────
+  # Único ponto por onde a app fala com o daemon: `configure(proxy_url, terminal_enabled)` guarda o
+  # endereço do socket-proxy. Nenhum outro módulo monta a URL do Docker — é o que torna a superfície
+  # de acesso ao daemon uma coisa só, auditável num arquivo. Ver THREAT-SOCKET-ESCRITA.
+  - id: CMP-PROXY
+    kind: adapter
+    capability: CAP-OBSERVAR
+    status: verified
+    source_paths:
+    - workspace/target/app/routers/_proxy.py
+    depends_on: []
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_projects_security.py
+    - workspace/target/tests/test_updates_v14.py
+    implements: []
+    owner: danzeroum
+
+  # A superfície de leitura de containers: listagem, inspect, histórico e `GET /{id}/logs?tail=`.
+  # `stats_util` extrai `State.Health.Status` do inspect e devolve None quando NÃO HÁ healthcheck —
+  # ausência de saúde é estado próprio, não 'não saudável'. É a rota de logs que carrega o dado
+  # pessoal incidental do parecer de privacidade (RISCO-001).
+  - id: CMP-CONTAINERS
+    kind: service
+    capability: CAP-OBSERVAR
+    status: verified
+    source_paths:
+    - workspace/target/app/routers/containers.py
+    - workspace/target/app/routers/overview.py
+    - workspace/target/app/stats_util.py
+    depends_on:
+      - CMP-BARREIRA-ACOES
+      - CMP-MASCARAMENTO
+      - CMP-PERSISTENCIA
+      - CMP-POLITICA-RESPOSTA
+      - CMP-PROXY
+      - CMP-RESUMO
+      - CMP-SERIES
+      - CMP-SESSAO
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_api.py
+    - workspace/target/tests/test_history_route.py
+    - workspace/target/tests/test_container_history.py
+    - workspace/target/tests/test_logs_texto.py
+    - workspace/target/tests/test_telas_renderizam.py
+    implements: []
+    owner: danzeroum
+
+  # Imagens, `/info` do daemon e o agrupamento por projeto compose. É a visão do host que não é
+  # sobre um container específico.
+  - id: CMP-INVENTARIO-HOST
+    kind: service
+    capability: CAP-OBSERVAR
+    status: verified
+    source_paths:
+    - workspace/target/app/routers/system.py
+    - workspace/target/app/routers/projects.py
+    depends_on:
+      - CMP-BARREIRA-ACOES
+      - CMP-PERSISTENCIA
+      - CMP-POLITICA-RESPOSTA
+      - CMP-PROXY
+      - CMP-SERIES
+      - CMP-SESSAO
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_projects_security.py
+    - workspace/target/tests/test_session.py
+    implements: []
+    owner: danzeroum
+
+  # O motor que aplica as regras ao estado observado e o expõe por `/api/findings`, mais o score de
+  # postura por container (`/api/security`, B4). É o coração do produto: sem ele o cockpit mostra
+  # estado; com ele, mostra o que fazer a respeito.
+  - id: CMP-ACHADOS
+    kind: domain-module
+    capability: CAP-DIAGNOSTICAR
+    status: verified
+    source_paths:
+    - workspace/target/app/findings/__init__.py
+    - workspace/target/app/findings/engine.py
+    - workspace/target/app/routers/findings.py
+    - workspace/target/app/routers/security.py
+    depends_on:
+      - CMP-PERSISTENCIA
+      - CMP-PROXY
+      - CMP-SERIES
+      - CMP-SESSAO
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_findings.py
+    - workspace/target/tests/test_f6_palette.py
+    - workspace/target/tests/test_regras_container_parado.py
+    - workspace/target/tests/test_guarda_schema_literal.py
+    - workspace/target/tests/test_telas_topologia_plantao.py
+    implements: []
+    owner: danzeroum
+
+  # As dezoito regras, uma por arquivo. Onze são sobre o INGRESS (TLS fraco em protocolo e cifra,
+  # HTTP puro, autoindex, server_tokens, sem gzip, sem http2, upstream ausente, docs público,
+  # body_size default, stream_timeout, certificado emprestado) e sete sobre o CONTAINER (OOM,
+  # restart loop, unhealthy, healthcheck que nunca passou, sem backup). Um arquivo por regra é o
+  # que permite acrescentar uma sem tocar nas outras dezessete.
+  - id: CMP-REGRAS-ACHADO
+    kind: domain-module
+    capability: CAP-DIAGNOSTICAR
+    status: verified
+    source_paths:
+    - workspace/target/app/findings/rules/__init__.py
+    - workspace/target/app/findings/rules/autoindex_enabled.py
+    - workspace/target/app/findings/rules/body_size_default.py
+    - workspace/target/app/findings/rules/default_cert_borrowed.py
+    - workspace/target/app/findings/rules/docs_public.py
+    - workspace/target/app/findings/rules/healthcheck_never_passed.py
+    - workspace/target/app/findings/rules/http_plain.py
+    - workspace/target/app/findings/rules/no_backup.py
+    - workspace/target/app/findings/rules/no_gzip.py
+    - workspace/target/app/findings/rules/no_http2.py
+    - workspace/target/app/findings/rules/oom.py
+    - workspace/target/app/findings/rules/restart_loop.py
+    - workspace/target/app/findings/rules/server_tokens_exposed.py
+    - workspace/target/app/findings/rules/ssl_ciphers_weak.py
+    - workspace/target/app/findings/rules/ssl_protocols_weak.py
+    - workspace/target/app/findings/rules/stream_timeout.py
+    - workspace/target/app/findings/rules/unhealthy.py
+    - workspace/target/app/findings/rules/upstream_missing.py
+    depends_on: []
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_findings.py
+    - workspace/target/tests/test_no_backup.py
+    - workspace/target/tests/test_regras_container_parado.py
+    implements: []
+    owner: danzeroum
+
+  # B8: compara o que o compose DECLARA com o que está EM EXECUÇÃO. Lê os compose files pelo rótulo
+  # `com.docker.compose.project.config_files`, que grava o caminho do HOST — e o mount usa o mesmo
+  # caminho dos dois lados para o rótulo resolver direto. Se o destino mudar, o drift passa a dizer
+  # 'não encontrado' por projeto em vez de sumir em silêncio.
+  - id: CMP-DRIFT
+    kind: service
+    capability: CAP-DIAGNOSTICAR
+    status: verified
+    source_paths:
+    - workspace/target/app/drift.py
+    - workspace/target/app/routers/drift.py
+    depends_on:
+      - CMP-MASCARAMENTO
+      - CMP-POLITICA-RESPOSTA
+      - CMP-SERIES
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_drift_b8.py
+    - workspace/target/tests/test_render_vivo.py
+    - workspace/target/tests/test_kernel_cockpit.py
+    - workspace/target/tests/test_guarda_docs_registro.py
+    implements: []
+    owner: danzeroum
+
+  # Validade de certificado lida do X.509 (`notAfter`), nunca parseada da saída do certbot — é a
+  # razão de `cryptography==43.0.3` estar no requirements do alvo.
+  - id: CMP-CERTS
+    kind: service
+    capability: CAP-DIAGNOSTICAR
+    status: verified
+    source_paths:
+    - workspace/target/app/certs.py
+    - workspace/target/app/routers/certs.py
+    depends_on:
+      - CMP-POLITICA-RESPOSTA
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_certs_sprint5.py
+    implements: []
+    owner: danzeroum
+
+  # B6: pergunta ao Docker Hub se a imagem em execução está desatualizada. É a única capacidade que
+  # fala com a INTERNET, e não com o daemon local — e por isso a única cuja indisponibilidade é
+  # externa ao host.
+  - id: CMP-ATUALIZACOES
+    kind: service
+    capability: CAP-DIAGNOSTICAR
+    status: verified
+    source_paths:
+    - workspace/target/app/updates.py
+    - workspace/target/app/routers/updates.py
+    depends_on:
+      - CMP-PERSISTENCIA
+      - CMP-PROXY
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_updates_v14.py
+    - workspace/target/tests/test_updates_ui.py
+    implements: []
+    owner: danzeroum
+
+  # Lê a configuração nginx do host montada em `/etc/nginx-ingress:ro` e a transforma em rotas
+  # declaradas. É a fonte de ONZE das dezoito regras de achado — sem ele, `http_plain` e
+  # `ssl_protocols_weak` não teriam o que inspecionar.
+  - id: CMP-INGRESS
+    kind: adapter
+    capability: CAP-DIAGNOSTICAR
+    status: verified
+    source_paths:
+    - workspace/target/app/ingress/parser.py
+    - workspace/target/app/routers/ingress.py
+    depends_on: []
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_ingress_parser.py
+    - workspace/target/tests/test_rotas_rail.py
+    - workspace/target/tests/test_config_ingress_path.py
+    implements: []
+    owner: danzeroum
+
+  # B10: a barreira de escrita. Com a flag desligada as rotas são DESREGISTRADAS — 404, não 403 — e
+  # o padrão virou desligado. A diferença importa: 403 anuncia que a rota existe.
+  - id: CMP-BARREIRA-ACOES
+    kind: domain-module
+    capability: CAP-AGIR
+    status: verified
+    source_paths:
+    - workspace/target/app/actions.py
+    depends_on: []
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_no_backup.py
+    - workspace/target/tests/test_prune_v12.py
+    - workspace/target/tests/test_summary.py
+    implements: []
+    owner: danzeroum
+
+  # A única credencial aceita para mutação é um token de sessão emitido por
+  # `POST /api/session/unlock`: aleatório, guardado SÓ COMO HASH, 30 min, atrelado ao usuário do
+  # basic auth do ingress. Não existe token vindo de configuração — um valor estático de env não
+  # casa hash nenhum e cai no 403, que é o furo que a v8 fechou. `hardening` põe rate-limit nessa
+  # superfície (B11). Ver THREAT-UNLOCK-SEM-GATEWAY.
+  - id: CMP-SESSAO
+    kind: service
+    capability: CAP-AGIR
+    status: verified
+    source_paths:
+    - workspace/target/app/auth.py
+    - workspace/target/app/routers/session.py
+    - workspace/target/app/hardening.py
+    depends_on:
+      - CMP-NOTIFICACOES
+      - CMP-PERSISTENCIA
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_unlock_v8.py
+    - workspace/target/tests/test_session.py
+    - workspace/target/tests/test_hardening_b11.py
+    - workspace/target/tests/test_deploy_credencial.py
+    implements: []
+    owner: danzeroum
+
+  # As mutações que existem: prune de recursos órfãos (B10), tarefas assíncronas, e o registro de
+  # auditoria que as acompanha. Todas passam pela barreira e pelo unlock.
+  - id: CMP-OPERACOES
+    kind: service
+    capability: CAP-AGIR
+    status: verified
+    source_paths:
+    - workspace/target/app/routers/prune.py
+    - workspace/target/app/routers/tasks.py
+    - workspace/target/app/routers/audit.py
+    depends_on:
+      - CMP-BARREIRA-ACOES
+      - CMP-PERSISTENCIA
+      - CMP-POLITICA-RESPOSTA
+      - CMP-PROXY
+      - CMP-RESUMO
+      - CMP-SESSAO
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_prune_v12.py
+    - workspace/target/tests/test_prune_sintetico.py
+    - workspace/target/tests/test_tasks_api.py
+    - workspace/target/tests/test_ack_audit.py
+    - workspace/target/tests/test_tasks.py
+    - workspace/target/tests/test_ciclo_acao_sintetico.py
+    implements: []
+    owner: danzeroum
+
+  # Fluxo de eventos do daemon por cliente, e o FILTRO VIVE NO SERVIDOR: o cliente pede
+  # `?container=x` e nunca recebe evento de outro container. Filtrar no navegador entregaria o
+  # evento alheio ao navegador antes de escondê-lo.
+  - id: CMP-EVENTOS
+    kind: service
+    capability: CAP-NARRAR
+    status: verified
+    source_paths:
+    - workspace/target/app/events.py
+    - workspace/target/app/routers/events.py
+    depends_on:
+      - CMP-NOTIFICACOES
+      - CMP-PERSISTENCIA
+      - CMP-POLITICA-RESPOSTA
+      - CMP-PROXY
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_events_rota.py
+    - workspace/target/tests/test_events_v11.py
+    - workspace/target/tests/test_cabecalhos_seguranca.py
+    implements: []
+    owner: danzeroum
+
+  # B5: ingestão incremental de logs para um índice FTS5, que é o que faz `/api/logs/search`
+  # responder por HOST em vez de por container.
+  - id: CMP-LOGS-BUSCA
+    kind: service
+    capability: CAP-NARRAR
+    status: verified
+    source_paths:
+    - workspace/target/app/logs_ingest.py
+    depends_on:
+      - CMP-PERSISTENCIA
+      - CMP-PROXY
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_logs_fts_v13.py
+    - workspace/target/tests/test_notify_v15.py
+    implements: []
+    owner: danzeroum
+
+  # A série temporal: `sampler` coleta, `telemetry` mantém histograma em memória, e as duas rotas
+  # expõem — uma para a UI, outra no formato Prometheus (B9).
+  - id: CMP-SERIES
+    kind: service
+    capability: CAP-NARRAR
+    status: verified
+    source_paths:
+    - workspace/target/app/sampler.py
+    - workspace/target/app/telemetry.py
+    - workspace/target/app/routers/metrics.py
+    - workspace/target/app/routers/metrics_prom.py
+    depends_on:
+      - CMP-CONTAINERS
+      - CMP-PERSISTENCIA
+      - CMP-PROXY
+      - CMP-SESSAO
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_sampler.py
+    - workspace/target/tests/test_metrics.py
+    - workspace/target/tests/test_metrics_prom.py
+    - workspace/target/tests/test_frescor_amostra.py
+    - workspace/target/tests/test_capacidade_serie_curta.py
+    implements: []
+    owner: danzeroum
+
+  # O bloco `summary` que a UI lê (espelho de `ENABLE_ACTIONS`, com `actions.habilitadas` como fonte
+  # única), a tela do gestor (`/api/executive`), o estado do backend e o storage com recursos órfãos
+  # (B1). É a camada que AGREGA em vez de observar.
+  - id: CMP-RESUMO
+    kind: service
+    capability: CAP-NARRAR
+    status: verified
+    source_paths:
+    - workspace/target/app/summary.py
+    - workspace/target/app/routers/executive.py
+    - workspace/target/app/routers/backend.py
+    - workspace/target/app/routers/storage.py
+    depends_on:
+      - CMP-ACHADOS
+      - CMP-BARREIRA-ACOES
+      - CMP-CERTS
+      - CMP-DRIFT
+      - CMP-INGRESS
+      - CMP-PERSISTENCIA
+      - CMP-POLITICA-RESPOSTA
+      - CMP-PROXY
+      - CMP-SERIES
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_summary.py
+    - workspace/target/tests/test_executive.py
+    - workspace/target/tests/test_storage.py
+    - workspace/target/tests/test_offline.py
+    - workspace/target/tests/test_kernel_cockpit.py
+    implements: []
+    owner: danzeroum
+
+  # B7: o motor que decide o que vira notificação e a rota que a entrega.
+  - id: CMP-NOTIFICACOES
+    kind: service
+    capability: CAP-NARRAR
+    status: verified
+    source_paths:
+    - workspace/target/app/notify.py
+    - workspace/target/app/routers/notificacoes.py
+    depends_on:
+      - CMP-CERTS
+      - CMP-PERSISTENCIA
+      - CMP-POLITICA-RESPOSTA
+      - CMP-SERIES
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_notify_v15.py
+    implements: []
+    owner: danzeroum
+
+  # A aplicação FastAPI: lifespan, montagem dos routers e o serviço dos estáticos.
+  - id: CMP-APP
+    kind: service
+    capability: CAP-SUSTENTAR
+    status: verified
+    source_paths:
+    - workspace/target/app/app.py
+    - workspace/target/app/routers/__init__.py
+    depends_on:
+      - CMP-ACHADOS
+      - CMP-ATUALIZACOES
+      - CMP-CERTS
+      - CMP-CONTAINERS
+      - CMP-DRIFT
+      - CMP-EVENTOS
+      - CMP-INGRESS
+      - CMP-INVENTARIO-HOST
+      - CMP-LOGS-BUSCA
+      - CMP-NOTIFICACOES
+      - CMP-OPERACOES
+      - CMP-PERSISTENCIA
+      - CMP-POLITICA-RESPOSTA
+      - CMP-PROXY
+      - CMP-RESUMO
+      - CMP-SERIES
+      - CMP-SESSAO
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_api.py
+    - workspace/target/tests/test_offline.py
+    - workspace/target/tests/test_telas_renderizam.py
+    implements: []
+    owner: danzeroum
+
+  # SQLite por `aiosqlite`, com migração versionada, e backup diário pela API de backup DO PRÓPRIO
+  # SQLite (B11) — não por cópia de arquivo, que pegaria o banco no meio de uma escrita.
+  - id: CMP-PERSISTENCIA
+    kind: adapter
+    capability: CAP-SUSTENTAR
+    status: verified
+    source_paths:
+    - workspace/target/app/db.py
+    - workspace/target/app/backup.py
+    depends_on: []
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_db.py
+    - workspace/target/tests/test_migration.py
+    - workspace/target/tests/test_no_backup.py
+    - workspace/target/tests/test_container_history.py
+    - workspace/target/tests/test_events_v11.py
+    implements: []
+    owner: danzeroum
+
+  # O que toda resposta carrega, DECLARADO e não deixado ao acaso (B11): cache em memória com teto
+  # de 500 chaves, política de cache HTTP, gzip por content-type — nunca em stream, nunca no que já
+  # vem comprimido — e os cabeçalhos de segurança derivados do que a app REALMENTE serve.
+  - id: CMP-POLITICA-RESPOSTA
+    kind: adapter
+    capability: CAP-SUSTENTAR
+    status: verified
+    source_paths:
+    - workspace/target/app/cache.py
+    - workspace/target/app/cache_http.py
+    - workspace/target/app/compressao.py
+    - workspace/target/app/cabecalhos_seguranca.py
+    depends_on: []
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_cache.py
+    - workspace/target/tests/test_cache_http.py
+    - workspace/target/tests/test_cabecalhos_seguranca.py
+    - workspace/target/tests/test_acessibilidade.py
+    - workspace/target/tests/test_sinais_de_maturidade.py
+    - workspace/target/tests/test_capacidade_cards.py
+    implements: []
+    owner: danzeroum
+
+  # Mascara por NOME de chave (`pass|secret|token|credential|apikey|_key$|private`) e credencial
+  # embutida em URI. Defesa real e incompleta por construção — `authorization`, `pwd`, `jwt` e
+  # `cookie` atravessam intactas. Ver RISCO-002 no parecer e THREAT-MASCARA-POR-REGEX.
+  - id: CMP-MASCARAMENTO
+    kind: domain-module
+    capability: CAP-SUSTENTAR
+    status: verified
+    source_paths:
+    - workspace/target/app/masking.py
+    depends_on: []
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_api.py
+    implements: []
+    owner: danzeroum
+
+# Arquivos sob code_roots que deliberadamente não pertencem a componente algum.
+# Vazia por enquanto: os 68 arquivos não-Python de `app/` (static/, css/, js/, assets/, config/)
+# são a sub-fatia 2b, e ficam como ÓRFÃOS DECLARADOS no contador até lá — órfão contado é dívida
+# visível; isenção prematura seria dívida escondida.
+exemptions: []
