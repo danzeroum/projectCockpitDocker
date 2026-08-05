@@ -22,9 +22,18 @@ graph TD
   TEST_tests_unit_test_plano_py{{"test_plano.py"}}
   TEST_tests_unit_test_procedencia_py{{"test_procedencia.py"}}
   TEST_tests_unit_test_veredito_py{{"test_veredito.py"}}
+  TEST_workspace_target_tests_fixtures_exercita_kernel_mjs{{"exercita_kernel.mjs"}}
+  TEST_workspace_target_tests_fixtures_exercita_notificacoes_mjs{{"exercita_notificacoes.mjs"}}
+  TEST_workspace_target_tests_fixtures_exercita_render_vivo_mjs{{"exercita_render_vivo.mjs"}}
+  TEST_workspace_target_tests_fixtures_exercita_rotas_mjs{{"exercita_rotas.mjs"}}
+  TEST_workspace_target_tests_fixtures_exercita_telas_mjs{{"exercita_telas.mjs"}}
+  TEST_workspace_target_tests_fixtures_exercita_updates_mjs{{"exercita_updates.mjs"}}
+  TEST_workspace_target_tests_fixtures_renderiza_capacidade_mjs{{"renderiza_capacidade.mjs"}}
+  TEST_workspace_target_tests_fixtures_renderiza_telas_mjs{{"renderiza_telas.mjs"}}
   TEST_workspace_target_tests_test_acessibilidade_py{{"test_acessibilidade.py"}}
   TEST_workspace_target_tests_test_ack_audit_py{{"test_ack_audit.py"}}
   TEST_workspace_target_tests_test_api_py{{"test_api.py"}}
+  TEST_workspace_target_tests_test_backend_py{{"test_backend.py"}}
   TEST_workspace_target_tests_test_cabecalhos_seguranca_py{{"test_cabecalhos_seguranca.py"}}
   TEST_workspace_target_tests_test_cache_py{{"test_cache.py"}}
   TEST_workspace_target_tests_test_cache_http_py{{"test_cache_http.py"}}
@@ -34,6 +43,7 @@ graph TD
   TEST_workspace_target_tests_test_ciclo_acao_sintetico_py{{"test_ciclo_acao_sintetico.py"}}
   TEST_workspace_target_tests_test_config_ingress_path_py{{"test_config_ingress_path.py"}}
   TEST_workspace_target_tests_test_container_history_py{{"test_container_history.py"}}
+  TEST_workspace_target_tests_test_contraste_severidade_py{{"test_contraste_severidade.py"}}
   TEST_workspace_target_tests_test_db_py{{"test_db.py"}}
   TEST_workspace_target_tests_test_deploy_credencial_py{{"test_deploy_credencial.py"}}
   TEST_workspace_target_tests_test_drift_b8_py{{"test_drift_b8.py"}}
@@ -43,6 +53,7 @@ graph TD
   TEST_workspace_target_tests_test_f6_palette_py{{"test_f6_palette.py"}}
   TEST_workspace_target_tests_test_findings_py{{"test_findings.py"}}
   TEST_workspace_target_tests_test_frescor_amostra_py{{"test_frescor_amostra.py"}}
+  TEST_workspace_target_tests_test_frontend_modulos_py{{"test_frontend_modulos.py"}}
   TEST_workspace_target_tests_test_guarda_docs_registro_py{{"test_guarda_docs_registro.py"}}
   TEST_workspace_target_tests_test_guarda_schema_literal_py{{"test_guarda_schema_literal.py"}}
   TEST_workspace_target_tests_test_hardening_b11_py{{"test_hardening_b11.py"}}
@@ -55,6 +66,7 @@ graph TD
   TEST_workspace_target_tests_test_metrics_prom_py{{"test_metrics_prom.py"}}
   TEST_workspace_target_tests_test_migration_py{{"test_migration.py"}}
   TEST_workspace_target_tests_test_no_backup_py{{"test_no_backup.py"}}
+  TEST_workspace_target_tests_test_notificacoes_ui_py{{"test_notificacoes_ui.py"}}
   TEST_workspace_target_tests_test_notify_v15_py{{"test_notify_v15.py"}}
   TEST_workspace_target_tests_test_offline_py{{"test_offline.py"}}
   TEST_workspace_target_tests_test_projects_security_py{{"test_projects_security.py"}}
@@ -177,6 +189,10 @@ graph TD
   CMP_DRIFT -.->|testa| TEST_workspace_target_tests_test_guarda_docs_registro_py
   CMP_DRIFT -.->|testa| TEST_workspace_target_tests_test_kernel_cockpit_py
   CMP_DRIFT -.->|testa| TEST_workspace_target_tests_test_render_vivo_py
+  CMP_EMPACOTAMENTO["CMP-EMPACOTAMENTO<br/>Dockerfile"]
+  CMP_EMPACOTAMENTO -->|realiza| CAP_SUSTENTAR
+  CMP_EMPACOTAMENTO -.->|testa| TEST_workspace_target_tests_test_config_ingress_path_py
+  CMP_EMPACOTAMENTO -.->|testa| TEST_workspace_target_tests_test_deploy_credencial_py
   CMP_EVENTOS["CMP-EVENTOS<br/>events.py"]
   CMP_EVENTOS -->|realiza| CAP_NARRAR
   CMP_EVENTOS -->|depende| CMP_NOTIFICACOES
@@ -194,6 +210,7 @@ graph TD
   CMP_FASE_C -.->|testa| TEST_tests_unit_test_veredito_py
   CMP_INGRESS["CMP-INGRESS<br/>parser.py"]
   CMP_INGRESS -->|realiza| CAP_DIAGNOSTICAR
+  CMP_INGRESS -.->|testa| TEST_workspace_target_tests_fixtures_exercita_rotas_mjs
   CMP_INGRESS -.->|testa| TEST_workspace_target_tests_test_config_ingress_path_py
   CMP_INGRESS -.->|testa| TEST_workspace_target_tests_test_ingress_parser_py
   CMP_INGRESS -.->|testa| TEST_workspace_target_tests_test_rotas_rail_py
@@ -284,6 +301,7 @@ graph TD
   CMP_RESUMO -->|depende| CMP_POLITICA_RESPOSTA
   CMP_RESUMO -->|depende| CMP_PROXY
   CMP_RESUMO -->|depende| CMP_SERIES
+  CMP_RESUMO -.->|testa| TEST_workspace_target_tests_test_backend_py
   CMP_RESUMO -.->|testa| TEST_workspace_target_tests_test_executive_py
   CMP_RESUMO -.->|testa| TEST_workspace_target_tests_test_kernel_cockpit_py
   CMP_RESUMO -.->|testa| TEST_workspace_target_tests_test_offline_py
@@ -308,6 +326,95 @@ graph TD
   CMP_SESSAO -.->|testa| TEST_workspace_target_tests_test_hardening_b11_py
   CMP_SESSAO -.->|testa| TEST_workspace_target_tests_test_session_py
   CMP_SESSAO -.->|testa| TEST_workspace_target_tests_test_unlock_v8_py
+  CMP_TELA_ATENCAO["CMP-TELA-ATENCAO<br/>atencao.js"]
+  CMP_TELA_ATENCAO -->|realiza| CAP_NARRAR
+  CMP_TELA_ATENCAO -->|depende| CMP_UI_INFRA
+  CMP_TELA_ATENCAO -->|depende| CMP_UI_KERNEL
+  CMP_TELA_ATENCAO -.->|testa| TEST_workspace_target_tests_test_frontend_modulos_py
+  CMP_TELA_AUDITORIA["CMP-TELA-AUDITORIA<br/>auditoria.js"]
+  CMP_TELA_AUDITORIA -->|realiza| CAP_NARRAR
+  CMP_TELA_AUDITORIA -->|depende| CMP_UI_INFRA
+  CMP_TELA_AUDITORIA -->|depende| CMP_UI_KERNEL
+  CMP_TELA_AUDITORIA -.->|testa| TEST_workspace_target_tests_test_frontend_modulos_py
+  CMP_TELA_BACKEND["CMP-TELA-BACKEND<br/>backend.js"]
+  CMP_TELA_BACKEND -->|realiza| CAP_NARRAR
+  CMP_TELA_BACKEND -->|depende| CMP_UI_INFRA
+  CMP_TELA_BACKEND -->|depende| CMP_UI_KERNEL
+  CMP_TELA_BACKEND -.->|testa| TEST_workspace_target_tests_test_frontend_modulos_py
+  CMP_TELA_CAPACIDADE["CMP-TELA-CAPACIDADE<br/>capacidade.js"]
+  CMP_TELA_CAPACIDADE -->|realiza| CAP_NARRAR
+  CMP_TELA_CAPACIDADE -->|depende| CMP_UI_INFRA
+  CMP_TELA_CAPACIDADE -->|depende| CMP_UI_KERNEL
+  CMP_TELA_CAPACIDADE -.->|testa| TEST_workspace_target_tests_fixtures_renderiza_capacidade_mjs
+  CMP_TELA_CAPACIDADE -.->|testa| TEST_workspace_target_tests_test_frontend_modulos_py
+  CMP_TELA_EXECUTIVO["CMP-TELA-EXECUTIVO<br/>executivo.js"]
+  CMP_TELA_EXECUTIVO -->|realiza| CAP_NARRAR
+  CMP_TELA_EXECUTIVO -->|depende| CMP_UI_INFRA
+  CMP_TELA_EXECUTIVO -->|depende| CMP_UI_KERNEL
+  CMP_TELA_EXECUTIVO -.->|testa| TEST_workspace_target_tests_test_frontend_modulos_py
+  CMP_TELA_INGRESS["CMP-TELA-INGRESS<br/>ingress.js"]
+  CMP_TELA_INGRESS -->|realiza| CAP_NARRAR
+  CMP_TELA_INGRESS -->|depende| CMP_UI_INFRA
+  CMP_TELA_INGRESS -->|depende| CMP_UI_KERNEL
+  CMP_TELA_INGRESS -.->|testa| TEST_workspace_target_tests_test_frontend_modulos_py
+  CMP_TELA_PLANTAO["CMP-TELA-PLANTAO<br/>plantao.js"]
+  CMP_TELA_PLANTAO -->|realiza| CAP_NARRAR
+  CMP_TELA_PLANTAO -->|depende| CMP_UI_INFRA
+  CMP_TELA_PLANTAO -->|depende| CMP_UI_KERNEL
+  CMP_TELA_PLANTAO -.->|testa| TEST_workspace_target_tests_fixtures_exercita_telas_mjs
+  CMP_TELA_PLANTAO -.->|testa| TEST_workspace_target_tests_test_frontend_modulos_py
+  CMP_TELA_PROJETOS["CMP-TELA-PROJETOS<br/>projetos.js"]
+  CMP_TELA_PROJETOS -->|realiza| CAP_NARRAR
+  CMP_TELA_PROJETOS -->|depende| CMP_UI_INFRA
+  CMP_TELA_PROJETOS -->|depende| CMP_UI_KERNEL
+  CMP_TELA_PROJETOS -.->|testa| TEST_workspace_target_tests_test_frontend_modulos_py
+  CMP_TELA_TAREFAS["CMP-TELA-TAREFAS<br/>tarefas.js"]
+  CMP_TELA_TAREFAS -->|realiza| CAP_NARRAR
+  CMP_TELA_TAREFAS -->|depende| CMP_UI_INFRA
+  CMP_TELA_TAREFAS -->|depende| CMP_UI_KERNEL
+  CMP_TELA_TAREFAS -.->|testa| TEST_workspace_target_tests_test_frontend_modulos_py
+  CMP_TELA_TOPOLOGIA["CMP-TELA-TOPOLOGIA<br/>topologia.js"]
+  CMP_TELA_TOPOLOGIA -->|realiza| CAP_NARRAR
+  CMP_TELA_TOPOLOGIA -->|depende| CMP_UI_INFRA
+  CMP_TELA_TOPOLOGIA -->|depende| CMP_UI_KERNEL
+  CMP_TELA_TOPOLOGIA -.->|testa| TEST_workspace_target_tests_fixtures_exercita_telas_mjs
+  CMP_TELA_TOPOLOGIA -.->|testa| TEST_workspace_target_tests_fixtures_renderiza_telas_mjs
+  CMP_TELA_TOPOLOGIA -.->|testa| TEST_workspace_target_tests_test_frontend_modulos_py
+  CMP_UI_CASCA["CMP-UI-CASCA<br/>index.html"]
+  CMP_UI_CASCA -->|realiza| CAP_NARRAR
+  CMP_UI_CASCA -.->|testa| TEST_workspace_target_tests_test_acessibilidade_py
+  CMP_UI_CASCA -.->|testa| TEST_workspace_target_tests_test_contraste_severidade_py
+  CMP_UI_INFRA["CMP-UI-INFRA<br/>commands.js"]
+  CMP_UI_INFRA -->|realiza| CAP_NARRAR
+  CMP_UI_INFRA -->|depende| CMP_UI_KERNEL
+  CMP_UI_INFRA -.->|testa| TEST_workspace_target_tests_fixtures_exercita_notificacoes_mjs
+  CMP_UI_INFRA -.->|testa| TEST_workspace_target_tests_fixtures_exercita_updates_mjs
+  CMP_UI_INFRA -.->|testa| TEST_workspace_target_tests_test_frontend_modulos_py
+  CMP_UI_INFRA -.->|testa| TEST_workspace_target_tests_test_notificacoes_ui_py
+  CMP_UI_KERNEL["CMP-UI-KERNEL<br/>app.js"]
+  CMP_UI_KERNEL -->|realiza| CAP_NARRAR
+  CMP_UI_KERNEL -->|depende| CMP_UI_INFRA
+  CMP_UI_KERNEL -->|depende| CMP_UI_MODULOS_INLINE
+  CMP_UI_KERNEL -.->|testa| TEST_workspace_target_tests_fixtures_exercita_kernel_mjs
+  CMP_UI_KERNEL -.->|testa| TEST_workspace_target_tests_fixtures_exercita_render_vivo_mjs
+  CMP_UI_KERNEL -.->|testa| TEST_workspace_target_tests_test_contraste_severidade_py
+  CMP_UI_KERNEL -.->|testa| TEST_workspace_target_tests_test_frontend_modulos_py
+  CMP_UI_MODULOS_INLINE["CMP-UI-MODULOS-INLINE<br/>armazenamento.js"]
+  CMP_UI_MODULOS_INLINE -->|realiza| CAP_NARRAR
+  CMP_UI_MODULOS_INLINE -->|depende| CMP_TELA_ATENCAO
+  CMP_UI_MODULOS_INLINE -->|depende| CMP_TELA_AUDITORIA
+  CMP_UI_MODULOS_INLINE -->|depende| CMP_TELA_BACKEND
+  CMP_UI_MODULOS_INLINE -->|depende| CMP_TELA_CAPACIDADE
+  CMP_UI_MODULOS_INLINE -->|depende| CMP_TELA_EXECUTIVO
+  CMP_UI_MODULOS_INLINE -->|depende| CMP_TELA_INGRESS
+  CMP_UI_MODULOS_INLINE -->|depende| CMP_TELA_PLANTAO
+  CMP_UI_MODULOS_INLINE -->|depende| CMP_TELA_PROJETOS
+  CMP_UI_MODULOS_INLINE -->|depende| CMP_TELA_TAREFAS
+  CMP_UI_MODULOS_INLINE -->|depende| CMP_TELA_TOPOLOGIA
+  CMP_UI_MODULOS_INLINE -->|depende| CMP_UI_INFRA
+  CMP_UI_MODULOS_INLINE -->|depende| CMP_UI_KERNEL
+  CMP_UI_MODULOS_INLINE -.->|testa| TEST_workspace_target_tests_test_frontend_modulos_py
+  CMP_UI_MODULOS_INLINE -.->|testa| TEST_workspace_target_tests_test_notificacoes_ui_py
   IFC_CLI(["IFC-CLI<br/>Porta de linha de comando da harness"])
   CMP_CLI -.->|provê| IFC_CLI
   IFC_CONTRATO(["IFC-CONTRATO<br/>Situação verificada do consumidor"])
@@ -476,7 +583,7 @@ graph TD
   classDef cap fill:#2563eb,stroke:#1e40af,color:#fff;
   class CAP_AGIR,CAP_ALVO,CAP_CONTRATO,CAP_DIAGNOSTICAR,CAP_MODOS,CAP_NARRAR,CAP_OBSERVAR,CAP_PROCEDENCIA,CAP_SUSTENTAR cap;
   classDef cmp fill:#0891b2,stroke:#0e7490,color:#fff;
-  class CMP_ACHADOS,CMP_APP,CMP_ATUALIZACOES,CMP_BARREIRA_ACOES,CMP_CERTS,CMP_CLI,CMP_CONTAINERS,CMP_CONTRATO,CMP_DRIFT,CMP_EVENTOS,CMP_FASE_C,CMP_INGRESS,CMP_INVENTARIO_HOST,CMP_LOGS_BUSCA,CMP_MASCARAMENTO,CMP_NOTIFICACOES,CMP_OPERACOES,CMP_PERSISTENCIA,CMP_PLANO,CMP_POLITICA_RESPOSTA,CMP_PROCEDENCIA,CMP_PROXY,CMP_REGRAS_ACHADO,CMP_RESUMO,CMP_SERIES,CMP_SESSAO cmp;
+  class CMP_ACHADOS,CMP_APP,CMP_ATUALIZACOES,CMP_BARREIRA_ACOES,CMP_CERTS,CMP_CLI,CMP_CONTAINERS,CMP_CONTRATO,CMP_DRIFT,CMP_EMPACOTAMENTO,CMP_EVENTOS,CMP_FASE_C,CMP_INGRESS,CMP_INVENTARIO_HOST,CMP_LOGS_BUSCA,CMP_MASCARAMENTO,CMP_NOTIFICACOES,CMP_OPERACOES,CMP_PERSISTENCIA,CMP_PLANO,CMP_POLITICA_RESPOSTA,CMP_PROCEDENCIA,CMP_PROXY,CMP_REGRAS_ACHADO,CMP_RESUMO,CMP_SERIES,CMP_SESSAO,CMP_TELA_ATENCAO,CMP_TELA_AUDITORIA,CMP_TELA_BACKEND,CMP_TELA_CAPACIDADE,CMP_TELA_EXECUTIVO,CMP_TELA_INGRESS,CMP_TELA_PLANTAO,CMP_TELA_PROJETOS,CMP_TELA_TAREFAS,CMP_TELA_TOPOLOGIA,CMP_UI_CASCA,CMP_UI_INFRA,CMP_UI_KERNEL,CMP_UI_MODULOS_INLINE cmp;
   classDef ifc fill:#7c3aed,stroke:#5b21b6,color:#fff;
   class IFC_CLI,IFC_CONTRATO,IFC_PLANO,IFC_PROCEDENCIA ifc;
   classDef rule fill:#16a34a,stroke:#15803d,color:#fff;
@@ -488,7 +595,7 @@ graph TD
   classDef met fill:#ea580c,stroke:#c2410c,color:#fff;
   class MET_COMPARAVEL,MET_FRONTEIRA,MET_PENDENCIA met;
   classDef test fill:#57534e,stroke:#44403c,color:#fff;
-  class TEST_tests_e2e_test_checklist_adocao_py,TEST_tests_e2e_test_cli_laudo_py,TEST_tests_integration_test_fase_c_py,TEST_tests_integration_test_homologacao_py,TEST_tests_integration_test_repositorio_py,TEST_tests_integration_test_workflows_py,TEST_tests_unit_test_contrato_py,TEST_tests_unit_test_escopo_regua_py,TEST_tests_unit_test_plano_py,TEST_tests_unit_test_procedencia_py,TEST_tests_unit_test_veredito_py,TEST_workspace_target_tests_test_acessibilidade_py,TEST_workspace_target_tests_test_ack_audit_py,TEST_workspace_target_tests_test_api_py,TEST_workspace_target_tests_test_cabecalhos_seguranca_py,TEST_workspace_target_tests_test_cache_py,TEST_workspace_target_tests_test_cache_http_py,TEST_workspace_target_tests_test_capacidade_cards_py,TEST_workspace_target_tests_test_capacidade_serie_curta_py,TEST_workspace_target_tests_test_certs_sprint5_py,TEST_workspace_target_tests_test_ciclo_acao_sintetico_py,TEST_workspace_target_tests_test_config_ingress_path_py,TEST_workspace_target_tests_test_container_history_py,TEST_workspace_target_tests_test_db_py,TEST_workspace_target_tests_test_deploy_credencial_py,TEST_workspace_target_tests_test_drift_b8_py,TEST_workspace_target_tests_test_events_rota_py,TEST_workspace_target_tests_test_events_v11_py,TEST_workspace_target_tests_test_executive_py,TEST_workspace_target_tests_test_f6_palette_py,TEST_workspace_target_tests_test_findings_py,TEST_workspace_target_tests_test_frescor_amostra_py,TEST_workspace_target_tests_test_guarda_docs_registro_py,TEST_workspace_target_tests_test_guarda_schema_literal_py,TEST_workspace_target_tests_test_hardening_b11_py,TEST_workspace_target_tests_test_history_route_py,TEST_workspace_target_tests_test_ingress_parser_py,TEST_workspace_target_tests_test_kernel_cockpit_py,TEST_workspace_target_tests_test_logs_fts_v13_py,TEST_workspace_target_tests_test_logs_texto_py,TEST_workspace_target_tests_test_metrics_py,TEST_workspace_target_tests_test_metrics_prom_py,TEST_workspace_target_tests_test_migration_py,TEST_workspace_target_tests_test_no_backup_py,TEST_workspace_target_tests_test_notify_v15_py,TEST_workspace_target_tests_test_offline_py,TEST_workspace_target_tests_test_projects_security_py,TEST_workspace_target_tests_test_prune_sintetico_py,TEST_workspace_target_tests_test_prune_v12_py,TEST_workspace_target_tests_test_regras_container_parado_py,TEST_workspace_target_tests_test_render_vivo_py,TEST_workspace_target_tests_test_rotas_rail_py,TEST_workspace_target_tests_test_sampler_py,TEST_workspace_target_tests_test_session_py,TEST_workspace_target_tests_test_sinais_de_maturidade_py,TEST_workspace_target_tests_test_storage_py,TEST_workspace_target_tests_test_summary_py,TEST_workspace_target_tests_test_tasks_py,TEST_workspace_target_tests_test_tasks_api_py,TEST_workspace_target_tests_test_telas_renderizam_py,TEST_workspace_target_tests_test_telas_topologia_plantao_py,TEST_workspace_target_tests_test_unlock_v8_py,TEST_workspace_target_tests_test_updates_ui_py,TEST_workspace_target_tests_test_updates_v14_py test;
+  class TEST_tests_e2e_test_checklist_adocao_py,TEST_tests_e2e_test_cli_laudo_py,TEST_tests_integration_test_fase_c_py,TEST_tests_integration_test_homologacao_py,TEST_tests_integration_test_repositorio_py,TEST_tests_integration_test_workflows_py,TEST_tests_unit_test_contrato_py,TEST_tests_unit_test_escopo_regua_py,TEST_tests_unit_test_plano_py,TEST_tests_unit_test_procedencia_py,TEST_tests_unit_test_veredito_py,TEST_workspace_target_tests_fixtures_exercita_kernel_mjs,TEST_workspace_target_tests_fixtures_exercita_notificacoes_mjs,TEST_workspace_target_tests_fixtures_exercita_render_vivo_mjs,TEST_workspace_target_tests_fixtures_exercita_rotas_mjs,TEST_workspace_target_tests_fixtures_exercita_telas_mjs,TEST_workspace_target_tests_fixtures_exercita_updates_mjs,TEST_workspace_target_tests_fixtures_renderiza_capacidade_mjs,TEST_workspace_target_tests_fixtures_renderiza_telas_mjs,TEST_workspace_target_tests_test_acessibilidade_py,TEST_workspace_target_tests_test_ack_audit_py,TEST_workspace_target_tests_test_api_py,TEST_workspace_target_tests_test_backend_py,TEST_workspace_target_tests_test_cabecalhos_seguranca_py,TEST_workspace_target_tests_test_cache_py,TEST_workspace_target_tests_test_cache_http_py,TEST_workspace_target_tests_test_capacidade_cards_py,TEST_workspace_target_tests_test_capacidade_serie_curta_py,TEST_workspace_target_tests_test_certs_sprint5_py,TEST_workspace_target_tests_test_ciclo_acao_sintetico_py,TEST_workspace_target_tests_test_config_ingress_path_py,TEST_workspace_target_tests_test_container_history_py,TEST_workspace_target_tests_test_contraste_severidade_py,TEST_workspace_target_tests_test_db_py,TEST_workspace_target_tests_test_deploy_credencial_py,TEST_workspace_target_tests_test_drift_b8_py,TEST_workspace_target_tests_test_events_rota_py,TEST_workspace_target_tests_test_events_v11_py,TEST_workspace_target_tests_test_executive_py,TEST_workspace_target_tests_test_f6_palette_py,TEST_workspace_target_tests_test_findings_py,TEST_workspace_target_tests_test_frescor_amostra_py,TEST_workspace_target_tests_test_frontend_modulos_py,TEST_workspace_target_tests_test_guarda_docs_registro_py,TEST_workspace_target_tests_test_guarda_schema_literal_py,TEST_workspace_target_tests_test_hardening_b11_py,TEST_workspace_target_tests_test_history_route_py,TEST_workspace_target_tests_test_ingress_parser_py,TEST_workspace_target_tests_test_kernel_cockpit_py,TEST_workspace_target_tests_test_logs_fts_v13_py,TEST_workspace_target_tests_test_logs_texto_py,TEST_workspace_target_tests_test_metrics_py,TEST_workspace_target_tests_test_metrics_prom_py,TEST_workspace_target_tests_test_migration_py,TEST_workspace_target_tests_test_no_backup_py,TEST_workspace_target_tests_test_notificacoes_ui_py,TEST_workspace_target_tests_test_notify_v15_py,TEST_workspace_target_tests_test_offline_py,TEST_workspace_target_tests_test_projects_security_py,TEST_workspace_target_tests_test_prune_sintetico_py,TEST_workspace_target_tests_test_prune_v12_py,TEST_workspace_target_tests_test_regras_container_parado_py,TEST_workspace_target_tests_test_render_vivo_py,TEST_workspace_target_tests_test_rotas_rail_py,TEST_workspace_target_tests_test_sampler_py,TEST_workspace_target_tests_test_session_py,TEST_workspace_target_tests_test_sinais_de_maturidade_py,TEST_workspace_target_tests_test_storage_py,TEST_workspace_target_tests_test_summary_py,TEST_workspace_target_tests_test_tasks_py,TEST_workspace_target_tests_test_tasks_api_py,TEST_workspace_target_tests_test_telas_renderizam_py,TEST_workspace_target_tests_test_telas_topologia_plantao_py,TEST_workspace_target_tests_test_unlock_v8_py,TEST_workspace_target_tests_test_updates_ui_py,TEST_workspace_target_tests_test_updates_v14_py test;
   classDef adr fill:#ca8a04,stroke:#a16207,color:#fff;
   class ADR_001,ADR_002,ADR_003,ADR_004,ADR_015,ADR_016,ADR_017 adr;
   classDef risk fill:#dc2626,stroke:#991b1b,color:#fff;

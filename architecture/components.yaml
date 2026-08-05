@@ -338,6 +338,7 @@ components:
     - workspace/target/tests/test_ingress_parser.py
     - workspace/target/tests/test_rotas_rail.py
     - workspace/target/tests/test_config_ingress_path.py
+    - workspace/target/tests/fixtures/exercita_rotas.mjs
     implements: []
     owner: danzeroum
 
@@ -507,6 +508,7 @@ components:
     - workspace/target/tests/test_storage.py
     - workspace/target/tests/test_offline.py
     - workspace/target/tests/test_kernel_cockpit.py
+    - workspace/target/tests/test_backend.py
     implements: []
     owner: danzeroum
 
@@ -620,6 +622,387 @@ components:
     exposes: []
     tested_by:
     - workspace/target/tests/test_api.py
+    implements: []
+    owner: danzeroum
+
+  # ─────────────────────────────────────────────────────────────────────────────────────────
+  # O FRONTEND (CP-003 fatia-2b) — os 68 arquivos não-Python de `workspace/target/app/`.
+  #
+  # O GABARITO DO LAUDO BATEU, E A FORMA DELE NÃO É A QUE EU ESPERAVA. As "10 telas" não são uma
+  # camada: são o `render` de dez dos DEZENOVE módulos. Conferido por import e não por nome —
+  # `modulos/X.js` importa `screens/Y.js`, 1:1, e nenhuma tela ficou órfã. Por isso cada tela
+  # entra como UM componente com os dois arquivos, e não como dois: o módulo é a unidade de
+  # extensão do sistema, e a tela é o `render` dele.
+  #
+  # `status: implemented` e não `verified`. Os três testes de frontend existem e amarram, mas
+  # `test_frontend_modulos.py` confere ESTRUTURA (que os módulos existem e registram), não o
+  # comportamento de cada tela. Chamar isso de `verified` seria dizer que a tela foi exercitada
+  # quando o que foi exercitado é o registro dela.
+  # ─────────────────────────────────────────────────────────────────────────────────────────
+  # A tela de atenção: o que precisa de olho agora.
+  # Módulo `atencao` mais a tela `attention` — um componente e não dois, porque o módulo
+  # É a unidade de extensão do sistema: o contrato do `registry` diz 'módulo novo = 1
+  # arquivo novo, zero `if` no núcleo', e a tela é o `render` dele.
+  # O NOME DIVERGE entre as duas camadas (`atencao` → `attention`): a de módulos está
+  # em português e esta tela ficou em inglês. Registrado porque quem procurar
+  # `screens/atencao.js` não vai achar.
+  - id: CMP-TELA-ATENCAO
+    kind: ui-surface
+    capability: CAP-NARRAR
+    status: implemented
+    source_paths:
+    - workspace/target/app/static/js/modulos/atencao.js
+    - workspace/target/app/static/js/screens/attention.js
+    depends_on:
+      - CMP-UI-INFRA
+      - CMP-UI-KERNEL
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_frontend_modulos.py
+    implements: []
+    owner: danzeroum
+
+  # O registro do que foi feito e por quem.
+  # Módulo `auditoria` mais a tela `auditoria` — um componente e não dois, porque o módulo
+  # É a unidade de extensão do sistema: o contrato do `registry` diz 'módulo novo = 1
+  # arquivo novo, zero `if` no núcleo', e a tela é o `render` dele.
+  - id: CMP-TELA-AUDITORIA
+    kind: ui-surface
+    capability: CAP-NARRAR
+    status: implemented
+    source_paths:
+    - workspace/target/app/static/js/modulos/auditoria.js
+    - workspace/target/app/static/js/screens/auditoria.js
+    depends_on:
+      - CMP-UI-INFRA
+      - CMP-UI-KERNEL
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_frontend_modulos.py
+    implements: []
+    owner: danzeroum
+
+  # O estado do próprio backend do cockpit.
+  # Módulo `backend` mais a tela `backend` — um componente e não dois, porque o módulo
+  # É a unidade de extensão do sistema: o contrato do `registry` diz 'módulo novo = 1
+  # arquivo novo, zero `if` no núcleo', e a tela é o `render` dele.
+  - id: CMP-TELA-BACKEND
+    kind: ui-surface
+    capability: CAP-NARRAR
+    status: implemented
+    source_paths:
+    - workspace/target/app/static/js/modulos/backend.js
+    - workspace/target/app/static/js/screens/backend.js
+    depends_on:
+      - CMP-UI-INFRA
+      - CMP-UI-KERNEL
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_frontend_modulos.py
+    implements: []
+    owner: danzeroum
+
+  # Capacidade e séries curtas — CPU, memória, disco.
+  # Módulo `capacidade` mais a tela `capacidade` — um componente e não dois, porque o módulo
+  # É a unidade de extensão do sistema: o contrato do `registry` diz 'módulo novo = 1
+  # arquivo novo, zero `if` no núcleo', e a tela é o `render` dele.
+  - id: CMP-TELA-CAPACIDADE
+    kind: ui-surface
+    capability: CAP-NARRAR
+    status: implemented
+    source_paths:
+    - workspace/target/app/static/js/modulos/capacidade.js
+    - workspace/target/app/static/js/screens/capacidade.js
+    depends_on:
+      - CMP-UI-INFRA
+      - CMP-UI-KERNEL
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_frontend_modulos.py
+    - workspace/target/tests/fixtures/renderiza_capacidade.mjs
+    implements: []
+    owner: danzeroum
+
+  # A tela do gestor: o agregado sem o detalhe.
+  # Módulo `executivo` mais a tela `executivo` — um componente e não dois, porque o módulo
+  # É a unidade de extensão do sistema: o contrato do `registry` diz 'módulo novo = 1
+  # arquivo novo, zero `if` no núcleo', e a tela é o `render` dele.
+  - id: CMP-TELA-EXECUTIVO
+    kind: ui-surface
+    capability: CAP-NARRAR
+    status: implemented
+    source_paths:
+    - workspace/target/app/static/js/modulos/executivo.js
+    - workspace/target/app/static/js/screens/executivo.js
+    depends_on:
+      - CMP-UI-INFRA
+      - CMP-UI-KERNEL
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_frontend_modulos.py
+    implements: []
+    owner: danzeroum
+
+  # As rotas do nginx do host, lidas do disco.
+  # Módulo `ingress` mais a tela `ingress` — um componente e não dois, porque o módulo
+  # É a unidade de extensão do sistema: o contrato do `registry` diz 'módulo novo = 1
+  # arquivo novo, zero `if` no núcleo', e a tela é o `render` dele.
+  - id: CMP-TELA-INGRESS
+    kind: ui-surface
+    capability: CAP-NARRAR
+    status: implemented
+    source_paths:
+    - workspace/target/app/static/js/modulos/ingress.js
+    - workspace/target/app/static/js/screens/ingress.js
+    depends_on:
+      - CMP-UI-INFRA
+      - CMP-UI-KERNEL
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_frontend_modulos.py
+    implements: []
+    owner: danzeroum
+
+  # O turno: o que está aberto e quem responde.
+  # Módulo `plantao` mais a tela `plantao` — um componente e não dois, porque o módulo
+  # É a unidade de extensão do sistema: o contrato do `registry` diz 'módulo novo = 1
+  # arquivo novo, zero `if` no núcleo', e a tela é o `render` dele.
+  - id: CMP-TELA-PLANTAO
+    kind: ui-surface
+    capability: CAP-NARRAR
+    status: implemented
+    source_paths:
+    - workspace/target/app/static/js/modulos/plantao.js
+    - workspace/target/app/static/js/screens/plantao.js
+    depends_on:
+      - CMP-UI-INFRA
+      - CMP-UI-KERNEL
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_frontend_modulos.py
+    - workspace/target/tests/fixtures/exercita_telas.mjs
+    implements: []
+    owner: danzeroum
+
+  # Os projetos compose agrupados.
+  # Módulo `projetos` mais a tela `projects` — um componente e não dois, porque o módulo
+  # É a unidade de extensão do sistema: o contrato do `registry` diz 'módulo novo = 1
+  # arquivo novo, zero `if` no núcleo', e a tela é o `render` dele.
+  # O NOME DIVERGE entre as duas camadas (`projetos` → `projects`): a de módulos está
+  # em português e esta tela ficou em inglês. Registrado porque quem procurar
+  # `screens/projetos.js` não vai achar.
+  - id: CMP-TELA-PROJETOS
+    kind: ui-surface
+    capability: CAP-NARRAR
+    status: implemented
+    source_paths:
+    - workspace/target/app/static/js/modulos/projetos.js
+    - workspace/target/app/static/js/screens/projects.js
+    depends_on:
+      - CMP-UI-INFRA
+      - CMP-UI-KERNEL
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_frontend_modulos.py
+    implements: []
+    owner: danzeroum
+
+  # As tarefas assíncronas e seu andamento.
+  # Módulo `tarefas` mais a tela `tarefas` — um componente e não dois, porque o módulo
+  # É a unidade de extensão do sistema: o contrato do `registry` diz 'módulo novo = 1
+  # arquivo novo, zero `if` no núcleo', e a tela é o `render` dele.
+  - id: CMP-TELA-TAREFAS
+    kind: ui-surface
+    capability: CAP-NARRAR
+    status: implemented
+    source_paths:
+    - workspace/target/app/static/js/modulos/tarefas.js
+    - workspace/target/app/static/js/screens/tarefas.js
+    depends_on:
+      - CMP-UI-INFRA
+      - CMP-UI-KERNEL
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_frontend_modulos.py
+    implements: []
+    owner: danzeroum
+
+  # O mapa de quem fala com quem.
+  # Módulo `topologia` mais a tela `topologia` — um componente e não dois, porque o módulo
+  # É a unidade de extensão do sistema: o contrato do `registry` diz 'módulo novo = 1
+  # arquivo novo, zero `if` no núcleo', e a tela é o `render` dele.
+  - id: CMP-TELA-TOPOLOGIA
+    kind: ui-surface
+    capability: CAP-NARRAR
+    status: implemented
+    source_paths:
+    - workspace/target/app/static/js/modulos/topologia.js
+    - workspace/target/app/static/js/screens/topologia.js
+    depends_on:
+      - CMP-UI-INFRA
+      - CMP-UI-KERNEL
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_frontend_modulos.py
+    - workspace/target/tests/fixtures/exercita_telas.mjs
+    - workspace/target/tests/fixtures/renderiza_telas.mjs
+    implements: []
+    owner: danzeroum
+
+  # Os nove módulos que renderizam INLINE, sem arquivo de tela dedicado.
+  # Não é categoria da governança: o contrato do `registry` prevê `chip` opcional e
+  # `render` como a tela, então 'módulo que só tem chip' é forma do sistema. Entre eles
+  # estão containers, logs e eventos — os mais usados do cockpit, e nenhum tem tela
+  # própria porque vivem dentro da régua.
+  - id: CMP-UI-MODULOS-INLINE
+    kind: ui-surface
+    capability: CAP-NARRAR
+    status: implemented
+    source_paths:
+    - workspace/target/app/static/js/modulos/armazenamento.js
+    - workspace/target/app/static/js/modulos/config.js
+    - workspace/target/app/static/js/modulos/containers.js
+    - workspace/target/app/static/js/modulos/drift.js
+    - workspace/target/app/static/js/modulos/eventos.js
+    - workspace/target/app/static/js/modulos/index.js
+    - workspace/target/app/static/js/modulos/logs.js
+    - workspace/target/app/static/js/modulos/metricas.js
+    - workspace/target/app/static/js/modulos/stacks.js
+    depends_on:
+      - CMP-TELA-ATENCAO
+      - CMP-TELA-AUDITORIA
+      - CMP-TELA-BACKEND
+      - CMP-TELA-CAPACIDADE
+      - CMP-TELA-EXECUTIVO
+      - CMP-TELA-INGRESS
+      - CMP-TELA-PLANTAO
+      - CMP-TELA-PROJETOS
+      - CMP-TELA-TAREFAS
+      - CMP-TELA-TOPOLOGIA
+      - CMP-UI-INFRA
+      - CMP-UI-KERNEL
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_frontend_modulos.py
+    - workspace/target/tests/test_notificacoes_ui.py
+    implements: []
+    owner: danzeroum
+
+  # O núcleo da UI, e `registry.js` é o ponto que dá forma a todo o resto: ele é o ÚNICO
+  # ponto de extensão. O que havia antes era um `switch` com um `case` por tela em
+  # `main.js` — o núcleo conhecia cada tela pelo nome, e acrescentar uma significava
+  # editá-lo. Os outros onze arquivos são a moldura: layout, régua, escopo, subtela,
+  # rolagem, relógio, presets, personalização e o `patch` que aplica diffs sem redesenhar.
+  - id: CMP-UI-KERNEL
+    kind: service
+    capability: CAP-NARRAR
+    status: implemented
+    source_paths:
+    - workspace/target/app/static/js/kernel/app.js
+    - workspace/target/app/static/js/kernel/cockpit.js
+    - workspace/target/app/static/js/kernel/escopo.js
+    - workspace/target/app/static/js/kernel/layout.js
+    - workspace/target/app/static/js/kernel/patch.js
+    - workspace/target/app/static/js/kernel/personalizar.js
+    - workspace/target/app/static/js/kernel/presets.js
+    - workspace/target/app/static/js/kernel/regua.js
+    - workspace/target/app/static/js/kernel/relogio.js
+    - workspace/target/app/static/js/kernel/rolagem.js
+    - workspace/target/app/static/js/kernel/registry.js
+    - workspace/target/app/static/js/kernel/subtela.js
+    depends_on:
+      - CMP-UI-INFRA
+      - CMP-UI-MODULOS-INLINE
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_frontend_modulos.py
+    - workspace/target/tests/test_contraste_severidade.py
+    - workspace/target/tests/fixtures/exercita_kernel.mjs
+    - workspace/target/tests/fixtures/exercita_render_vivo.mjs
+    implements: []
+    owner: danzeroum
+
+  # O que os módulos usam e não é do núcleo: busca de dados, formatação, store, comandos e
+  # notificação. `notificacoes.js` e `notifications.js` coexistem — dois arquivos com o
+  # mesmo nome em idiomas diferentes, o que é candidato a código morto e está LISTADO como
+  # achado no PR em vez de resolvido por palpite: decidir qual morre é do dono do produto.
+  - id: CMP-UI-INFRA
+    kind: adapter
+    capability: CAP-NARRAR
+    status: implemented
+    source_paths:
+    - workspace/target/app/static/js/commands.js
+    - workspace/target/app/static/js/data.js
+    - workspace/target/app/static/js/fmt.js
+    - workspace/target/app/static/js/main.js
+    - workspace/target/app/static/js/notificacoes.js
+    - workspace/target/app/static/js/notifications.js
+    - workspace/target/app/static/js/store.js
+    - workspace/target/app/static/js/updates.js
+    depends_on:
+      - CMP-UI-KERNEL
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_frontend_modulos.py
+    - workspace/target/tests/test_notificacoes_ui.py
+    - workspace/target/tests/fixtures/exercita_notificacoes.mjs
+    - workspace/target/tests/fixtures/exercita_updates.mjs
+    implements: []
+    owner: danzeroum
+
+  # A casca que o navegador carrega antes de qualquer módulo: o HTML, o service worker que
+  # sustenta o modo offline, o manifest do PWA, as quatro folhas de estilo, as fontes e o
+  # ícone.
+  # DONO ÚNICO, e é decisão: fontes e CSS são usados por TODAS as telas, e atribuí-los a
+  # uma delas seria posse arbitrária — o schema recusa posse dupla, e a alternativa honesta
+  # é o componente compartilhado. `inspect-educativo.html` é página autônoma servida à
+  # parte, e entra aqui pelo mesmo critério: casca, não módulo.
+  - id: CMP-UI-CASCA
+    kind: ui-surface
+    capability: CAP-NARRAR
+    status: implemented
+    source_paths:
+    - workspace/target/app/static/index.html
+    - workspace/target/app/static/inspect-educativo.html
+    - workspace/target/app/static/manifest.json
+    - workspace/target/app/static/sw.js
+    - workspace/target/app/static/css/base.css
+    - workspace/target/app/static/css/components.css
+    - workspace/target/app/static/css/fontes.css
+    - workspace/target/app/static/css/themes.css
+    - workspace/target/app/static/vendor/xterm.css
+    - workspace/target/app/static/assets/icon.svg
+    - workspace/target/app/static/assets/fonts/OFL.txt
+    - workspace/target/app/static/assets/fonts/inter-latin.woff2
+    - workspace/target/app/static/assets/fonts/inter-latin-ext.woff2
+    - workspace/target/app/static/assets/fonts/jetbrains-mono-latin.woff2
+    - workspace/target/app/static/assets/fonts/jetbrains-mono-latin-ext.woff2
+    depends_on: []
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_contraste_severidade.py
+    - workspace/target/tests/test_acessibilidade.py
+    implements: []
+    owner: danzeroum
+
+  # Como a aplicação é construída e configurada: o Dockerfile, o pin exato das sete
+  # dependências de runtime, e o exemplo de configuração de serviços. Não é código que roda
+  # no processo — é o que decide QUAL processo roda, e por isso um componente e não uma
+  # isenção.
+  - id: CMP-EMPACOTAMENTO
+    kind: adapter
+    capability: CAP-SUSTENTAR
+    status: implemented
+    source_paths:
+    - workspace/target/app/Dockerfile
+    - workspace/target/app/requirements.txt
+    - workspace/target/app/config/README.md
+    - workspace/target/app/config/servicos.example.json
+    depends_on: []
+    exposes: []
+    tested_by:
+    - workspace/target/tests/test_deploy_credencial.py
+    - workspace/target/tests/test_config_ingress_path.py
     implements: []
     owner: danzeroum
 

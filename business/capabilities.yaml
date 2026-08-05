@@ -126,6 +126,7 @@ capabilities:
   - workspace/target/app/ingress/parser.py
   - workspace/target/app/routers/ingress.py
   test_paths:
+  - workspace/target/tests/fixtures/exercita_rotas.mjs
   - workspace/target/tests/test_certs_sprint5.py
   - workspace/target/tests/test_config_ingress_path.py
   - workspace/target/tests/test_drift_b8.py
@@ -192,16 +193,28 @@ capabilities:
   - workspace/target/app/routers/backend.py
   - workspace/target/app/routers/storage.py
   test_paths:
+  - workspace/target/tests/fixtures/exercita_kernel.mjs
+  - workspace/target/tests/fixtures/exercita_notificacoes.mjs
+  - workspace/target/tests/fixtures/exercita_render_vivo.mjs
+  - workspace/target/tests/fixtures/exercita_telas.mjs
+  - workspace/target/tests/fixtures/exercita_updates.mjs
+  - workspace/target/tests/fixtures/renderiza_capacidade.mjs
+  - workspace/target/tests/fixtures/renderiza_telas.mjs
+  - workspace/target/tests/test_acessibilidade.py
+  - workspace/target/tests/test_backend.py
   - workspace/target/tests/test_cabecalhos_seguranca.py
   - workspace/target/tests/test_capacidade_serie_curta.py
+  - workspace/target/tests/test_contraste_severidade.py
   - workspace/target/tests/test_events_rota.py
   - workspace/target/tests/test_events_v11.py
   - workspace/target/tests/test_executive.py
   - workspace/target/tests/test_frescor_amostra.py
+  - workspace/target/tests/test_frontend_modulos.py
   - workspace/target/tests/test_kernel_cockpit.py
   - workspace/target/tests/test_logs_fts_v13.py
   - workspace/target/tests/test_metrics.py
   - workspace/target/tests/test_metrics_prom.py
+  - workspace/target/tests/test_notificacoes_ui.py
   - workspace/target/tests/test_notify_v15.py
   - workspace/target/tests/test_offline.py
   - workspace/target/tests/test_sampler.py
@@ -230,8 +243,10 @@ capabilities:
   - workspace/target/tests/test_cache.py
   - workspace/target/tests/test_cache_http.py
   - workspace/target/tests/test_capacidade_cards.py
+  - workspace/target/tests/test_config_ingress_path.py
   - workspace/target/tests/test_container_history.py
   - workspace/target/tests/test_db.py
+  - workspace/target/tests/test_deploy_credencial.py
   - workspace/target/tests/test_events_v11.py
   - workspace/target/tests/test_migration.py
   - workspace/target/tests/test_no_backup.py

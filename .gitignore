@@ -44,3 +44,14 @@ env/
 # Laudos e evidência solta
 *.evidence
 report/
+
+# RESTAURADAS na fatia-2b, e as duas somem por REGRESSÃO minha: o transplante da carcaça v1.0.0
+# (commit 4a5d238) sobrescreveu este arquivo inteiro pelo do molde, e o molde não conhece estes
+# dois caminhos. Entre aquele commit e este, um `git add -A` neste repositório teria comitado uma
+# credencial de homologação ou o escopo autorizado real.
+#
+# Quem pegou foi a suíte LEGADA — `test_env_real_nao_esta_comitado` e
+# `test_escopo_real_nao_esta_comitado`, dois testes que eu estava prestes a classificar como
+# "expectativa obsoleta da carcaça velha". Não eram: estavam certos, e eu é que estava errado.
+deploy/homologacao/.env
+tests/qa/escopo-autorizado.yaml

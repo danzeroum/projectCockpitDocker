@@ -27,7 +27,7 @@ threats:
   # ─────────────────────────────────────────────────────────────────────────────────────────
   - id: THREAT-SOCKET-ESCRITA
     stride: elevation_of_privilege
-    target: STAGE-CODE
+    target: CMP-PROXY
     attack_vector: >
       O cockpit não fala com o daemon Docker direto: fala com `tecnativa/docker-socket-proxy`, que
       monta `/var/run/docker.sock:ro` (workspace/target/docker-compose.yml, linha 30). O `:ro` é do
@@ -49,7 +49,7 @@ threats:
   # ─────────────────────────────────────────────────────────────────────────────────────────
   - id: THREAT-LOG-DADO-PESSOAL
     stride: information_disclosure
-    target: STAGE-CODE
+    target: CMP-CONTAINERS
     attack_vector: >
       `GET /api/containers/{id}/logs?tail=500` (workspace/target/app/routers/containers.py:96)
       devolve a saída bruta de qualquer container do host. Log de aplicação de terceiro é onde dado
@@ -68,7 +68,7 @@ threats:
   # ─────────────────────────────────────────────────────────────────────────────────────────
   - id: THREAT-MASCARA-POR-REGEX
     stride: information_disclosure
-    target: STAGE-CODE
+    target: CMP-MASCARAMENTO
     attack_vector: >
       `workspace/target/app/masking.py` mascara por NOME de chave, com um regex de sete termos
       (`pass|secret|token|credential|apikey|_key$|private`) mais credencial embutida em URI. É
@@ -84,7 +84,7 @@ threats:
   # ─────────────────────────────────────────────────────────────────────────────────────────
   - id: THREAT-UNLOCK-SEM-GATEWAY
     stride: spoofing
-    target: STAGE-CODE
+    target: CMP-SESSAO
     attack_vector: >
       Toda mutação exige `X-Cockpit-Unlock` — token de sessão aleatório, guardado só como hash, com
       30 min de prazo e o usuário do basic auth do ingress atrelado
