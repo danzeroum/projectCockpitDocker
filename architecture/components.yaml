@@ -7,128 +7,20 @@ source_of_truth: true
 generated_from: null
 
 components:
-  - id: CMP-CONTRATO
-    kind: domain-module
-    capability: CAP-CONTRATO
-    status: verified
-    source_paths:
-      - src/cockpit_harness/contrato.py
-      - src/cockpit_harness/codigos.py
-    depends_on: []
-    exposes:
-      - "cockpit_harness.contrato.situacao"
-      - "cockpit_harness.contrato.conferir_fonte_unica"
-      - "cockpit_harness.contrato.regua_copiada"
-      - "cockpit_harness.contrato.exigir_rede_liberada"
-    tested_by:
-      - tests/unit/test_contrato.py
-      - tests/integration/test_repositorio.py
-    implements:
-      - REQ-001
-    owner: danzeroum
-
-  - id: CMP-PLANO
-    kind: domain-module
-    capability: CAP-MODOS
-    status: verified
-    source_paths:
-      - src/cockpit_harness/plano.py
-    depends_on:
-      - CMP-CONTRATO
-    exposes:
-      - "cockpit_harness.plano.pode_disparar"
-      - "cockpit_harness.plano.exigir_permissao"
-      - "cockpit_harness.plano.exigir_ambiente_limpo"
-    tested_by:
-      - tests/unit/test_plano.py
-      - tests/integration/test_workflows.py
-    implements:
-      - REQ-002
-      - REQ-004
-    owner: danzeroum
-
-  - id: CMP-PROCEDENCIA
-    kind: domain-module
-    capability: CAP-PROCEDENCIA
-    status: verified
-    source_paths:
-      - src/cockpit_harness/procedencia.py
-    depends_on:
-      - CMP-CONTRATO
-    exposes:
-      - "cockpit_harness.procedencia.montar_laudo"
-      - "cockpit_harness.procedencia.validar"
-      - "cockpit_harness.procedencia.fingerprint"
-      - "cockpit_harness.procedencia.exigir_comparaveis"
-    tested_by:
-      - tests/unit/test_procedencia.py
-    implements:
-      - REQ-003
-    owner: danzeroum
-
-  - id: CMP-FASE-C
-    kind: domain-module
-    capability: CAP-ALVO
-    status: verified
-    # As duas peças que fazem o modo `active_discovery` de fato descobrir. Nasceram juntas,
-    # nos PRs #7 e #8, para o mesmo defeito: a cerimônia de autorização protegia um run que
-    # não emitia probe nenhum. Uma traduz o escopo entre dois schemas de mesmo nome; a outra
-    # emite o veredito que a régua não emite (ela sai 0 com o laudo dizendo `inconclusivo`).
-    source_paths:
-      - src/cockpit_harness/escopo_regua.py
-      - src/cockpit_harness/veredito.py
-    depends_on:
-      - CMP-CONTRATO
-    exposes:
-      - "cockpit_harness.escopo_regua.traduzir"
-      - "cockpit_harness.escopo_regua.escrever"
-      - "cockpit_harness.veredito.avaliar"
-    tested_by:
-      - tests/unit/test_escopo_regua.py
-      - tests/unit/test_veredito.py
-      - tests/integration/test_fase_c.py
-    owner: danzeroum
-
-  - id: CMP-CLI
-    kind: adapter
-    capability: CAP-PROCEDENCIA
-    status: verified
-    # `__init__.py` entra aqui, e a escolha não é óbvia: ele é o mapa do pacote (`__all__`),
-    # não a CLI. Sob o schema atual não há `exemptions` para declarar "arquivo sem componente,
-    # com justificativa" — o molde já tem, e a CP-002 o traz. Até lá, a superfície de entrada
-    # do pacote (`__init__` + `__main__`) ficar com o adapter de entrada é a atribuição menos
-    # arbitrária disponível. Fica registrado que é acomodação, não desenho.
-    source_paths:
-      - src/cockpit_harness/cli.py
-      - src/cockpit_harness/__main__.py
-      - src/cockpit_harness/__init__.py
-    depends_on:
-      - CMP-CONTRATO
-      - CMP-PLANO
-      - CMP-PROCEDENCIA
-    exposes:
-      - "cockpit_harness.cli.main"
-    tested_by:
-      - tests/e2e/test_cli_laudo.py
-    implements:
-      - REQ-003
-    owner: danzeroum
-
+  # ─────────────────────────────────────────────────────────────────────────────────────────
+  # AQUI HAVIA CINCO COMPONENTES — CMP-CONTRATO, CMP-PLANO, CMP-PROCEDENCIA, CMP-FASE-C e
+  # CMP-CLI —, que descreviam `src/cockpit_harness/`. A nota anterior dizia que eles sairiam
+  # "junto com o código, na sub-fatia da divisão", e não podiam sair antes porque 24 regras de
+  # negócio os referenciavam: removê-los sozinhos produziria regra apontando para componente
+  # inexistente, uma SUBIDA que a catraca recusa com razão.
+  #
+  # Esta é a sub-fatia. Código, testes, regras e componentes saem no MESMO commit, e é por isso
+  # que o contador desce em vez de subir. O equivalente vive em danzeroum/cockpit-harness.
   # ─────────────────────────────────────────────────────────────────────────────────────────
   # O COCKPIT (CP-003 fatia-2a) — os 65 arquivos Python de `workspace/target/app/`, lidos em
-  # d6ae70ea. Os cinco componentes acima descrevem `src/cockpit_harness/`, a CLI de adoção que
-  # está saindo deste repositório; NÃO foram removidos aqui porque 24 regras de negócio os
-  # referenciam, e removê-los produziria regra apontando para componente inexistente — uma
-  # SUBIDA, que a catraca recusa com razão. Saem junto com o código, na sub-fatia da divisão.
+  # d6ae70ea.
   #
   # `status: verified` em todos, e o critério é literal: cada `tested_by` é um arquivo de
-  # `workspace/target/tests/` cujo texto referencia o módulo do componente. O vínculo foi obtido
-  # mecanicamente (regex do nome do módulo no corpo do teste) e conferido por amostra — não por
-  # semelhança de nome.
-  # ─────────────────────────────────────────────────────────────────────────────────────────
-  # Único ponto por onde a app fala com o daemon: `configure(proxy_url, terminal_enabled)` guarda o
-  # endereço do socket-proxy. Nenhum outro módulo monta a URL do Docker — é o que torna a superfície
-  # de acesso ao daemon uma coisa só, auditável num arquivo. Ver THREAT-SOCKET-ESCRITA.
   - id: CMP-PROXY
     kind: adapter
     capability: CAP-OBSERVAR

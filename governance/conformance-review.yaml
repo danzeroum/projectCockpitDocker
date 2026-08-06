@@ -12,7 +12,7 @@ generated_from: null
 review:
   produced_by: agent
   agent: conformance
-  scope_fingerprint: "sha256:29e57912ddae8f6fbd8912205dbd5dd9229c840c105586f281592cbd14172987"
+  scope_fingerprint: "sha256:fc568f107f1e0f16e7c411f08b72b138c8c9c8f3f2411962352c4aaed3c3ee44"
 
   findings:
     - id: CONF-001
@@ -131,6 +131,53 @@ review:
         recusando a declaração — e zero redução nos dez `teste órfão`. Líquido: +10.
         Não existe, na carcaça, instrumento para "arquivo de apoio de teste, declarado, que não é
         teste". Os dez ficam contados como dívida VISÍVEL, que é o segundo melhor estado.
+      disposition: change_proposal
+      ref: harness/change-proposals/CP-003-virar-derivado-do-molde.yaml
+      consumed_by:
+        kind: change_proposal
+        ref: CP-003
+
+    - id: CONF-008
+      severity: medium
+      summary: >
+        O VOCABULÁRIO DA CARCAÇA v1.0.0 SUPÕE QUE O CONSUMIDOR CONTÉM O PRÓPRIO CÓDIGO, e a
+        fatia-4 da CP-003 foi o primeiro caso a desmentir isso — extraiu `src/cockpit_harness/`
+        para um repositório próprio e passou a consumi-lo por pin exato. Duas travas perderam a
+        capacidade de dizer o que é verdade, ambas medidas ao tentar executá-las.
+        (1) `ci/validate_metadata.py::_declaradas` lê `pyproject.toml` com o regex
+        `"nome[<>=!~]..."` e não reconhece referência direta PEP 508 (`nome @ git+url`) — de modo
+        que a forma mais perigosa que existe, código arbitrário de um host qualquer, é justamente
+        a que o inventário de supply chain não enxerga. Consequência: `cockpit-harness` está
+        inventariada em `security/dependencies.yaml`, é declarada de fato em `pyproject.toml`, e
+        o fiscal a acusa de "entrada morta". 1 achado, na categoria nova `meta:dependência`.
+        (2) `harness/schemas/risk-register.schema.json` fixa `kind` em local_path,
+        standard_symbol (com `standard` const "webqa-suite"), github_environment e
+        branch_protection. Não há como declarar "o controle vive na dependência que eu pino":
+        três controles de RISK-WEBQA-001, RISK-ALVO-001 e RISK-SEGREDO-001 emigraram e só puderam
+        ser registrados em comentário.
+        O CAMPO QUE FALTA, nomeado: um `kind: pinned_dependency` com `ref` (símbolo ou arquivo) e
+        `version_source` apontando para onde o pin mora — o mesmo desenho de `standard_symbol`,
+        que já resolve exatamente este problema para a régua externa e foi escrito como se a régua
+        fosse a única dependência com essa propriedade.
+      disposition: change_proposal
+      ref: harness/change-proposals/CP-003-virar-derivado-do-molde.yaml
+      consumed_by:
+        kind: change_proposal
+        ref: CP-003
+
+    - id: CONF-009
+      severity: medium
+      summary: >
+        FALHA LEGADA, CLASSIFICADA E NÃO CONSERTADA: `python -m cockpit_harness laudo` sai 30
+        (`PROVENANCE_INVALID: Additional properties are not allowed ('findings', 'result',
+        'summary')`). Os schemas de laudo da carcaça v1.0.0 recusam, na composição `allOf` com
+        provenance, justamente os campos que a harness escreve. Medido NOS DOIS LADOS antes de
+        pinar: com `src/` local, exit 30; com o pin `@9522f0d`, exit 30, mesma mensagem. O pin não
+        causa nem corrige — a divergência é anterior a ele e veio do transplante da carcaça
+        (CP-002).
+        Não é consertada aqui porque a correção é uma decisão sobre QUAL schema é o certo: o da
+        carcaça, e então a harness muda o envelope; ou o pré-transplante, e então o molde precisa
+        aceitar `findings`/`result`. Essa escolha vale para todo derivado, não só para este.
       disposition: change_proposal
       ref: harness/change-proposals/CP-003-virar-derivado-do-molde.yaml
       consumed_by:

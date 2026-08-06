@@ -11,8 +11,6 @@ adrs:
     title: "Consumir a WebQA Suite como padrão externo, nunca copiado"
     status: accepted
     file: architecture/adr/ADR-001-webqa-como-padrao-externo.md
-    related_capabilities:
-      - CAP-CONTRATO
     related_risks:
       - RISK-WEBQA-001
 
@@ -60,12 +58,6 @@ adrs:
     title: "Versão do padrão em fonte única e procedência carimbada"
     status: accepted
     file: architecture/adr/ADR-003-versao-em-fonte-unica.md
-    related_capabilities:
-      - CAP-CONTRATO
-      - CAP-PROCEDENCIA
-    related_components:
-      - CMP-CONTRATO
-      - CMP-PROCEDENCIA
     related_risks:
       - RISK-DEP-001
 
@@ -122,8 +114,6 @@ adrs:
     # se apaga — se apagasse, o repositório perderia a memória de por que já foi diferente.
     status: superseded
     file: architecture/adr/ADR-015-alvo-fora-do-consumidor.md
-    related_capabilities:
-      - CAP-ALVO
     related_risks:
       - RISK-ALVO-001
 
@@ -131,11 +121,6 @@ adrs:
     title: "Sem homologação declarada, a saída é uma pendência; nunca produção"
     status: accepted
     file: architecture/adr/ADR-016-pendencia-em-vez-de-alvo-inventado.md
-    related_capabilities:
-      - CAP-ALVO
-      - CAP-CONTRATO
-    related_components:
-      - CMP-CONTRATO
     related_risks:
       - RISK-ALVO-001
       - RISK-SEGREDO-001
@@ -168,8 +153,6 @@ adrs:
     file: architecture/adr/ADR-017-stack-de-homologacao-no-consumidor.md
     supersedes:
       - ADR-015
-    related_capabilities:
-      - CAP-ALVO
     related_risks:
       - RISK-ALVO-001
       - RISK-HOMOLOG-001
@@ -189,3 +172,45 @@ adrs:
         description: "E o que NÃO mudou: o código do cockpit não é vendorizado. O compose CONSTRÓI a partir do clone que já existe no servidor (`COCKPIT_SRC`) em vez de carregar uma cópia — uma cópia versionada derivaria do original em silêncio."
         files: ["deploy/homologacao/compose.yml"]
         pattern: "COCKPIT_SRC"
+
+  # NOTA SOBRE `related_capabilities` NESTE ÍNDICE (CP-003 fatia-4). Cinco entradas acima citavam
+  # CAP-CONTRATO, CAP-PROCEDENCIA ou CAP-ALVO. As três aposentaram: as duas primeiras descreviam
+  # `src/cockpit_harness/` e foram com ele para danzeroum/cockpit-harness; CAP-ALVO aposentou com
+  # motivo, e o registro está na ADR-018 abaixo. As referências foram REMOVIDAS, não repontadas
+  # para a capacidade mais parecida: ponteiro que resolve para o alvo errado é pior que ausência,
+  # porque parece revisado. As decisões continuam valendo — o que sumiu foi o elo com uma
+  # capacidade que este repositório não declara mais, e as asserções de cada uma seguem intactas.
+  - id: ADR-018
+    title: "A bancada de homologação é etapa governada, não isenção"
+    status: accepted
+    file: architecture/adr/ADR-018-bancada-como-etapa-governada.md
+    related_risks:
+      - RISK-HOMOLOG-001
+      - RISK-ALVO-001
+
+    assertions:
+      - id: ADR-018-A1
+        kind: file_matches
+        severity: high
+        risk: RISK-HOMOLOG-001
+        description: "A etapa declara o fiscal da invariante 1 — a tranca de FORA, a do daemon, que é a que sobrevive a um erro de configuração da aplicação. Se o símbolo sair da etapa, `deploy/` volta a ser partição fechada sem quem vigie a porta; e se ele for renomeado no teste, check_stage_coverage acusa por AST. São as duas metades da mesma trava."
+        files: ["harness/stages.yaml"]
+        pattern: "symbol: test_socket_proxy_nega_escrita_no_daemon"
+      - id: ADR-018-A2
+        kind: path_absent
+        severity: medium
+        risk: RISK-HOMOLOG-001
+        description: "A aposentadoria das RULE-HOMOLOG-001..004 é FATO e não narrativa: o arquivo de regras não existe. Recriá-lo devolveria a segunda fonte de verdade que esta decisão eliminou — as invariantes passariam a viver em dois lugares e divergiriam no primeiro PR que tocasse um só."
+        paths:
+          - business/rules/homologacao.yaml
+      - id: ADR-018-A3
+        kind: file_lacks
+        severity: medium
+        risk: RISK-ALVO-001
+        description: "CAP-ALVO aposentou de verdade. O padrão ancora na CHAVE do YAML e não na string: o comentário que explica a aposentadoria cita 'CAP-ALVO' três vezes, e uma proibição escrita contra a MENÇÃO faria o documento que explica a regra ser o primeiro a violá-la — o erro que esta migração já cometeu quatro vezes."
+        files: ["business/capabilities.yaml"]
+        pattern: "^\\s*-?\\s*id:\\s*CAP-ALVO\\s*$"
+        mutation:
+          op: injetar_texto
+          alvo: business/capabilities.yaml
+          texto: "- id: CAP-ALVO\n"

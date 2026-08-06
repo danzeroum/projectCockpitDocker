@@ -37,18 +37,29 @@ def compose_texto(request) -> str:
     return (Path(request.config.rootpath) / COMPOSE).read_text(encoding="utf-8")
 
 
+# A DECLARAÇÃO da bancada mudou de casa na fatia-4 da CP-003. Era
+# `business/rules/homologacao.yaml` (RULE-HOMOLOG-001..004); virou a etapa STAGE-DEPLOY em
+# `harness/stages.yaml`, com o enunciado de cada invariante preservado na ADR-018. Este arquivo é
+# o fiscal dessa etapa, e passou a ler as duas pontas: a etapa, para provar que o elo declaração↔
+# fiscal existe; o ADR, para provar que o TEXTO não se perdeu na migração.
+ADR = "architecture/adr/ADR-018-bancada-como-etapa-governada.md"
+
+
 @pytest.fixture(scope="module")
-def regras(request) -> dict:
-    return yaml.safe_load(
-        (Path(request.config.rootpath) / "business" / "rules" / "homologacao.yaml")
-        .read_text(encoding="utf-8"))
+def etapa(request) -> dict:
+    doc = yaml.safe_load(
+        (Path(request.config.rootpath) / "harness" / "stages.yaml").read_text(encoding="utf-8"))
+    for s in doc.get("stages", []):
+        if s.get("id") == "STAGE-DEPLOY":
+            return s
+    raise AssertionError(
+        "STAGE-DEPLOY sumiu de harness/stages.yaml — `deploy/` voltou a não pertencer a etapa "
+        "alguma, que é exatamente o estado que a ADR-018 recusou")
 
 
-def _regra(regras: dict, ident: str) -> dict:
-    for r in regras.get("rules", []):
-        if r.get("id") == ident:
-            return r
-    raise AssertionError(f"{ident} sumiu de business/rules/homologacao.yaml")
+@pytest.fixture(scope="module")
+def adr(request) -> str:
+    return (Path(request.config.rootpath) / ADR).read_text(encoding="utf-8")
 
 
 @pytest.fixture(scope="module")
@@ -269,8 +280,8 @@ def declarado_int(valor) -> int:
 # ---------------------------------------------------------------------------
 # o escopo EXATO de "não age sobre a infraestrutura"
 # ---------------------------------------------------------------------------
-# A RULE-HOMOLOG-001 chamava-se "Homologação não tem superfície de escrita", e
-# isso era FALSO — descoberto ao medir o alvo, não ao ler o compose.
+# A invariante 1 chamava-se "Homologação não tem superfície de escrita", e isso
+# era FALSO — descoberto ao medir o alvo, não ao ler o compose.
 # `POST /api/findings/{id}/ack` e `POST /api/tasks` não passam por
 # ENABLE_ACTIONS: existem em qualquer instalação e aceitam escrita com um token
 # de destravamento válido.
@@ -278,24 +289,67 @@ def declarado_int(valor) -> int:
 # O nome foi corrigido. Estes casos existem para que a correção não seja
 # "consertada" na direção errada por quem ler o nome antigo em algum lugar.
 
-def test_a_regra_declara_o_escopo_exato(regras: dict):
-    """Nome que promete mais do que a regra entrega é pior que nome vago: ele
-    dispensa a leitura do statement."""
-    r = _regra(regras, "RULE-HOMOLOG-001")
-    assert "INFRAESTRUTURA" in r["name"].upper(), (
-        "o nome voltou a prometer ausência total de escrita")
-    # O limite vai no `rationale`, e não num campo novo: acrescentar propriedade
-    # ao schema de regras mudaria o contrato da harness inteira por causa de uma
-    # regra. "Onde a regra para, e por que parar aí é o certo" é justificativa.
-    justificativa = r.get("rationale", "")
-    for termo in ("ack", "tasks", "ENABLE_ACTIONS"):
-        assert termo in justificativa, (
-            f"o rationale não cita {termo} — a exceção volta a ser surpresa")
+def test_o_escopo_exato_sobreviveu_a_migracao(adr: str):
+    """A aposentadoria das RULE-HOMOLOG só é aposentadoria se o TEXTO chegou do
+    outro lado. Se este teste falhar, a migração virou apagamento: a exceção do
+    `ack`/`tasks` volta a ser surpresa na próxima auditoria, e quem ler o nome
+    antigo vai "consertar" o compose na direção errada.
+
+    Nome que promete mais do que a regra entrega é pior que nome vago: ele
+    dispensa a leitura do enunciado.
+    """
+    assert "INFRAESTRUTURA" in adr.upper(), (
+        "o enunciado voltou a prometer ausência total de escrita")
+    for termo in ("/ack", "/api/tasks", "ENABLE_ACTIONS"):
+        assert termo in adr, (
+            f"a ADR-018 não cita {termo} — o limite da invariante 1 se perdeu na migração")
+
+
+def test_a_etapa_declara_um_fiscal_para_cada_invariante(etapa: dict):
+    """O elo que faz STAGE-DEPLOY ser etapa governada e não etapa nominal.
+
+    `check_stage_coverage` já confere que cada símbolo EXISTE, por AST. O que
+    ele não confere é que os quatro estejam lá: uma etapa com um fiscal só
+    resolve, e `deploy/` passaria a ter três invariantes sem vigia — partição
+    fechada, evidência perdida, tudo verde. Esse é o defeito que a isenção teria
+    tido, chegando por outro caminho.
+    """
+    simbolos = {e.get("symbol") for e in etapa.get("enforced_by", []) if e.get("symbol")}
+    esperados = {
+        "test_socket_proxy_nega_escrita_no_daemon",        # não age sobre a infraestrutura
+        "test_container_nao_colide_com_producao",           # não colide com produção
+        "test_script_recusa_credencial_identica_a_de_producao",  # não reusa a credencial
+        "test_script_de_ingress_recusa_o_host_de_producao",      # não publica produção
+    }
+    assert esperados <= simbolos, f"invariante sem fiscal na etapa: {sorted(esperados - simbolos)}"
+    # E os quatro têm de existir NESTE arquivo — a etapa aponta para cá.
+    meu = Path(__file__).read_text(encoding="utf-8")
+    for s in sorted(esperados):
+        assert f"def {s}(" in meu, f"{s} é referenciado por STAGE-DEPLOY e não existe aqui"
+
+
+def test_a_etapa_cobre_a_bancada_inteira(etapa: dict, request):
+    """Artefato que não casa o diretório deixaria arquivo de `deploy/` fora da
+    partição — o achado original, de volta pela porta dos fundos."""
+    raiz = Path(request.config.rootpath)
+    cobertos = {p for art in etapa.get("artifacts", []) for p in raiz.glob(f"{art}/**/*")}
+    faltam = [p for p in raiz.glob("deploy/**/*") if p.is_file() and p not in cobertos]
+    assert not faltam, f"arquivo de deploy/ fora dos artefatos da etapa: {faltam}"
 
 
 def test_o_compose_nao_promete_ausencia_de_escrita(compose_texto: str):
     assert "superfície de escrita não deveria existir" not in compose_texto, (
         "voltou a afirmação que a medição desmentiu")
+
+
+def test_a_declaracao_antiga_nao_ressuscitou(request):
+    """Aposentadoria com migração tem um modo de falha próprio: alguém recria o
+    arquivo de regras "para não perder o texto", e as invariantes passam a viver
+    em dois lugares. Duas fontes de verdade divergem no primeiro PR que toca uma
+    só — e a que ninguém lê é a que fica errada."""
+    assert not (Path(request.config.rootpath) / "business/rules/homologacao.yaml").exists(), (
+        "business/rules/homologacao.yaml voltou. O enunciado mora na ADR-018 e a mordida em "
+        "STAGE-DEPLOY; recriar o arquivo restaura a segunda fonte de verdade que a fatia-4 tirou")
 
 
 def test_a_excecao_esta_documentada_onde_o_operador_le(request):

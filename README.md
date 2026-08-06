@@ -25,10 +25,16 @@ E o corolário que justifica tudo:
 por versão, não copiada. O código do cockpit também não é vendorizado (ADR-015) — este repositório
 é o plano de controle da adoção, não um fork do produto.
 
+E o **software** dessa adoção também não mora aqui: desde a fatia-4 da CP-003 ele vive em
+[`danzeroum/cockpit-harness`](https://github.com/danzeroum/cockpit-harness), declarado por pin
+exato de SHA em `pyproject.toml` — mesma regra da régua, mesma razão. Consumidor que carrega uma
+cópia do que audita não consegue provar contra o quê mediu. Daí o `--raiz .` em toda chamada: a
+raiz do repositório é conhecimento do consumidor, não da dependência.
+
 ## Estado atual: fail-closed, por falta de alvo
 
 ```console
-$ python -m cockpit_harness pendencias
+$ python -m cockpit_harness --raiz . pendencias
 INCOMPLETE:target_url
 INCOMPLETE:escopo-autorizado
 ```
@@ -59,9 +65,9 @@ projectCockpitDocker/
 ├── design/                 sistema de design e superfícies de UI do ALVO
 ├── governance/             registro de riscos
 ├── deploy/homologacao/     a bancada: compose + ingress do alvo que a régua pode auditar
-├── src/cockpit_harness/    o software desta adoção (contrato, plano, procedência, CLI)
+│                           (STAGE-DEPLOY — etapa governada, ADR-018)
 ├── tests/
-│   ├── unit/ integration/ e2e/   os quatro níveis — entrada do inventário
+│   ├── integration/ governance/  o que testa ESTE repositório
 │   └── qa/                 config.yaml · campanha.yaml · escopo-autorizado.yaml.example
 ├── harness/                plano de controle (policies, agents, schemas, prompts)
 ├── ci/                     fiscais executáveis (metadados + diagrama derivado)
@@ -72,9 +78,9 @@ projectCockpitDocker/
 ## Rodar
 
 ```bash
-pip install -e ".[dev]"
-pytest -q                                   # inventário: os quatro níveis
-python -m cockpit_harness checar            # verificação do contrato de consumo
+pip install -e ".[dev]"                     # resolve o pin exato da harness (por SHA)
+pytest -q                                   # inventário: os testes deste repositório
+python -m cockpit_harness --raiz . checar   # verificação do contrato de consumo
 python ci/validate_metadata.py              # fiscal dos metadados
 python ci/generate_graph.py --check         # diagrama derivado em dia
 ```

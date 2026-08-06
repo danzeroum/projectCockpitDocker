@@ -15,7 +15,7 @@ target:
   # escopo autorizado existe para evitar.
   #
   # Enquanto o host abaixo terminar em .invalid (RFC 2606 — nunca resolve), o consumidor fica
-  # fail-closed: `python -m cockpit_harness pendencias` imprime INCOMPLETE:target_url e todo
+  # fail-closed: `python -m cockpit_harness --raiz . pendencias` imprime INCOMPLETE:target_url e todo
   # modo de rede é recusado com SCOPE_MISSING (12).
   #
   # Para liberar o modo passivo: troque por https://<homologacao-do-cockpit> e injete o

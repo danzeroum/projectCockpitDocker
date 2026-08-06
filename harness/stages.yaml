@@ -123,7 +123,11 @@ stages:
     # harness_lib exclui da varredura dos fiscais pelo mesmo motivo da evidência: é material
     # efêmero de terceiro, e exigir que cada arquivo do alvo pertença a uma etapa DESTE
     # repositório faria a partição do derivado depender do tamanho do projeto que ele governa.
-    artifacts: ["src", "workspace"]
+    #
+    # CP-003 fatia-4: "src" saiu. Este repositório não tem mais código próprio — a harness de
+    # adoção virou danzeroum/cockpit-harness, consumida por pin exato em pyproject.toml. O que
+    # resta aqui é declaração e fiscal, e o código de negócio passou a ser inteiramente o do alvo.
+    artifacts: ["workspace"]
     enforced_by:
       - kind: workflow_step
         ref: .github/workflows/qa.yml
@@ -139,7 +143,11 @@ stages:
   - id: STAGE-TESTS
     order: 9
     name: "Testes"
-    artifacts: ["tests/unit", "tests/integration", "tests/e2e", "tests/governance"]
+    # CP-003 fatia-4: "tests/unit" e "tests/e2e" saíram junto com o código que exercitavam — foram
+    # para danzeroum/cockpit-harness, onde a unidade sob teste mora. Sobra o que testa ESTE
+    # repositório: integração (o que os metadados afirmam sobre o alvo e sobre a bancada) e
+    # governança (as mordidas dos fiscais).
+    artifacts: ["tests/integration", "tests/governance"]
     enforced_by:
       - kind: workflow_step
         ref: .github/workflows/qa.yml
@@ -298,6 +306,59 @@ stages:
     privacy_lens:
       scan: false
       question: "A documentação expõe dado real em exemplo? Exemplo com CPF válido é vazamento."
+
+  # A BANCADA DE HOMOLOGAÇÃO — etapa nova na fatia-4 da CP-003, e a alternativa que ela recusa
+  # explica o desenho. `deploy/` estava fora de qualquer etapa: três achados de partição, e a saída
+  # barata seria declará-lo isento. Isenção custaria a EVIDÊNCIA — um stack que abre uma porta para
+  # o daemon Docker do servidor real não é "arquivo que não governa o produto"; é o artefato de
+  # maior consequência deste repositório. Isento, ele deixaria de ter fiscal declarado.
+  #
+  # AS QUATRO INVARIANTES desta etapa são as RULE-HOMOLOG-001..004 aposentadas no mesmo PR. Elas
+  # nunca descreveram o cockpit: descreviam o plano de controle antigo, cujo código saiu daqui.
+  # Aposentar não é apagar — o enunciado e a razão de cada uma migraram para ADR-018, e a MORDIDA
+  # de cada uma está abaixo, no fiscal que a sucede, uma linha por invariante.
+  #
+  # Por que o texto foi para o ADR e não para cá: o schema desta etapa é `additionalProperties:
+  # false` e não tem campo de prosa — `name` é uma linha e `privacy_lens.question` é outra
+  # pergunta. Registrado como lacuna do molde no corpo do PR, irmã da CONF-007, e não contornada
+  # com campo inventado local.
+  - id: STAGE-DEPLOY
+    order: 15
+    name: "Bancada de homologação (o ambiente que a régua tem permissão de medir)"
+    artifacts: ["deploy"]
+    enforced_by:
+      # RULE-HOMOLOG-001 → "não age sobre a INFRAESTRUTURA". Duas trancas em camadas diferentes:
+      # a de dentro é da aplicação (ENABLE_ACTIONS="0"), a de fora é do daemon (o proxy nega
+      # POST/DELETE). O símbolo abaixo é o da tranca de fora, que é a que sobrevive a um erro de
+      # configuração da aplicação.
+      - kind: ci_script
+        ref: tests/integration/test_homologacao.py
+        symbol: test_socket_proxy_nega_escrita_no_daemon
+      # RULE-HOMOLOG-002 → "não colide com produção". `compose up` com o nome de container de
+      # produção derruba o cockpit de verdade; `down -v` com o volume compartilhado apaga a série
+      # histórica.
+      - kind: ci_script
+        ref: tests/integration/test_homologacao.py
+        symbol: test_container_nao_colide_com_producao
+      # RULE-HOMOLOG-003 → "não reusa a credencial de produção". Credencial igual faz o ambiente
+      # de teste virar porta alternativa para o mesmo servidor.
+      - kind: ci_script
+        ref: tests/integration/test_homologacao.py
+        symbol: test_script_recusa_credencial_identica_a_de_producao
+      # RULE-HOMOLOG-004 → "produção nunca é publicada pelo caminho de homologação". Rodar o
+      # script com o host de produção publicaria o stack de teste com TLS válido: o pior tipo de
+      # erro, porque parece que funcionou.
+      - kind: ci_script
+        ref: tests/integration/test_homologacao.py
+        symbol: test_script_de_ingress_recusa_o_host_de_producao
+      # E a prova de que os quatro RODAM. Símbolo existente que ninguém executa é fiscal de
+      # papel: `pytest -q` cobre tests/integration, e este passo é onde ele acontece.
+      - kind: workflow_step
+        ref: .github/workflows/qa.yml
+        step: "Inventário (Trabalho B — sem rede, sem autorização)"
+    privacy_lens:
+      scan: true
+      question: "O .env de exemplo ou o script de ingress carregam credencial, host ou dado real de produção em vez de placeholder?"
 
 # Isenções DECLARADAS. Uma isenção que não casa nenhum arquivo é isenção morta e vira achado:
 # serve só para fazer a partição parecer fechada.

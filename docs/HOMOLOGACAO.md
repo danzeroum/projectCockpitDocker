@@ -163,8 +163,8 @@ authorization_expires: "2027-08-03"
 Conferência:
 
 ```bash
-python -m cockpit_harness pendencias   # deve não imprimir nada
-python -m cockpit_harness alvo         # https://homolog.docker.danzeroum.com
+python -m cockpit_harness --raiz . pendencias   # deve não imprimir nada
+python -m cockpit_harness --raiz . alvo         # https://homolog.docker.danzeroum.com
 ```
 
 Sem saída em `pendencias`, o job `inventory-and-passive` deixa de pular a auditoria e passa a
