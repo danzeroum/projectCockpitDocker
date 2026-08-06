@@ -1,0 +1,29 @@
+# Invariantes de CAP-OBSERVAR. Regra de negócio aqui é o que o sistema garante SEMPRE — não o que
+# o operador faz (isso é requisito). A separação importa: `CMP-PROXY` não tem comportamento de
+# usuário para descrever, e inventar um ("acessar o daemon") seria o nome do componente com um
+# verbo na frente. O que ele tem é uma invariante, e ela é forte.
+# Schema: ../../harness/schemas/business-rules.schema.json
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+capability: CAP-OBSERVAR
+
+rules:
+  - id: RULE-OBSERVAR-001
+    name: "O daemon é alcançado por um ponto só"
+    status: verified
+    statement: >
+      Toda comunicação da aplicação com o daemon Docker passa por `app/routers/_proxy.py`, que
+      guarda o endereço do socket-proxy configurado uma vez. Nenhum outro módulo monta a URL do
+      daemon.
+    rationale: >
+      É o que torna a superfície de acesso ao daemon uma coisa só, auditável num arquivo. Um
+      segundo caminho — um `httpx.get` solto numa rota, um cliente Docker instanciado noutro
+      módulo — não apareceria como falha: apareceria como funcionalidade, e passaria a ignorar
+      todas as decisões tomadas no ponto único (timeout, verbos permitidos, endereço do proxy).
+      A ameaça correspondente é THREAT-SOCKET-ESCRITA.
+    verified_by:
+      - workspace/target/tests/test_projects_security.py
+      - workspace/target/tests/test_updates_v14.py

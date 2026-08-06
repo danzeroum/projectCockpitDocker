@@ -1,0 +1,37 @@
+# Invariante de CAP-DIAGNOSTICAR. Ela descreve a FORMA do motor de achados, que é o que faz o
+# cockpit ser diagnóstico em vez de dashboard.
+# Schema: ../../harness/schemas/business-rules.schema.json
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+capability: CAP-DIAGNOSTICAR
+
+rules:
+  - id: RULE-DIAG-001
+    name: "Regra nova é arquivo novo; o motor não conhece nenhuma pelo nome"
+    status: verified
+    statement: >
+      Cada regra de achado é um módulo próprio em `app/findings/rules/`, com nome, severidade e
+      remediação. O motor (`app/findings/engine.py`) as descobre e aplica; acrescentar uma não
+      exige tocar o motor.
+    rationale: >
+      É a mesma forma do `registry` da UI, e pela mesma razão: um motor com um `if` por regra
+      passa a ser o lugar onde toda regra nova compete por atenção, e o custo de acrescentar a
+      décima oitava desencoraja acrescentá-la. Regra que não é acrescentada é falha que o operador
+      descobre sozinho, no horário errado.
+      O corolário é o que dá nome ao achado: severidade e remediação moram COM a regra, então
+      "o gráfico subiu" nunca chega ao operador como achado — chega `restart_loop`, com o que fazer.
+    verified_by:
+      - workspace/target/tests/test_findings.py
+      - workspace/target/tests/test_no_backup.py
+      - workspace/target/tests/test_regras_container_parado.py
+      - workspace/target/tests/test_f6_palette.py
+      - workspace/target/tests/test_guarda_schema_literal.py
+      - workspace/target/tests/test_telas_topologia_plantao.py
+      - workspace/target/tests/test_certs_sprint5.py
+      - workspace/target/tests/test_drift_b8.py
+      - workspace/target/tests/test_ingress_parser.py
+      - workspace/target/tests/test_config_ingress_path.py
+      - workspace/target/tests/test_updates_ui.py

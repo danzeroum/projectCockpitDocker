@@ -1,0 +1,54 @@
+# Invariantes de CAP-AGIR — a capacidade de maior consequência do cockpit, e a única que muda o
+# estado de um servidor real. As duas regras abaixo são o que separa "um painel com botões" de
+# "um painel com botões que alguém consegue auditar depois".
+# Schema: ../../harness/schemas/business-rules.schema.json
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+capability: CAP-AGIR
+
+rules:
+  - id: RULE-AGIR-001
+    name: "Com ENABLE_ACTIONS desligado, a rota de mutação NÃO EXISTE"
+    status: verified
+    statement: >
+      A barreira de ações (`app/actions.py`) decide no REGISTRO das rotas, não na execução delas:
+      com `ENABLE_ACTIONS` desligado, `POST /stop|start|restart`, `DELETE /{id}`, `POST /prune` e
+      as de projeto não são registradas. A resposta é 404.
+    rationale: >
+      404 e 403 dizem coisas diferentes para quem sonda. 403 confirma que a rota existe e que
+      falta autorização — é um convite a procurar a autorização. 404 não confirma nada.
+      E a decisão no registro é mais forte que a decisão na execução: um `if` no corpo do handler
+      pode ser contornado por um caminho que esqueceu de chamá-lo; uma rota não registrada não tem
+      corpo para alcançar.
+      EXCEÇÃO CONHECIDA, e ela é deliberada: `POST /api/findings/{id}/ack` e `POST /api/tasks`
+      não passam por `ENABLE_ACTIONS`. Elas escrevem o estado do PAINEL — reconhecer um achado,
+      abrir um cartão —, não a infraestrutura. Gateá-las tornaria homologação incapaz de exercitar
+      o fluxo que ela existe para validar. Ver ADR-018.
+    verified_by:
+      - workspace/target/tests/test_no_backup.py
+      - workspace/target/tests/test_prune_v12.py
+      - workspace/target/tests/test_summary.py
+
+  - id: RULE-AGIR-002
+    name: "Mutação sem trilha não acontece"
+    status: verified
+    statement: >
+      Toda mutação exige sessão destravada com prazo (`app/auth.py::require_unlock`) e grava linha
+      de auditoria com ator, IP, alvo e motivo — inclusive nos caminhos de ERRO.
+    rationale: >
+      Gravar só o sucesso produz uma trilha que descreve um sistema que nunca falha. As tentativas
+      recusadas são justamente as que interessam numa investigação: `app/routers/findings.py`
+      grava `error: 404 nao encontrado` e `error: 400 ja resolvido` ANTES de levantar a exceção.
+      O prazo no token é a outra metade — sessão destravada que não expira é sessão destravada.
+    verified_by:
+      - workspace/target/tests/test_ack_audit.py
+      - workspace/target/tests/test_unlock_v8.py
+      - workspace/target/tests/test_session.py
+      - workspace/target/tests/test_hardening_b11.py
+      - workspace/target/tests/test_deploy_credencial.py
+      - workspace/target/tests/test_ciclo_acao_sintetico.py
+      - workspace/target/tests/test_prune_sintetico.py
+      - workspace/target/tests/test_rotas_rail.py

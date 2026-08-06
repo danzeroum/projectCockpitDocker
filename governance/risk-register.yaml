@@ -191,6 +191,12 @@ risks:
 # própria um achado, então a lista não pode ser usada para fazer a cobertura parecer fechada.
   - id: RISK-SOCKET-001
     area: access
+    # CAP-AGIR entra aqui na fatia-5, e o elo já era verdadeiro antes de ser declarado: este risco
+    # é sobre a superfície de escrita que aquela capacidade usa. `alignment_report::R1` acusava a
+    # capacidade `high` sem risco que a referenciasse — risco reconhecido em campo e invisível na
+    # governança.
+    related:
+      - CAP-AGIR
     description: >
       O socket-proxy do cockpit monta `/var/run/docker.sock:ro` e o MESMO compose habilita
       `POST: 1` e `DELETE: 1` no ambiente do proxy. O `:ro` é do ARQUIVO de socket, não dos verbos
@@ -248,6 +254,8 @@ risks:
 
   - id: RISK-ALVO-002
     area: access
+    related:
+      - CAP-AGIR
     description: >
       O socket-proxy do cockpit precisa MESMO de POST e DELETE — medido, não suposto. Sete
       caminhos da API Docker são mutados através dele: POST /containers/{id}/stop, /start,
@@ -311,5 +319,43 @@ risks:
         ref: main
       - kind: local_path
         ref: ci/catraca.py
+
+  - id: RISK-DIAG-001
+    area: availability
+    description: >
+      CLASSE DE FALHA SEM REGRA É FALSO VERDE. O cockpit converte estado observado em achado
+      NOMEADO, e é por isso que CAP-DIAGNOSTICAR é `risk_level: high`: o operador confia na fila
+      de Atenção para saber o que está errado no host. Uma classe de falha observável para a qual
+      nenhuma regra existe não produz achado nenhum — e a ausência de achado é indistinguível, na
+      tela, de "está tudo bem". O painel fica verde e o servidor não está.
+      As 17 regras de `app/findings/rules/` cobrem container, TLS, exposição, entrega, rota e
+      dado. Ninguém verificou que essa lista é COMPLETA em relação ao que o daemon e o nginx
+      expõem, e completude não é verificável por leitura do próprio motor: só comparando o que ele
+      sabe achar com o que o host sabe falhar.
+      DECLARADO NA FATIA-5, e a razão é o fiscal: `alignment_report::R1` acusava CAP-DIAGNOSTICAR
+      como capacidade `high` que nenhum risco referenciava — risco reconhecido em campo e
+      invisível na governança. Apontá-la para um dos riscos existentes teria fechado o achado com
+      um ponteiro falso: nenhum deles é sobre diagnóstico.
+    likelihood: medium
+    impact: high
+    treatment: mitigate
+    owner: technical_owner
+    # `open`, não `mitigated`. A forma do motor É um controle real — regra nova é arquivo novo,
+    # sem `if` no núcleo, o que mantém o custo de acrescentar baixo. Mas forma não é cobertura, e
+    # dizer `mitigated` seria afirmar completude que ninguém mediu.
+    status: open
+    # 03/11/2026 — a mesma data dos outros abertos desta casa. Não é prazo novo inventado por
+    # mim: é entrar no ciclo de revisão que já existe, pelo motivo já registrado aqui (risco com
+    # data própria é risco revisado sozinho, e revisado sozinho é esquecido).
+    due: "2026-11-03"
+    related:
+      - CAP-DIAGNOSTICAR
+    controls:
+      - kind: local_path
+        ref: business/rules/diagnosticar.yaml
+      - kind: local_path
+        ref: business/requirements/backlog.yaml
+      - kind: local_path
+        ref: security/threat-model.yaml
 
 risk_exemptions: []

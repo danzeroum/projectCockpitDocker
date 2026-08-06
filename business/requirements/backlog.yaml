@@ -1,17 +1,533 @@
 # Backlog de requisitos, cada item ligado a uma capacidade (CAP-*). Dá ao agente o QUE fazer e por
 # quê, sem inventar escopo. Um item pode citar o risco que introduz e depender de outro.
 # Schema: harness/schemas/backlog.schema.json
+#
+# ─────────────────────────────────────────────────────────────────────────────────────────────
+# AUTORADOS NA FATIA-5 DA CP-003 (2026-08-06), e três coisas os definem:
+#
+# 1. SÃO DESCRITIVOS, não prescritivos. O cockpit existe e está publicado; estes requisitos dizem
+#    o que ele JÁ FAZ, lido do sistema. `status: done` é o padrão, e `validated_by` só aparece
+#    quando um teste do alvo prova o COMPORTAMENTO — não a existência do código.
+#
+# 2. DESCREVEM O QUE O OPERADOR FAZ, nunca o que o componente é. "Mostrar eventos" para
+#    CMP-EVENTOS é contador zerado com aparência de requisito: parafrasear o nome do componente
+#    fecha o fiscal de cobertura reversa sem acrescentar uma única informação sobre o produto.
+#    O teste que apliquei em cada um: um operador do cockpit leria isto e diria "sim, é para isso
+#    que eu uso"? Os que não passaram estão listados no fim deste arquivo, recusados por mim.
+#
+# 3. A FONTE, em ordem de autoridade: as 10 telas de `app/static/js/screens/` e as 22 rotas de
+#    `app/routers/` — o que o usuário FAZ com o sistema —, depois o laudo antigo, depois o README
+#    do alvo. Cada item cita a evidência; para o não-óbvio, arquivo e linha.
+#
+# Medição do alvo: danzeroum/docker @ d6ae70ea (target.lock), materializado em workspace/target/.
+# ─────────────────────────────────────────────────────────────────────────────────────────────
 schema_version: "1.0"
 metadata_version: "1.0"
 source_of_truth: true
 generated_from: null
 
-# VAZIO DESDE A FATIA-4 DA CP-003. Os nove requisitos (REQ-001..009) apontavam todos para as
-# quatro capacidades aposentadas: cinco para a harness de adoção, que virou repositório próprio,
-# e quatro (REQ-005/006/007/009) para CAP-ALVO — a campanha de homologação.
-#
-# Estes quatro NÃO foram cumpridos nem cancelados: são a CP-001, que continua aberta, e voltam
-# como requisitos do alvo quando aquela campanha for reaberta sobre a bancada de STAGE-DEPLOY.
-# Mantê-los aqui apontando para uma capacidade que não existe mais seria backlog que descreve
-# um repositório que não é este.
-items: []
+items:
+  # ══ CAP-OBSERVAR — ver o estado do daemon sem poder mudá-lo ═══════════════════════════════
+  - id: REQ-001
+    title: "Ver todo container do host, com estado e saúde, sem poder alterá-lo"
+    type: user-story
+    capability: CAP-OBSERVAR
+    status: done
+    priority: critical
+    metrics:
+      - MET-SUPERFICIE
+    acceptance_criteria:
+      - "A lista traz nome, imagem, estado e healthcheck de cada container do daemon."
+      - "O detalhe de um container traz o inspect completo (`GET /api/containers/{id}/json`)."
+      - "Com ENABLE_ACTIONS desligado, nenhuma rota de mutação está REGISTRADA — 404, não 403."
+    validated_by:
+      - workspace/target/tests/test_api.py
+    # Evidência: `app/routers/containers.py` — 8 rotas GET antes de qualquer POST. A leitura é
+    # incondicional; a escrita é que depende de gate. É a assimetria que define o produto.
+
+  - id: REQ-002
+    title: "Ler o log de um container — o histórico, o fluxo ao vivo e a busca por termo"
+    type: user-story
+    capability: CAP-OBSERVAR
+    status: done
+    priority: high
+    metrics:
+      - MET-ATENCAO
+    acceptance_criteria:
+      - "`GET /api/containers/{id}/logs` devolve a janela recente; `/logs/stream` acompanha ao vivo."
+      - "`GET /api/containers/search` devolve TRECHOS com o termo destacado, do índice FTS5 — não o log inteiro para o navegador filtrar."
+      - "A busca responde sobre o que já foi coletado, mesmo com o container parado."
+    validated_by:
+      - workspace/target/tests/test_logs_texto.py
+    # A busca é FTS5 no servidor (`app/logs_ingest.py`), e o docstring da rota diz por quê:
+    # "Trechos com o termo destacado, do indice FTS5". Um grep no cliente exigiria baixar tudo.
+
+  - id: REQ-003
+    title: "Ver o inventário do host: imagens, disco e versão do daemon, num lugar só"
+    type: user-story
+    capability: CAP-OBSERVAR
+    status: done
+    priority: medium
+    metrics:
+      - MET-ATENCAO
+    acceptance_criteria:
+      - "`GET /api/system/info` e `/api/system/images` trazem daemon e imagens; `/api/storage` o disco."
+      - "`GET /api/overview` e `/api/stats/all` agregam o inventário numa leitura só, para a tela não fazer N chamadas."
+    validated_by:
+      - workspace/target/tests/test_api.py
+
+  # ══ CAP-DIAGNOSTICAR — transformar o estado observado em achado acionável ═════════════════
+  - id: REQ-004
+    title: "Receber uma fila triada do que precisa de atenção agora, por severidade e por espera"
+    type: user-story
+    capability: CAP-DIAGNOSTICAR
+    status: done
+    priority: critical
+    metrics:
+      - MET-ATENCAO
+    acceptance_criteria:
+      - "`GET /api/findings?status=open` é a fonte única das duas telas que triam: Atenção e Plantão."
+      - "No Plantão a ordem é severidade primeiro e, dentro da mesma severidade, o MAIS ANTIGO primeiro."
+      - "Ordem cronológica invertida é recusada: faz o plantonista atender sempre o último grito."
+    validated_by:
+      - workspace/target/tests/test_findings.py
+      - workspace/target/tests/test_telas_topologia_plantao.py
+    # `app/static/js/screens/plantao.js:8-12` declara a ordenação como "a única decisão da tela",
+    # e diz o que ela recusa: "quem esta aberto ha mais tempo ja esperou demais".
+
+  - id: REQ-005
+    title: "Ser avisado por regra NOMEADA, não por gráfico que alguém precisa interpretar"
+    type: user-story
+    capability: CAP-DIAGNOSTICAR
+    status: done
+    priority: critical
+    metrics:
+      - MET-ATENCAO
+    governed_by:
+      - RULE-DIAG-001
+    acceptance_criteria:
+      - "Cada achado nasce de uma regra com nome próprio, severidade e o que fazer — não de um limiar anônimo."
+      - "As 17 regras cobrem as classes observáveis: container (restart_loop, oom, unhealthy, healthcheck_never_passed), TLS (ssl_protocols_weak, ssl_ciphers_weak, default_cert_borrowed, http_plain), exposição (docs_public, autoindex_enabled, server_tokens_exposed), entrega (no_gzip, no_http2, body_size_default, stream_timeout), rota (upstream_missing) e dado (no_backup)."
+      - "Regra nova é ARQUIVO novo em `app/findings/rules/`, sem `if` no motor."
+    validated_by:
+      - workspace/target/tests/test_findings.py
+      - workspace/target/tests/test_regras_container_parado.py
+    # Contadas em `app/findings/rules/`: 17 módulos de regra mais o `__init__.py`. O ponto não é
+    # o número, é a forma — cada uma diz O QUE está errado com nome de gente.
+
+  - id: REQ-006
+    title: "Saber que um certificado TLS vai expirar ANTES de ele expirar"
+    type: user-story
+    capability: CAP-DIAGNOSTICAR
+    status: done
+    priority: high
+    metrics:
+      - MET-ATENCAO
+    acceptance_criteria:
+      - "`GET /api/certs` traz cada certificado servido pelo ingress com a data de expiração."
+      - "Certificado emprestado do default vira achado (`default_cert_borrowed`), não passa como válido."
+    validated_by:
+      - workspace/target/tests/test_certs_sprint5.py
+
+  - id: REQ-007
+    title: "Saber quando o container em execução divergiu do compose que o declarou"
+    type: user-story
+    capability: CAP-DIAGNOSTICAR
+    status: done
+    priority: high
+    metrics:
+      - MET-ATENCAO
+    acceptance_criteria:
+      - "`GET /api/drift` compara o que roda com o que o compose declara e aponta a diferença."
+      - "A divergência é apresentada por campo, não como 'difere' — quem lê precisa saber o quê."
+    validated_by:
+      - workspace/target/tests/test_drift_b8.py
+
+  - id: REQ-008
+    title: "Saber quando existe imagem mais nova que a que está em uso"
+    type: user-story
+    capability: CAP-DIAGNOSTICAR
+    status: done
+    priority: medium
+    metrics:
+      - MET-ATENCAO
+    acceptance_criteria:
+      - "`GET /api/updates` compara a tag em uso com o registry e diz o que tem atualização."
+      - "A consulta ao registry não bloqueia a leitura do painel."
+    validated_by:
+      - workspace/target/tests/test_updates_v14.py
+      - workspace/target/tests/test_updates_ui.py
+
+  - id: REQ-009
+    title: "Ver por onde a requisição entra e ONDE ELA PARA DE ANDAR"
+    type: user-story
+    capability: CAP-DIAGNOSTICAR
+    status: done
+    priority: high
+    metrics:
+      - MET-ATENCAO
+    acceptance_criteria:
+      - "`GET /api/ingress` e `/api/ingress/hosts` leem o nginx.conf do host e devolvem domínio → upstream."
+      - "A Topologia cruza ingress e overview e responde a única pergunta que ela existe para responder: onde a requisição para."
+      - "Upstream sem container correspondente vira nó AUSENTE — que é um ACHADO, não um erro de carregamento."
+      - "Nenhum nome de container, domínio ou porta está escrito na tela: os nós são descobertos."
+    validated_by:
+      - workspace/target/tests/test_ingress_parser.py
+      - workspace/target/tests/test_telas_topologia_plantao.py
+    # `app/static/js/screens/topologia.js:1-13` — a tela é derivada de duas rotas que já existem,
+    # e o comentário explica por que NÃO há rota própria: "cada elo da corrente ja e observavel".
+
+  # ══ CAP-AGIR — mutação sob barreira e auditoria ══════════════════════════════════════════
+  - id: REQ-010
+    title: "Parar, subir, reiniciar ou remover um container sem sair do painel"
+    type: user-story
+    capability: CAP-AGIR
+    status: done
+    priority: critical
+    risk: RISK-SOCKET-001
+    metrics:
+      - MET-ACAO-AUDITADA
+    governed_by:
+      - RULE-AGIR-001
+    acceptance_criteria:
+      - "`POST /api/containers/{id}/stop|start|restart` e `DELETE /api/containers/{id}` executam a operação nomeada."
+      - "Cada uma exige sessão destravada e grava linha de auditoria."
+      - "Com ENABLE_ACTIONS desligado, as quatro não existem."
+    validated_by:
+      - workspace/target/tests/test_ciclo_acao_sintetico.py
+      - workspace/target/tests/test_prune_sintetico.py
+
+  - id: REQ-011
+    title: "Subir ou parar um projeto compose inteiro, com confirmação explícita"
+    type: user-story
+    capability: CAP-AGIR
+    status: done
+    priority: high
+    risk: RISK-SOCKET-001
+    metrics:
+      - MET-ACAO-AUDITADA
+    governed_by:
+      - RULE-AGIR-001
+    acceptance_criteria:
+      - "`POST /api/projects/{name}/start|stop` opera o stack agrupado, não container a container."
+      - "A tela pede confirmação e destravamento antes de disparar — são os botões mais perigosos do cockpit."
+      - "O cartão do projeto é chaveado pelo nome: uma leitura nova não troca o botão sob o ponteiro entre o mousedown e o mouseup."
+    validated_by:
+      - workspace/target/tests/test_ciclo_acao_sintetico.py
+    # `app/static/js/screens/projects.js:6-11` descreve o defeito que a chaveação corrigiu, e ele
+    # é de segurança e não de estética: reabilitar um botão que o próprio código desabilitou
+    # enquanto a ação estava em voo.
+
+  - id: REQ-012
+    title: "Destravar a sessão antes de qualquer mutação, dizendo o motivo"
+    type: user-story
+    capability: CAP-AGIR
+    status: done
+    priority: critical
+    risk: RISK-SOCKET-001
+    metrics:
+      - MET-ACAO-AUDITADA
+    governed_by:
+      - RULE-AGIR-002
+    acceptance_criteria:
+      - "`POST /api/session/unlock` devolve token com prazo (`expires_at`), não sessão perpétua."
+      - "O destravamento só é aceito se a origem estiver dentro de `TRUSTED_GATEWAY_CIDR`."
+      - "CIDR NÃO CONFIGURADO BLOQUEIA — fail-closed. Variável ausente não é variável permissiva."
+      - "Tentativa repetida é contada e bloqueada (`app/hardening.py:LIMITE`)."
+    validated_by:
+      - workspace/target/tests/test_unlock_v8.py
+      - workspace/target/tests/test_session.py
+      - workspace/target/tests/test_hardening_b11.py
+    # `app/routers/session.py:26-30`: sem CIDR, loga "bloqueando unlock" e retorna False. É a
+    # forma certa do fail-closed — a ausência da configuração fecha, nunca abre.
+
+  - id: REQ-013
+    title: "Reconstruir depois quem fez o quê, quando, de onde e por quê"
+    type: user-story
+    capability: CAP-AGIR
+    status: done
+    priority: critical
+    metrics:
+      - MET-ACAO-AUDITADA
+    governed_by:
+      - RULE-AGIR-002
+    acceptance_criteria:
+      - "`GET /api/audit` devolve a trilha com ator, IP, alvo e motivo."
+      - "A linha é gravada TAMBÉM nos caminhos de erro — 404 e 400 deixam rastro, não só o sucesso."
+      - "A tela de Auditoria insere a entrada nova no topo sem reconstruir a tabela: quem a abre está conferindo se a ação que acabou de disparar foi registrada."
+    validated_by:
+      - workspace/target/tests/test_ack_audit.py
+    # `app/routers/findings.py:99,102` gravam auditoria nos ramos de erro antes de levantar. É o
+    # detalhe que separa trilha de log de sucesso.
+
+  - id: REQ-014
+    title: "Silenciar um achado com motivo e prazo, sem que ele suma do registro"
+    type: user-story
+    # CAP-DIAGNOSTICAR, e o fiscal me obrigou a pensar: silenciar é o fim do CICLO DE VIDA do
+    # achado, e a rota vive em `routers/findings.py`, que é CMP-ACHADOS. A barreira pela qual ela
+    # passa é de CAP-AGIR (RULE-AGIR-002), mas passar por uma barreira não muda de que capacidade
+    # o comportamento é — senão toda escrita do sistema seria CAP-AGIR e a distinção morreria.
+    capability: CAP-DIAGNOSTICAR
+    status: done
+    priority: high
+    metrics:
+      - MET-ACAO-AUDITADA
+    acceptance_criteria:
+      - "`POST /api/findings/{id}/ack` exige destravamento e registra motivo e prazo (`sem prazo` é valor explícito)."
+      - "Silenciar não apaga: o achado sai da fila e permanece consultável."
+      - "Silenciar é da tela de Atenção, que audita — o Plantão não escreve."
+    validated_by:
+      - workspace/target/tests/test_findings.py
+
+  # ══ CAP-NARRAR — entregar o estado ao operador ═══════════════════════════════════════════
+  - id: REQ-015
+    title: "Acompanhar o que aconteceu, em fluxo contínuo e em histórico filtrável"
+    type: user-story
+    capability: CAP-NARRAR
+    status: done
+    priority: high
+    metrics:
+      - MET-ATENCAO
+    acceptance_criteria:
+      - "`GET /api/events/stream` entrega o fluxo ao vivo; `GET /api/events` o histórico paginado."
+      - "Os filtros do histórico são aplicados NO SERVIDOR — o navegador não recebe tudo para descartar."
+    validated_by:
+      - workspace/target/tests/test_events_rota.py
+      - workspace/target/tests/test_events_v11.py
+    # O docstring da rota diz exatamente isto: "Histórico paginado, com os filtros aplicados no
+    # servidor."
+
+  - id: REQ-016
+    title: "Ver a TENDÊNCIA de CPU, memória e disco — não só o instante"
+    type: user-story
+    capability: CAP-NARRAR
+    status: done
+    priority: high
+    metrics:
+      - MET-LEITURA-ESTAVEL
+    acceptance_criteria:
+      - "`GET /api/metrics/history` e `/api/capacity` devolvem a série, não o valor corrente."
+      - "A série CRESCE da altura anterior para a nova a cada leitura; não nasce na altura final."
+      - "As listas ao lado mantêm o scroll onde o operador o deixou."
+    validated_by:
+      - workspace/target/tests/test_capacidade_serie_curta.py
+      - workspace/target/tests/fixtures/renderiza_capacidade.mjs
+    # `screens/capacidade.js:7-11`: 30 colunas recriadas a cada 30s faziam a série "pular" de
+    # estado em vez de crescer. Numa tela de tendência isso não é cosmético — destrói a leitura.
+
+  - id: REQ-017
+    title: "Ter um resumo agregado para quem não opera o servidor"
+    type: user-story
+    capability: CAP-NARRAR
+    status: done
+    priority: medium
+    metrics:
+      - MET-ATENCAO
+    acceptance_criteria:
+      - "`GET /api/executive` devolve o agregado sem o detalhe operacional."
+      - "A tela fica fora de todo preset padrão: quem a quer, a acrescenta pelo Personalizar."
+    validated_by:
+      - workspace/target/tests/test_executive.py
+      - workspace/target/tests/test_summary.py
+
+  - id: REQ-018
+    title: "Ser avisado fora do painel quando algo grave abre"
+    type: user-story
+    capability: CAP-NARRAR
+    status: done
+    priority: high
+    metrics:
+      - MET-ATENCAO
+    acceptance_criteria:
+      - "`GET /api/notifications` lista o que foi notificado, com canal e horário."
+      - "O achado exibe o selo 'notificado hh:mm · canal' ao lado — quem lê sabe se alguém já foi avisado."
+    validated_by:
+      - workspace/target/tests/test_notify_v15.py
+      - workspace/target/tests/test_notificacoes_ui.py
+
+  - id: REQ-019
+    title: "Registrar e mover o trabalho que o achado gerou, num board de quatro colunas"
+    type: user-story
+    # CAP-AGIR e não CAP-NARRAR, e a correção veio da MEDIÇÃO: eu havia escrito NARRAR por o board
+    # ser uma tela. Mas `POST /api/tasks` e `PATCH /api/tasks/{id}` são escrita atrás do
+    # destravamento, e a fatia-2 já tinha atribuído `test_tasks*.py` a CMP-OPERACOES, que é de
+    # CAP-AGIR. A propriedade do teste sabia antes de mim.
+    capability: CAP-AGIR
+    status: done
+    priority: medium
+    metrics:
+      - MET-ACAO-AUDITADA
+    acceptance_criteria:
+      - "`GET /api/tasks` devolve o board agrupado; a LEITURA é livre, como toda leitura do cockpit."
+      - "`POST /api/tasks` cria tarefa MANUAL — o board nunca cria 'auto' por HTTP; isso é do motor."
+      - "`PATCH /api/tasks/{id}` move de coluna, atrás do destravamento."
+    validated_by:
+      - workspace/target/tests/test_tasks.py
+      - workspace/target/tests/test_tasks_api.py
+    # Os dois docstrings de `app/routers/tasks.py` marcam a fronteira: leitura livre, criação
+    # manual apenas. "auto" nascer por HTTP deixaria o board contar história que ninguém viveu.
+
+  - id: REQ-020
+    title: "Ler o painel sem perder o lugar enquanto ele se atualiza sozinho"
+    type: user-story
+    capability: CAP-NARRAR
+    status: done
+    priority: critical
+    metrics:
+      - MET-LEITURA-ESTAVEL
+    governed_by:
+      - RULE-NARRAR-001
+    acceptance_criteria:
+      - "Leitura periódica que não muda o dado não redesenha nada."
+      - "Leitura que muda o dado altera só a linha, o rótulo ou a classe que mudou."
+      - "O scroll não volta ao topo; a linha que está sendo lida não muda de lugar."
+      - "As telas compartilham um relógio único (`kernel/relogio.js`), em fase, e pausam com a aba oculta."
+    validated_by:
+      - workspace/target/tests/test_frontend_modulos.py
+      - workspace/target/tests/fixtures/exercita_render_vivo.mjs
+    # É o requisito mais transversal do produto e está escrito no cabeçalho de TODAS as dez telas
+    # ("doc 13"). Não é performance: é a diferença entre um painel legível e um que pisca.
+
+  - id: REQ-021
+    title: "Montar o próprio painel — escolher quais telas aparecem e em que ordem"
+    type: user-story
+    capability: CAP-NARRAR
+    status: done
+    priority: medium
+    metrics:
+      - MET-LEITURA-ESTAVEL
+    acceptance_criteria:
+      - "O operador escolhe telas por preset ou pelo Personalizar, e a escolha persiste."
+      - "Tela nova é UM arquivo novo registrado no `registry` — zero `if` no núcleo."
+      - "O núcleo não conhece nenhuma tela pelo nome."
+    validated_by:
+      - workspace/target/tests/test_kernel_cockpit.py
+      - workspace/target/tests/fixtures/exercita_kernel.mjs
+    # O que havia antes era um `switch` com um `case` por tela em `main.js`: acrescentar uma
+    # significava editar o núcleo. O `registry` é o único ponto de extensão.
+
+  - id: REQ-022
+    title: "Atender o plantão pelo celular: a fila e a ação, e nada mais"
+    type: user-story
+    capability: CAP-NARRAR
+    status: done
+    priority: high
+    metrics:
+      - MET-ATENCAO
+    acceptance_criteria:
+      - "A tela de Plantão não é uma versão reduzida do desktop: é a fila de achados e o que fazer."
+      - "Sem filtro, sem profundidade, sem grade — há ordem de atendimento."
+      - "Sem escrita: daqui se ABRE o achado; silenciar é da tela de Atenção, que audita."
+    validated_by:
+      - workspace/target/tests/fixtures/exercita_telas.mjs
+      - workspace/target/tests/fixtures/renderiza_telas.mjs
+    # `screens/plantao.js:1-15`. O handoff está escrito no arquivo, e a decisão de NÃO escrever
+    # daqui é o que mantém a trilha de auditoria concentrada num caminho só.
+
+  - id: REQ-023
+    title: "Continuar lendo o último estado conhecido com a rede caída"
+    type: user-story
+    capability: CAP-NARRAR
+    status: done
+    priority: medium
+    metrics:
+      - MET-LEITURA-ESTAVEL
+    acceptance_criteria:
+      - "O service worker serve a casca e o último estado quando a rede falha."
+      - "O que é servido do cache é apresentado COMO cache — não como leitura fresca."
+    validated_by:
+      - workspace/target/tests/test_offline.py
+      - workspace/target/tests/test_frescor_amostra.py
+    # A distinção frescor/cache é o ponto: um painel offline que finge estar ao vivo é pior que um
+    # painel que não abre.
+
+  - id: REQ-024
+    title: "Ver o estado do próprio backend do cockpit"
+    type: user-story
+    capability: CAP-NARRAR
+    status: done
+    priority: low
+    metrics:
+      - MET-LEITURA-ESTAVEL
+    acceptance_criteria:
+      - "`GET /api/backend` expõe o estado interno: filas, coletor, banco."
+      - "A tela fica fora de todo preset padrão — quem observa o observador pede por isso."
+    validated_by:
+      - workspace/target/tests/test_backend.py
+
+  - id: REQ-027
+    title: "Buscar termo no log já coletado, mesmo com o container parado"
+    type: user-story
+    # CAP-NARRAR e não CAP-OBSERVAR, e a fronteira é exata: observar é perguntar ao daemon; isto
+    # responde do ÍNDICE do próprio cockpit. Por isso funciona com o container parado — e é a única
+    # leitura do produto que continua respondendo depois que a coisa observada deixou de existir.
+    capability: CAP-NARRAR
+    status: done
+    priority: high
+    metrics:
+      - MET-ATENCAO
+    acceptance_criteria:
+      - "`GET /api/containers/search` devolve TRECHOS com o termo destacado, do índice FTS5."
+      - "A busca é do servidor: o navegador não recebe o log inteiro para filtrar."
+      - "O container parado continua pesquisável — o índice é do cockpit, não do daemon."
+    validated_by:
+      - workspace/target/tests/test_logs_fts_v13.py
+
+  # ══ CAP-SUSTENTAR — servir a aplicação com política declarada ═════════════════════════════
+  - id: REQ-025
+    title: "Coletar as métricas do cockpit pela mesma ferramenta que coleta o resto do parque"
+    type: user-story
+    # CAP-NARRAR, e a medição corrigiu meu palpite: eu havia escrito SUSTENTAR por `/metrics` ser
+    # infraestrutura. Mas a fatia-2 atribuiu `test_metrics*.py` a CMP-SERIES, de CAP-NARRAR — e
+    # está certa: expor a série para um coletor é entregar o estado, só que o destinatário é o
+    # Prometheus em vez do operador.
+    capability: CAP-NARRAR
+    status: done
+    priority: medium
+    metrics:
+      - MET-COMPARAVEL
+    acceptance_criteria:
+      - "`GET /metrics` expõe formato Prometheus, fora do prefixo `/api`."
+      - "A exposição não depende de destravamento: é leitura, e o scraper não tem sessão."
+    validated_by:
+      - workspace/target/tests/test_metrics_prom.py
+      - workspace/target/tests/test_metrics.py
+
+  - id: REQ-026
+    title: "Confiar no painel também em quem o abre: contraste, teclado e leitor de tela"
+    type: user-story
+    # CAP-NARRAR: o painel legível por quem o abre é entrega de estado ao operador, não política
+    # de resposta do servidor. A UI-COCKPIT-PAINEL, que é de CAP-NARRAR, o satisfaz — e o fiscal
+    # recusa superfície satisfazendo requisito de outra capacidade, com razão.
+    capability: CAP-NARRAR
+    status: done
+    priority: high
+    metrics:
+      - MET-LEITURA-ESTAVEL
+    acceptance_criteria:
+      - "Nenhuma violação crítica de acessibilidade na carga inicial."
+      - "A navegação entre telas é operável só por teclado, na ordem visual."
+      - "A severidade nunca é comunicada SÓ por cor: o contraste de cada tom é verificado."
+    validated_by:
+      - workspace/target/tests/test_acessibilidade.py
+    # Severidade só por cor exclui quem não distingue as cores exatamente no momento em que a
+    # informação mais importa — é por isso que este é `high` e não `medium`.
+
+  # ─────────────────────────────────────────────────────────────────────────────────────────
+  # RECUSADOS POR MIM, e ficam listados porque a recusa é o critério em ação.
+  #
+  # Cada um destes fecharia um achado de cobertura reversa e não diria nada sobre o produto:
+  #
+  #   "Mostrar eventos"           (CMP-EVENTOS)      — parafraseia o nome. O que o operador faz é
+  #                                                    acompanhar fluxo E filtrar histórico no
+  #                                                    servidor, e isso virou REQ-015.
+  #   "Persistir dados"           (CMP-PERSISTENCIA) — não é comportamento de usuário. Virou
+  #                                                    RULE-SUSTENTAR-001, invariante verificada.
+  #   "Mascarar dados sensíveis"  (CMP-MASCARAMENTO) — idem: RULE-SUSTENTAR-003.
+  #   "Acessar o daemon Docker"   (CMP-PROXY)        — idem: RULE-OBSERVAR-001.
+  #   "Aplicar barreira de ação"  (CMP-BARREIRA)     — idem: RULE-AGIR-001.
+  #   "Empacotar a aplicação"     (CMP-EMPACOTAMENTO)— não tem usuário. Isenção declarada.
+  #
+  # A regra que separa os dois casos: se a frase só faz sentido para quem já conhece o
+  # componente, não é requisito — é o nome do componente com um verbo na frente.
+  # ─────────────────────────────────────────────────────────────────────────────────────────

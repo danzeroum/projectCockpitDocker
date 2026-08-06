@@ -12,7 +12,7 @@ generated_from: null
 review:
   produced_by: agent
   agent: conformance
-  scope_fingerprint: "sha256:4110bbf719560e24f14d4cb66a482129a9a5561364976e94e870c941775b8de3"
+  scope_fingerprint: "sha256:f233db5316244d65abb3383fe395fa9914224e731dc2e32a1bb2e918dc81e131"
 
   findings:
     - id: CONF-001
@@ -251,6 +251,62 @@ review:
         Registrado como achado em vez de nota de rodapé porque a diferença entre "12 restantes" e
         "12 restantes mais 40 que outro fiscal vê" é exatamente o que some quando um número é
         citado sozinho. O próximo trabalho deste repositório está nomeado aqui: o backlog do alvo.
+
+    - id: CONF-012
+      severity: medium
+      summary: >
+        A COBERTURA REVERSA FECHOU: `ci/alignment_report.py` saiu de 40 divergências para 0, por
+        27 requisitos e 9 regras de negócio LIDOS do alvo — nenhuma isenção declarada, nenhum
+        requisito inventado. A CONF-011 dizia que o repositório declarava o que o alvo É sem
+        declarar o que ele deve FAZER; isso deixou de ser verdade.
+        O MARCO DE `exit 0` NÃO FOI ALCANÇADO, e são dois bloqueios de naturezas diferentes.
+        (1) Os 11 achados de `validate_metadata` (10 `teste órfão` + 1 `meta:dependência`) são
+        CONF-007 e CONF-008, e a CP-039 do molde JÁ OS CORRIGIU — mas o conserto não chegou aqui:
+        `target.lock:mold_release` ancora a release v1.0.0 (commit 9b8071c), e a CP-039 vive na
+        `main` do molde sem release que a carregue. Consumir exige release nova do molde MAIS
+        atualização de carcaça, que é a operação de risco alto da CP-002: trocar quem mede é
+        diferente de mudar o que é medido.
+        (2) O achado de LGPD é de outra natureza e NÃO se fecha com metadado nenhum.
+        `ci/audit_lgpd.py:490` reprova qualquer issue P0/P1 com `status: open`, e RISCO-001 é P1
+        aberto: `GET /api/containers/{id}/logs?tail=500` devolve a saída bruta de qualquer
+        container do host. Fechá-lo é reduzir o que se expõe — janela, autorização, retenção — NO
+        ALVO, que este repositório lê e não escreve (`harness.yaml:target_feedback` nasce false).
+        Declará-lo resolvido sem reduzir nada seria a fraude exata que este sistema existe para
+        tornar cara.
+      disposition: accepted
+      rationale: >
+        Registrado como achado e não como nota porque a diferença entre os dois bloqueios é o que
+        importa para quem ler depois: um é dívida com conserto pronto e caminho conhecido; o outro
+        é uma propriedade do produto auditado. Um `exit 0` que passasse por cima do segundo seria
+        pior que o vermelho — seria o painel verde sobre o servidor que não está.
+
+    - id: CONF-013
+      severity: low
+      summary: >
+        A ISENÇÃO REDUNDANTE É INVISÍVEL — terceiro irmão da CONF-007 e da CONF-008, e encontrado
+        pelo teste de borda desta fatia, não por leitura.
+        `ci/alignment_report.py::isencao_morta` implementa METADE da propriedade que o schema
+        declara. O schema de `risk_exemptions` diz: "isenção que não casa ativo algum é ela própria
+        um achado — do contrário a lista vira o lugar onde a cobertura é fingida com uma linha".
+        O fiscal confere só o primeiro caso: `ref` que não resolve para ativo nenhum.
+        MEDIDO, numa cópia do repositório: isenção apontando para `CMP-NAO-EXISTE` ACUSA; isenção
+        apontando para `CMP-CERTS`, que já implementa REQ-006 e portanto não precisa de isenção
+        alguma, passa em SILÊNCIO. Ela fica ali para sempre protegendo nada, e o próximo leitor vê
+        "coberto por isenção declarada" num componente que tem requisito de verdade.
+        É o mesmo formato das outras duas: a trava conhece o caso em que a declaração não alcança
+        nada, e não conhece o caso em que ela deixou de ser necessária.
+        O QUE FALTA, nomeado: `isencao_morta` deve acusar também a isenção REDUNDANTE — `ref` de
+        componente com `implements` não vazio, de superfície com `satisfies`, ou de capacidade já
+        citada no `related` de algum risco.
+        NÃO BLOQUEOU esta fatia: as 40 divergências fecharam com ZERO isenções declaradas, por
+        requisito lido. O achado é sobre o instrumento, não sobre o repositório.
+      disposition: change_proposal
+      ref: harness/change-proposals/CP-003-virar-derivado-do-molde.yaml
+      consumed_by:
+        kind: change_proposal
+        ref: CP-003
+      rationale: >
+        DONO: molde (danzeroum/project), junto de CONF-007 e CONF-008. Revisão: 2026-11-03.
 
   not_assessed:
     - >
