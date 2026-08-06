@@ -36,6 +36,10 @@ capabilities:
   - workspace/target/app/routers/_proxy.py
   - workspace/target/app/stats_util.py
   test_paths:
+  # test_log_tail_max.py chegou com o alvo em 1da4d51 (CP-005). Sobe para a capacidade porque o
+  # fiscal exige que a evidencia de um requisito seja evidencia que a capacidade reivindica —
+  # senao um requisito poderia ser "validado" por teste de outra area.
+  - workspace/target/tests/test_log_tail_max.py
   - workspace/target/tests/test_api.py
   - workspace/target/tests/test_container_history.py
   - workspace/target/tests/test_history_route.py

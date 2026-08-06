@@ -1,0 +1,77 @@
+# Avançar o alvo de d6ae70ea para 1da4d51 — a obra do RISCO-001 entrou lá, e o registro daqui
+# precisa parar de descrever o cockpit de ontem.
+# Declarada ANTES de executada (ADR-004).
+# Schema: ../schemas/change-proposal.schema.json
+schema_version: "1.1"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+proposal:
+  id: CP-005
+  title: "Sincronizar o alvo em 1da4d51: a janela de log reduzida, e o que isso NÃO fecha"
+  author_kind: agent
+  created_at: "2026-08-06T03:30:00Z"
+  status: approved
+  capabilities_affected:
+    - CAP-OBSERVAR
+  components_affected:
+    - CMP-CONTAINERS
+    - CMP-PERSISTENCIA
+  paths_affected:
+    - target.lock
+    - architecture/components.yaml
+    - business/requirements/backlog.yaml
+    - governance/privacy-review.yaml
+    - governance/conformance-review.yaml
+    - harness/state/baseline-achados.json
+
+  risk_assessment:
+    level: high
+    risks:
+      - RISK-ALVO-001
+      - RISK-META-001
+    rationale: >
+      ALTO PORQUE REANCORA O REPOSITÓRIO INTEIRO. Toda declaração deste consumidor fala de um SHA;
+      mover o SHA muda, de uma vez, o objeto sobre o qual todas elas afirmam. É a mesma razão da
+      CP-003, e não fica menor por o diff ser pequeno.
+
+      O DIFF DO ALVO: 3 arquivos entre d6ae70ea e 1da4d51 — `app/db.py` (+18),
+      `app/routers/containers.py` (+10/-2) e `tests/test_log_tail_max.py` (+117, novo). É a obra
+      do LOG_TAIL_MAX e nada mais; nenhum commit alheio entrou junto.
+
+      O FISCAL DE SYNC DISSE "NENHUM", E O FISCAL ESTÁ CERTO E É ESTREITO.
+      `audit_conformance --sync-diff` respondeu "nenhum metadado com proveniência aponta para
+      eles", e a palavra que carrega o peso é PROVENIÊNCIA: ele cruza `derived_from.path`, e
+      NENHUM dos 36 componentes deste repositório tem `derived_from` — eles foram autorados à mão
+      na fatia-2, não propostos pelo cartographer, então têm `source_paths` e mais nada.
+      Cruzando pelo elo que existe aqui, a lista real aparece:
+
+          app/db.py                  -> CMP-PERSISTENCIA
+          app/routers/containers.py  -> CMP-CONTAINERS
+          tests/test_log_tail_max.py -> ninguém (arquivo NOVO; vira teste órfão ao materializar)
+
+      Registrado como CONF-014: para um derivado de metadado autorado, `--sync-diff` responde
+      "nenhum" sempre, e "nenhum" e "não sei olhar" saem iguais na tela.
+
+      O QUE MUDA DE FATO NO REGISTRO, item a item:
+      (1) REQ-028 sai de `proposed` para `done` — era a única entrada do backlog que descrevia
+          trabalho inexistente, e o trabalho existe. Ganha `validated_by` apontando para
+          `tests/test_log_tail_max.py`, que é a prova do comportamento e não do código.
+      (2) CMP-CONTAINERS reivindica o teste novo em `tested_by`, senão ele nasce órfão.
+      (3) RISCO-001 é EMENDADO e NÃO fechado. A janela caiu de 5000 para 500 e o stream ganhou o
+          teto que não tinha — mas a exposição incidental é por natureza, não por configuração:
+          log é stdout de terceiro. O que mudou foi o TAMANHO, não a espécie.
+      (4) A revisão de conformidade vence, porque o `scope_fingerprint` inclui o lock.
+
+      O QUE ESTA CP NÃO FAZ: não fecha RISCO-001, não declara o marco de `exit 0`, não toca
+      `mold_release`. `validate_all` continuará saindo 1 em `lgpd(1)`, e é o estado correto.
+
+  required_gates:
+    - metadata-validation
+    - unit-tests
+  tests_required:
+    - tests/integration/test_repositorio.py
+    - tests/integration/test_catraca.py
+  human_approval_required: true
+  change_mode: pull_request

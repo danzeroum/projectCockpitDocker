@@ -518,7 +518,9 @@ items:
     title: "Declarar o teto da janela de log em vez de embuti-lo, e reduzi-lo por padrão"
     type: task
     capability: CAP-OBSERVAR
-    status: proposed
+    # `proposed` -> `done` na CP-005. Era a UNICA entrada deste backlog que descrevia trabalho
+    # inexistente; o trabalho existe desde danzeroum/docker@1da4d51.
+    status: done
     priority: high
     risk: RISK-ALVO-001
     metrics:
@@ -528,6 +530,9 @@ items:
       - "O default cai de 5000 para 500 — o mesmo valor que o parâmetro já tem como padrão, tornando o teto igual ao pedido comum em vez de dez vezes maior."
       - "Quem precisa de mais o declara no ambiente, deliberadamente, e o piso impede `=0`."
       - "Nenhuma capacidade é destruída: `tail=500` continua sendo o pedido da tela, e o índice FTS continua respondendo sobre 7 dias."
+      - "A rota de STREAM passa a respeitar o mesmo teto — ela não tinha nenhum."
+    validated_by:
+      - workspace/target/tests/test_log_tail_max.py
     # ─────────────────────────────────────────────────────────────────────────────────────────
     # A PROPOSTA MÍNIMA PARA RISCO-001, e ela é UMA LINHA — mesmo formato do `ENABLE_TERMINAL=0`
     # que fechou a redução real do RISK-SOCKET-001. Medido em d6ae70ea, não suposto:

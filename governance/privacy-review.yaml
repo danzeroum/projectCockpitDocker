@@ -60,8 +60,26 @@ review:
         nenhum — log é stdout arbitrário de terceiro, sem chave para casar, e mascarar por
         adivinhação produz falso negativo silencioso. É exatamente por isso que este risco não se
         fecha por mascaramento.
+        EMENDA (CP-005, 06/08/2026) — A OBRA ENTROU, E O RISCO NÃO FECHOU.
+        `danzeroum/docker@1da4d51` declarou o teto (`LOG_TAIL_MAX = _env_int("LOG_TAIL_MAX", 500,
+        1)` em `db.py`) e o aplicou nas DUAS rotas de log. A janela caiu de 5000 para 500 no pior
+        caso por requisição — 10x —, e a rota de STREAM, que não tinha teto nenhum e mandava `tail`
+        do query string direto para o daemon, passou a respeitar o mesmo limite. Provado por
+        `tests/test_log_tail_max.py` no alvo; ver REQ-028, agora `done`.
+        O QUE MUDOU FOI O TAMANHO, NÃO A ESPÉCIE. A exposição continua incidental POR NATUREZA: o
+        cockpit não decide o que a aplicação de terceiro escreve no stdout, e 500 linhas de log
+        arbitrário continuam podendo trazer dado pessoal que ninguém coletou. Reduzir o pior caso
+        é proporcionalidade — não é eliminação, e chamar de eliminação seria trocar um risco aberto
+        e medido por um risco fechado e falso.
+        DAS QUATRO ALAVANCAS, o estado agora: RETENÇÃO resolvida (7 dias com purge e piso);
+        JANELA reduzida 10x e com o stream coberto; MASCARAMENTO não se aplica a texto livre e o
+        custo de uma implementação nova está medido na CONF-015; AUTORIZAÇÃO recusada com motivo —
+        gatear a leitura de log quebraria "leitura é livre, escrita é gateada" e tiraria de quem
+        opera o caminho mais curto às 3h. A recusa é decisão do dono, registrada, não omissão.
         CONTINUA `open`, e continua sendo o que impede `validate_all` de sair 0 neste repositório
-        (`ci/audit_lgpd.py:490` reprova P0/P1 aberto). Fechá-lo exige obra no alvo.
+        (`ci/audit_lgpd.py:490` reprova P0/P1 aberto). Um PR mergeado não é justificativa para
+        painel verde: o que fecharia este risco é o dado deixar de chegar ao endpoint, e ele
+        continua chegando — menos dele.
       consumed_by:
         kind: risk
         ref: RISK-ALVO-001
