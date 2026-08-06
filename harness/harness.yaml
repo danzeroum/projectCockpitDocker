@@ -12,10 +12,22 @@ standard:
 # CODEOWNERS + branch protection + diff-check no CI, não esta lista (que é a declaração).
 repository:
   project_manifest: project.yaml
+  # Manifesto das etapas — fonte única de quais etapas existem e quem as fiscaliza. Faltava desde
+  # o transplante da carcaça (CP-002): o arquivo sempre existiu, mas não era DECLARADO aqui, e
+  # `audit_governance` o encontrava por caminho embutido no fiscal. Declarar fecha o elo.
+  stages_manifest: harness/stages.yaml
   protected_paths:
     - .github/
     - harness/
-    - tests/qa/escopo-autorizado.yaml
+    # Era `tests/qa/escopo-autorizado.yaml`, e virou o DIRETÓRIO. Aquele arquivo é injetado como
+    # segredo no runner e nunca é comitado: proteger um caminho que por desenho não existe é vigiar
+    # o vazio — CODEOWNERS não casa nada, o diff-check nunca dispara, e o fiscal acusava
+    # `protected_path não existe`.
+    # `tests/qa/` é MAIS largo e não menos: cobre o `escopo-autorizado.yaml.example` (que define a
+    # forma do escopo — afrouxá-lo com um alvo a mais ou uma validade esticada é exatamente a
+    # mudança que precisa de olho humano), o `config.yaml` que espelha o pin da régua, a
+    # `campanha.yaml` que diz quais modos rodam, e qualquer escopo futuro que apareça ali.
+    - tests/qa/
     - requirements-qa.txt
 
 # Política de decisão da harness. default: deny — sem reconhecer projeto/capacidade/risco/modo,
@@ -62,7 +74,64 @@ execution_modes:
 env_hygiene:
   env_allowlist: [PATH, HOME, LANG]
   env_denylist_prefix: ["WEBQA_"]
+  # Nomes EXATOS, e a lista é distinta do prefixo porque a ameaça é outra. `WEBQA_*` é
+  # auto-autorização: o vigiado liga o próprio gate. Estes quatro são REDIRECIONAMENTO — trocam de
+  # onde o processo lê o que vai executar: de onde vem o pacote, de onde vem o módulo, para onde
+  # vai a requisição. Um fiscal enganado reporta verde com convicção, e verde com convicção encerra
+  # a investigação.
+  # Faltava desde a carcaça transplantada pela CP-002, e a ausência tinha consequência medida:
+  # `ci/hooks/pre_bash_env_hygiene.py::denied_exact` retorna `[]` quando a chave não existe. O hook
+  # rodava, lia, achava lista vazia e deixava passar — fail-OPEN silencioso, no fiscal cuja razão
+  # de existir é fechar o vão entre o que morde no CI e o que morde na sessão.
+  # (Nesta sessão um `PYTHONPATH=src` FOI recusado, mas pela lista do MOLDE: o hook resolve a raiz
+  # subindo do diretório corrente, e o corrente era o do molde. A trava do derivado estava aberta,
+  # e a evidência de que ela funcionava vinha de outro repositório.)
+  # A lista é a do molde, item a item e pelas mesmas três razões — não uma escolha nova.
+  env_denylist_exact:
+    # Sequestro de rede: reescrevem o destino de toda requisição do job, inclusive as do pip que
+    # baixam a régua cuja versão este repositório trava com tanto cuidado.
+    - HTTP_PROXY
+    - HTTPS_PROXY
+    - ALL_PROXY
+    - NO_PROXY
+    # Sequestro de índice: o pin exato continua exato e passa a apontar para outro lugar. Vale
+    # duplamente aqui desde a fatia-4: `cockpit-harness` também chega por pip.
+    - PIP_INDEX_URL
+    - PIP_EXTRA_INDEX_URL
+    # Sequestro de import: injetam código ANTES de qualquer linha deste repositório rodar. Um
+    # fiscal que importa harness_lib importaria o harness_lib de quem definiu a variável.
+    - PYTHONPATH
   fail_on_denied_env: true   # aborta se encontrar, NÃO apenas ignora (erro vira evento auditável)
+
+# A camada externa da trava — DECLARADA DESLIGADA, que é diferente de ausente. Sem este bloco,
+# "não há autoridade externa aqui" era um estado sem lugar onde aparecer, e lacuna que não aparece
+# não é revisada. Era um dos três `meta:estrutural` do baseline.
+#
+# POR QUE `false`, e por que isso não é o molde por preguiça. O molde ligou a sua em 05/08/2026
+# (CP-036) contra `danzeroum/harness-authority` — App próprio, cron diário, atestado que expira em
+# 25h. Ligar a DESTE repositório não é preencher campo: exige estender aquela autoridade a um
+# segundo repositório, o que significa instalar o App aqui e dar ao verificador suporte multi-repo.
+# É decisão administrativa do dono mais uma change-proposal no harness-authority — trabalho que não
+# mora neste repositório e que nenhum agente se autoriza a fazer.
+#
+# Um `enabled: true` apontando para uma autoridade que não observa este repositório seria pior que
+# desligado: o gate exigiria atestado, não haveria quem o emitisse, e a saída seria alguém escrever
+# o JSON à mão — exatamente a fraude que a camada externa existe para impedir.
+#
+# QUANDO LIGAR, o emissor autorizado será o mesmo `harness-authority`. Está escrito aqui e não só
+# na cabeça de quem decidiu, para que ligar não vire a oportunidade de escolher um emissor
+# conveniente.
+external_audit:
+  enabled: false
+  accepted_risk: RISK-EXT-002   # com `due` no registro — princípio (g): risco aceito tem data
+  attestation_path: harness/state/protection-attestation.json
+  justification: >
+    Desligada porque a autoridade externa existe (danzeroum/harness-authority, ligada no molde pela
+    CP-036) mas ainda não observa este repositório: falta instalar o App aqui e dar suporte
+    multi-repo ao verificador. As duas coisas são decisão administrativa do dono mais CP naquele
+    repositório, e nenhuma delas é preenchível daqui. Enquanto isso, a trava desta casa é a de
+    dentro — CODEOWNERS, branch protection e a catraca —, que o vigiado pode desligar, e é por isso
+    que a janela tem risco aceito COM DATA em vez de ficar aberta em silêncio.
 
 paths:
   runs: harness/runs         # evidência bruta por run_id

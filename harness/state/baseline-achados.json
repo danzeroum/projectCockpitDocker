@@ -1,24 +1,11 @@
 {
   "schema_version": "1.0",
   "comentario": "Contagem de achados por categoria. Baseline da catraca (ci/catraca.py): este repositório está em incubação e vermelho de propósito; o que a catraca garante é que o vermelho não cresce. Regravar para CIMA é recusado pelo workflow, que compara este arquivo com o da branch base.",
-  "total": 29,
+  "total": 12,
   "por_categoria": {
-    "governance:agent_pairing": 5,
-    "governance:change_buffer": 2,
-    "governance:external_audit": 1,
-    "governance:policy_pointer": 1,
-    "governance:protected_path": 1,
-    "governance:stage_coverage": 3,
-    "governance:stage_partition": 1,
     "lgpd:lgpd_judgment": 1,
     "meta:dependência": 1,
-    "meta:estrutural": 3,
     "meta:teste órfão": 10
   },
-  "categorias_novas_declaradas": [
-    {
-      "categoria": "meta:dependência",
-      "justificativa": "CONF-008: o fiscal de inventário do molde (ci/validate_metadata.py::_declaradas) lê pyproject.toml por regex e não reconhece referência direta PEP 508 (`nome @ git+url`). A fatia-4 é o primeiro PR desta casa a declarar dependência nessa forma — o pin da harness extraída —, e o fiscal a acusa de entrada morta apesar de ela estar declarada em pyproject.toml e inventariada em security/dependencies.yaml. A categoria apareceu porque uma trava cega passou a ter diante de si o que não sabe ler, e NAO porque o repositorio piorou: o pin por SHA é mais honesto que o vendor que ele substituiu, e a alternativa de não inventariar a dependência produziria zero achado com uma dependência git invisível ao inventário — silêncio pior que o vermelho. Correção é do molde (kind pinned_dependency); até lá o achado fica contado como dívida visível."
-    }
-  ]
+  "categorias_novas_declaradas": []
 }

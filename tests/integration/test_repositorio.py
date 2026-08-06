@@ -66,9 +66,23 @@ def test_denylist_de_ambiente_esta_ligado(raiz: Path):
 
 
 def test_caminhos_protegidos_cobrem_o_que_muda_a_regua(raiz: Path):
+    """COBERTURA, não menção literal — reancorado no fecho da CP-003.
+
+    A versão anterior exigia a string `tests/qa/escopo-autorizado.yaml` DENTRO da lista, e isso
+    obrigava a declarar como protegido um arquivo que por desenho nunca existe: ele é injetado
+    como segredo no runner e jamais comitado. `check_protected_paths` acusava, corretamente, uma
+    proteção que não casa nada — CODEOWNERS sem alvo, diff-check que nunca dispara.
+    A declaração passou a ser o diretório `tests/qa/`, que é MAIS largo: cobre o escopo, o exemplo
+    que define a forma dele, o config que espelha o pin e a campanha. Uma asserção presa à grafia
+    reprovaria essa melhora — é a mesma âncora-na-menção que já custou cinco correções nesta casa.
+    """
     protegidos = plano.carregar(raiz)["repository"]["protected_paths"]
+
+    def coberto(caminho: str) -> bool:
+        return any(caminho == p or caminho.startswith(p.rstrip("/") + "/") for p in protegidos)
+
     for esperado in ("requirements-qa.txt", "harness/", ".github/", contrato.ESCOPO_QA):
-        assert esperado in protegidos
+        assert coberto(esperado), f"{esperado} não é coberto por protected_paths: {protegidos}"
 
 
 def test_plano_referencia_o_arquivo_de_pin_sem_restatar_a_versao(raiz: Path):

@@ -278,4 +278,38 @@ risks:
       - kind: local_path
         ref: governance/conformance-review.yaml
 
+  - id: RISK-EXT-002
+    area: governance
+    description: >
+      A camada externa da trava está DESLIGADA neste repositório
+      (`harness/harness.yaml:external_audit`). Enquanto isso, tudo que impede um agente de afrouxar
+      a própria vigilância mora aqui dentro: CODEOWNERS, branch protection e a catraca. Quem tem
+      direito de merge pode relaxar os três, e o repositório continua reportando verde — a
+      definição exata da trava que o vigiado desliga em silêncio.
+      O gêmeo do molde é a RISK-EXT-001, que foi de `open` a `mitigated` quando a CP-036 ligou a
+      autoridade lá. Este é o mesmo risco, na mesma forma, um repositório depois: a autoridade
+      EXISTE (danzeroum/harness-authority) e ainda não observa este alvo.
+    likelihood: low
+    impact: high
+    treatment: accept
+    owner: security_owner
+    status: accepted
+    # ACEITO COM DATA, princípio (g). Sem `due`, "aceito" e "esquecido" são o mesmo registro lido
+    # por pessoas diferentes. 03/11/2026 é a data que os outros riscos abertos desta casa já
+    # carregam: risco com data própria é risco revisado sozinho, e revisado sozinho é esquecido.
+    #
+    # O QUE FECHA ESTE RISCO, e não é trabalho deste repositório: instalar o GitHub App do
+    # harness-authority aqui, e dar suporte multi-repo ao verificador de lá, que hoje atesta um
+    # repositório só. Decisão administrativa do dono mais change-proposal naquele repositório.
+    # Quando fechar, o emissor autorizado será `harness-authority` — declarado agora, antes de
+    # ligar, para que ligar não vire a oportunidade de escolher um emissor conveniente.
+    due: "2026-11-03"
+    controls:
+      - kind: local_path
+        ref: harness/harness.yaml
+      - kind: branch_protection
+        ref: main
+      - kind: local_path
+        ref: ci/catraca.py
+
 risk_exemptions: []

@@ -55,4 +55,12 @@ Os elos que dependem de resolver a tag no repositório do molde não rodam dentr
 dois faria "estou offline" e "a tag foi movida" produzirem a mesma cor, e a cor mais barata venceria
 por hábito. Por isso `verify_chain` é função pura, alimentada por quem tem a rede.
 
-Fiscalizado por: `ci/validate_metadata.py::check_mold_release`, `ci/validate_metadata.py::check_release_manifests`, `ci/mold_release.py::verify_chain`, `ci/mold_release.py::preflight_publicacao`, `.github/workflows/release.yml`
+> **Nota do derivado.** Esta política chegou do molde e descreve os DOIS lados do contrato de
+> release: quem publica e quem consome. Este repositório só consome — não tem, nem deve ter,
+> `.github/workflows/release.yml`. O ponteiro para aquele workflow ficou na linha abaixo até
+> a fatia-4 e era um fiscal que não resolve: apontava para um arquivo de outro repositório
+> como se fosse local. Foi REMOVIDO em vez de recriado — copiar o workflow de publicação para
+> cá faria este repositório parecer capaz de emitir releases do molde, que é o oposto do que
+> a ancoragem afirma. Os quatro fiscais restantes são os do lado consumidor, e são locais.
+
+Fiscalizado por: `ci/validate_metadata.py::check_mold_release`, `ci/validate_metadata.py::check_release_manifests`, `ci/mold_release.py::verify_chain`, `ci/mold_release.py::preflight_publicacao`
