@@ -30,9 +30,11 @@ vermelho e **nenhuma ref nasce**: não existe release parcial.
 
 **O workflow cria a ref e não a move** (ADR-025). `git push` sem `--force` recusa atualizar uma tag
 existente, então o que o workflow assina é *"esta versão nasceu de um commit validado"*. A
-afirmação seguinte — *"e continua sendo isto"* — exige ruleset administrado fora daqui, e é o que o
-eixo de tags de `ci/verify_protection.py` reporta a cada publicação enquanto não existir
-(`RISK-EXT-001`, `due: 2026-11-03`).
+afirmação seguinte — *"e continua sendo isto"* — exige ruleset administrado fora daqui. Ele existe
+desde 05/08/2026 (`tags-imoveis`: `deletion` + `non_fast_forward` + `update`, bypass vazio), é
+auditado de fora todo dia pelo `danzeroum/harness-authority`, e o eixo de tags de
+`ci/verify_protection.py` passou a **bloquear** em vez de reportar quando `external_audit.enabled`
+virou `true` (CP-036, ADR-028). `RISK-EXT-001` está `mitigated`.
 
 **A janela entre validar e publicar é vazia, não vigiada.** Manifesto emitido, commit de release
 montado, tag criada e cadeia verificada — tudo em objetos locais. O `git push` da ref é a única
@@ -48,6 +50,21 @@ intervalo é o mapa da migração, não defeito.
 não toca `derived_from` nem `workspace/`. A âncora do molde e a do alvo são perguntas diferentes;
 avançar as duas juntas tornaria impossível saber qual causou o vermelho seguinte.
 
+## Qual pergunta se faz a qual árvore
+
+| Árvore | Pergunta certa |
+|---|---|
+| um commit qualquer, a `main` | `python ci/validate_all.py` |
+| a árvore **taggeada** | pai verde · `diff pai..tag` só o manifesto · `--verify-tag` |
+
+A árvore taggeada **não** se valida por `validate_all.py` (ADR-026). Não é afrouxamento: o manifesto
+descreve a validação do **pai**, e o elo *"nada além do manifesto"* é o que transporta essa validação
+para a árvore publicada. Rodar a validação total na tag sempre foi perguntar a pergunta errada
+àquela árvore — e enquanto isso não estava dito, o job de auditoria era incapaz de ficar verde.
+
+`validate_all.py` permanece **puro e cego a refs**. A semântica da tag mora no ADR e no job, nunca
+no fiscal: um fiscal que soubesse em qual ref está teria duas respostas para a mesma árvore.
+
 ## Onde a verificação é indeterminada
 
 Os elos que dependem de resolver a tag no repositório do molde não rodam dentro de
@@ -55,12 +72,11 @@ Os elos que dependem de resolver a tag no repositório do molde não rodam dentr
 dois faria "estou offline" e "a tag foi movida" produzirem a mesma cor, e a cor mais barata venceria
 por hábito. Por isso `verify_chain` é função pura, alimentada por quem tem a rede.
 
-> **Nota do derivado.** Esta política chegou do molde e descreve os DOIS lados do contrato de
-> release: quem publica e quem consome. Este repositório só consome — não tem, nem deve ter,
-> `.github/workflows/release.yml`. O ponteiro para aquele workflow ficou na linha abaixo até
-> a fatia-4 e era um fiscal que não resolve: apontava para um arquivo de outro repositório
-> como se fosse local. Foi REMOVIDO em vez de recriado — copiar o workflow de publicação para
-> cá faria este repositório parecer capaz de emitir releases do molde, que é o oposto do que
-> a ancoragem afirma. Os quatro fiscais restantes são os do lado consumidor, e são locais.
+> **Nota do derivado, reaplicada na CP-004.** Esta política chega do molde e descreve os DOIS
+> lados do contrato de release: quem publica e quem consome. Este repositório só CONSOME — não
+> tem, nem deve ter, `.github/workflows/release.yml`. O ponteiro para aquele workflow foi removido
+> da linha abaixo, e não recriado: copiar o workflow de publicação para cá faria este repositório
+> parecer capaz de emitir releases do molde, que é o oposto do que a ancoragem afirma.
+> A adaptação foi decidida no fecho da CP-003 e o transplante a desfez, como transplante faz.
 
 Fiscalizado por: `ci/validate_metadata.py::check_mold_release`, `ci/validate_metadata.py::check_release_manifests`, `ci/mold_release.py::verify_chain`, `ci/mold_release.py::preflight_publicacao`

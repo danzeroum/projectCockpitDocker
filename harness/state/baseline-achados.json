@@ -1,11 +1,9 @@
 {
   "schema_version": "1.0",
   "comentario": "Contagem de achados por categoria. Baseline da catraca (ci/catraca.py): este repositório está em incubação e vermelho de propósito; o que a catraca garante é que o vermelho não cresce. Regravar para CIMA é recusado pelo workflow, que compara este arquivo com o da branch base.",
-  "total": 12,
+  "total": 1,
   "por_categoria": {
-    "lgpd:lgpd_judgment": 1,
-    "meta:dependência": 1,
-    "meta:teste órfão": 10
+    "lgpd:lgpd_judgment": 1
   },
   "categorias_novas_declaradas": []
 }

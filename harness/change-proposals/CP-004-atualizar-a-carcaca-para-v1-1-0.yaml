@@ -1,0 +1,86 @@
+# Atualizar a carcaça da v1.0.0 para a v1.1.0 — a primeira vez que este derivado consome uma
+# release nova do molde pelo caminho desenhado para isso.
+# Declarada ANTES de executada (ADR-004).
+# Schema: ../schemas/change-proposal.schema.json
+schema_version: "1.1"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+proposal:
+  id: CP-004
+  title: "Consumir a v1.1.0 do molde: os fiscais que a CP-039 corrigiu chegam aqui"
+  author_kind: agent
+  created_at: "2026-08-06T03:00:00Z"
+  status: approved
+  capabilities_affected: []
+  components_affected: []
+  paths_affected:
+    - ci/
+    - harness/schemas/
+    - harness/policies/
+    - .claude/
+    - target.lock
+    - architecture/components.yaml
+    - harness/state/baseline-achados.json
+
+  risk_assessment:
+    level: high
+    risks:
+      - RISK-MOLDE-001
+      - RISK-CARCACA-001
+      - RISK-META-001
+    rationale: >
+      ALTO PELO MESMO MOTIVO DA CP-002, e a frase de lá continua valendo: troca o FISCAL, e trocar
+      quem mede é diferente de mudar o que é medido — um erro aqui não aparece como erro, aparece
+      como verde. O que muda em relação àquela vez é que agora existe caminho: a release é
+      verificável, a cadeia foi conferida antes de a âncora ser escrita, e o `/atualizar-carcaca`
+      fez a escrita em vez de um `sed` meu.
+
+      A CADEIA, VERIFICADA ANTES DE QUALQUER ESCRITA (os seis elos de
+      `ci/mold_release.py::verify_chain`, rodados num worktree na própria tag):
+
+          ✓ cadeia íntegra: v1.1.0 → b088dc63d265 → harness/releases/v1.1.0.manifest.json
+                                                  → da8b95cddce1
+
+      E o evento no ledger do molde, `result: pass`, run 31066352222.
+
+      O DIFF DA CARCAÇA, medido `git diff v1.0.0 v1.1.0` sobre ci/, harness/schemas/,
+      harness/policies/ e .claude/: 16 arquivos, 770 inserções, 55 remoções. O grosso é a CP-039
+      (inventário que enxerga referência direta PEP 508, isenção que cobre os dois lados, fiscal
+      da âncora-na-menção) mais a CP-036/037 (autoridade externa e auto-merge do atestado).
+
+      NÃO EXIGE ADAPTAÇÃO SEMÂNTICA, e isto foi MEDIDO e não lido. Transplantei a carcaça numa
+      cópia e rodei os fiscais:
+
+          antes ................ 11 achados de validate_metadata
+          após a sobreposição ... 10  (o `meta:dependência` fecha sozinho: o regex novo enxerga
+                                       o pin git de `cockpit-harness`)
+          após declarar as 10
+          isenções de apoio .....  0  (`check_orphan_tests` passou a consultar `exemptions` —
+                                       é a CONF-007 chegando com o instrumento)
+
+      Os dois achados NOVOS que o transplante produz são de ponteiro, não de significado:
+      `harness/policies/ancoragem-do-molde.md` volta a citar `.github/workflows/release.yml`, que é
+      do molde, e `harness/policies/conformance.md` chega citando
+      `tests/governance/test_vocabulario_do_consumidor_bites.py`, que também é de lá. A primeira
+      já tinha adaptação decidida e escrita no fecho da CP-003 — este repositório CONSOME release,
+      não publica —, e a segunda é a mesma classe. Nenhuma das duas decide nada sobre o que os
+      metadados descrevem, que é o que a regra de ouro da CP-002 protege.
+
+      O QUE ESTA CP NÃO FAZ: não move `target_sha`, não reingere, não toca `workspace/` nem
+      `derived_from`. A âncora do molde e a âncora do alvo são duas perguntas diferentes, e
+      avançar as duas de uma vez tornaria impossível saber qual causou o vermelho seguinte.
+
+      O QUE SOBRA DEPOIS: um achado, e ele não é de carcaça. `ci/audit_lgpd.py` reprova RISCO-001,
+      P1 aberto sobre a saída bruta de log do alvo. A obra está proposta em REQ-028 e em PR no
+      repositório do alvo; enquanto ela não entra, a linha do marco de `exit 0` segue em branco.
+
+  required_gates:
+    - metadata-validation
+    - unit-tests
+  tests_required:
+    - tests/integration/test_repositorio.py
+    - tests/integration/test_catraca.py
+  human_approval_required: true
+  change_mode: pull_request

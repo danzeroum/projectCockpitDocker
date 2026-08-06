@@ -6,7 +6,7 @@ kind: derived
 target_sha: d6ae70eafee925e70f768f9c303229eb5673b6ba
 mold_release:
   repository: danzeroum/project
-  tag: v1.0.0
-  commit_sha: 9b8071c146e22b5bc189458cddac2a0cfc93973c
-  manifest_path: harness/releases/v1.0.0.manifest.json
-  manifest_sha: 8d5986b6ad3c91146a82d147958bea46ac637e53c9abe61813ad1ac419a84708
+  tag: v1.1.0
+  commit_sha: 5eff98bceb4150d329f528288c87d02fba4656f9
+  manifest_path: harness/releases/v1.1.0.manifest.json
+  manifest_sha: da8b95cddce1a6117aebd95ad0364cf209026c17b48a13db19d2657e2bd29aea
