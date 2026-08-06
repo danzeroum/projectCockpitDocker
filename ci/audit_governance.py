@@ -72,6 +72,33 @@ def assert_path_absent(adr, a, findings, errors) -> None:
                   location=p)
 
 
+def assert_dir_allowlist(adr, a, findings, errors) -> None:
+    """O diretório contém APENAS o que a asserção lista. Enumera em vez de adivinhar.
+
+    Existe porque a forma óbvia — `path_absent` com glob — é uma armadilha, e vale registrar qual:
+    `assert_path_absent` usa `rel_exists`, que é LITERAL. Um glob como
+    `harness/releases/*.manifest.json` nunca "existiria", a asserção passaria sempre, e a mutação
+    canônica `criar_caminho` criaria um arquivo chamado literalmente `v*.manifest.json` — que
+    `rel_exists` ENCONTRARIA. A asserção ficaria vermelha depois de mutada e a prova de mutação
+    CERTIFICARIA uma trava decorativa. Um fiscal de fiscais enganado é pior que fiscal nenhum,
+    porque produz um selo.
+
+    Enumerar o diretório não tem esse buraco: o que estiver lá aparece, e o inverso canônico —
+    pôr qualquer outra coisa dentro — é honesto.
+    """
+    raiz = hl.REPO / a["dir"].rstrip("/")
+    if not raiz.is_dir():
+        _unresolvable(findings, adr, a, f"'{a['dir']}' não é um diretório — uma allowlist que não "
+                                        f"encontra o que vigiar está quebrada, não satisfeita")
+        return
+    permitidos = set(a["allow"])
+    for p in sorted(raiz.iterdir()):
+        if p.name not in permitidos:
+            _fail(findings, adr, a,
+                  f"'{hl.rel(p)}' está em {a['dir']} e a allowlist só admite "
+                  f"{sorted(permitidos)}.", location=hl.rel(p))
+
+
 def assert_path_present(adr, a, findings, errors) -> None:
     for p in a["paths"]:
         if not hl.rel_exists(p):
@@ -188,6 +215,7 @@ def assert_manual(adr, a, findings, errors) -> None:
 KINDS = {
     "path_absent": assert_path_absent,
     "path_present": assert_path_present,
+    "dir_allowlist": assert_dir_allowlist,
     "import_required": assert_import_required,
     "import_forbidden": assert_import_forbidden,
     "file_matches": assert_file_matches,
@@ -195,6 +223,55 @@ KINDS = {
     "schema_lock": assert_schema_lock,
     "manual": assert_manual,
 }
+
+
+def check_assertion_self_match(adr_index: dict, findings: Findings, errors: Errors) -> None:
+    """A asserção que casa com a PRÓPRIA DECLARAÇÃO fica verde por existir, não por conformidade.
+
+    É a parte mecanizável de um padrão de erro que já custou cinco correções em duas semanas
+    (CP-039, e a política em harness/policies/metadata-boundaries.md o nomeia por extenso): a regra
+    é escrita contra a MENÇÃO de uma coisa em vez de contra o FATO dela, e o documento que explica
+    a regra vira o primeiro a satisfazê-la sozinho.
+
+    A forma exata que dá para pegar por máquina: uma asserção `file_matches` cujo `pattern` casa o
+    `index.yaml` que a declara. O texto da própria declaração passa a ser a evidência de
+    conformidade — a asserção não pode reprovar, porque enquanto ela existir o padrão estará lá.
+    Foi o que aconteceu com a ADR-028 deste molde, e até a CP-039 a lição era só prosa.
+
+    `file_lacks` entra pelo motivo espelhado e ainda mais direto: um padrão PROIBIDO que casa o
+    index está sendo violado pelo documento que o proíbe — reprova sempre, e por si mesmo.
+    """
+    idx_rel = ADR_INDEX
+    if not hl.rel_exists(idx_rel):
+        return
+    bruto = hl.read_text(idx_rel)
+    for entry in (adr_index or {}).get("adrs", []):
+        for a in entry.get("assertions") or []:
+            if a.get("kind") not in ("file_matches", "file_lacks"):
+                continue
+            # SÓ quando a asserção MIRA o index. A primeira versão deste fiscal não tinha esta
+            # linha e acusou 40 vezes de uma vez — porque `pattern: "COCKPIT_SRC"` está escrito no
+            # index, então todo padrão casa a própria linha `pattern:` trivialmente.
+            # Escrevi um fiscal contra a âncora-na-menção e ele ancorou na menção. Sexta ocorrência,
+            # e fica registrada aqui porque o padrão é mais teimoso do que a consciência dele.
+            if idx_rel not in (a.get("files") or []):
+                continue
+            try:
+                rx = re.compile(a["pattern"], re.MULTILINE | (re.DOTALL if a.get("dotall") else 0))
+            except re.error:
+                continue  # padrão inválido já é acusado por quem o executa
+            if not rx.search(bruto):
+                continue
+            findings.add(
+                key=f"{a['id']}-SELF-MATCH", origin="assertion_self_match", severity="high",
+                adr=entry.get("id", "?"), assertion=a["id"], risk=a.get("risk"),
+                location=f"{idx_rel} :: {a['id']}",
+                summary=f"{a['id']}: o padrão /{a['pattern']}/ casa o próprio {idx_rel}, que é onde "
+                        f"a asserção é DECLARADA — ela fica verde por existir, não por o "
+                        f"repositório estar conforme.",
+                remediation="Ancorar o padrão no FATO e não na MENÇÃO: quem CRIA o artefato, quem "
+                            "o EXECUTA, quem o CONFIGURA — não a string que o nomeia.",
+            )
 
 
 def check_adr_conformance(adr_index: dict, findings: Findings, errors: Errors) -> None:
@@ -1005,6 +1082,27 @@ def check_external_attestation(harness_doc: dict, risk_doc: dict, findings: Find
             risk="RISK-META-002", location=caminho, summary=msg,
         )
         return
+    # EMISSOR. Achado PRÓPRIO, e sem `return`: um atestado pode estar expirado E ter sido escrito
+    # por quem não devia, e são dois problemas com duas reações. "Não consegui verificar", "isto
+    # envelheceu" e "alguém escreveu isto à mão" nunca compartilham código de saída nesta casa —
+    # colapsá-los economizaria linhas e destruiria a informação que diz para onde olhar.
+    autorizado = externo.get("authorized_issuer") or {}
+    emissor = (doc.get("attestation") or {}).get("issuer") or {}
+    if autorizado and (emissor.get("identity") != autorizado.get("identity")
+                       or emissor.get("kind") != autorizado.get("kind")):
+        findings.add(
+            key="EXT-AUDIT-EMISSOR-NAO-AUTORIZADO", origin="external_audit", severity="critical",
+            risk="RISK-META-002", location=caminho,
+            summary=f"O atestado declara ter sido emitido por "
+                    f"{emissor.get('identity')!r} ({emissor.get('kind')}) e a autoridade declarada "
+                    f"é {autorizado.get('identity')!r} ({autorizado.get('kind')}). Atestado de "
+                    f"emissor não declarado é indistinguível de atestado escrito à mão por quem "
+                    f"tem direito de merge — que é exatamente quem teria motivo para escrevê-lo.",
+            remediation="Conferir se o atestado veio da autoridade externa declarada em "
+                        "harness.yaml:external_audit.authorized_issuer. Se a autoridade mudou, a "
+                        "mudança é decisão declarada, não ajuste de campo.",
+        )
+
     expira = (doc.get("attestation") or {}).get("expires_at")
     try:
         quando = datetime.fromisoformat(str(expira).replace("Z", "+00:00"))
@@ -1182,6 +1280,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     check_adr_conformance(adr_index, findings, errors)
+    check_assertion_self_match(adr_index, findings, errors)
     check_stage_coverage(stages_doc, findings, errors, project_doc)
     check_repo_partition(stages_doc, findings)
     check_ingest_pipeline(findings, errors)

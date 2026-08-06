@@ -12,7 +12,7 @@ generated_from: null
 review:
   produced_by: agent
   agent: conformance
-  scope_fingerprint: "sha256:daebb697bba1c60ced0cd4d3eba7108d66948d53fb4dd0d00ced5ff8d1a6285f"
+  scope_fingerprint: "sha256:4c1f14200e95cca7d22b8991f5fc5e9255beb1f2524c6d182af878bf78df34bc"
 
   findings:
     - id: CONF-001
@@ -163,10 +163,10 @@ review:
         `version_source` apontando para onde o pin mora — o mesmo desenho de `standard_symbol`,
         que já resolve exatamente este problema para a régua externa e foi escrito como se a régua
         fosse a única dependência com essa propriedade.
-        DONO E DATA (fecho da CP-003, 06/08/2026): conserto do MOLDE, na CP-039 de
-        danzeroum/project. Dono: danzeroum. Revisão: 2026-11-03. Até lá o achado fica contado, e
-        a categoria `meta:dependência` segue no baseline — a alternativa (não inventariar) daria
-        zero achados com uma dependência git invisível ao inventário, que é o verde-por-não-olhar.
+        FECHADO EM 06/08/2026 PELA CP-004. O `_DEP_PYPROJECT` da CP-039 enxerga referência direta
+        PEP 508, e o achado caiu SOZINHO com a sobreposição da carcaça — sem uma linha de metadado
+        mudada aqui. É a prova mais limpa que esta série produziu de que o conserto estava no lugar
+        certo: o derivado não teve nada a fazer além de consumir.
       disposition: change_proposal
       ref: harness/change-proposals/CP-003-virar-derivado-do-molde.yaml
       consumed_by:

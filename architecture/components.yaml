@@ -941,4 +941,46 @@ components:
 # Vazia por enquanto: os 68 arquivos não-Python de `app/` (static/, css/, js/, assets/, config/)
 # são a sub-fatia 2b, e ficam como ÓRFÃOS DECLARADOS no contador até lá — órfão contado é dívida
 # visível; isenção prematura seria dívida escondida.
-exemptions: []
+# ISENÇÕES DE APOIO DE TESTE — declaráveis desde a v1.1.0 do molde (CP-004).
+#
+# Elas foram TENTADAS na fatia-2 e recusadas pela própria trava: `exemptions` só era
+# consultada por `check_orphan_code`, então declarar um arquivo de apoio de TESTE produzia
+# achado de isenção morta E zero redução no contador de teste órfão. Líquido +10, e os dez
+# ficaram contados como dívida visível (CONF-007) até o instrumento existir.
+# A CP-039 do molde fez `check_orphan_tests` consultar a mesma lista. Isto é a dívida
+# fechando pelo caminho previsto: o derivado achou, o molde corrigiu, a release trouxe.
+#
+# Nenhum deles exercita componente algum — são fixture, stub, gabarito e shim. Vinculá-los
+# a um CMP-* para calar o fiscal seria inventar que testam algo.
+exemptions:
+  - path: workspace/target/tests/conftest.py
+    justification: >
+      Apoio de teste: cria o app, poe app/ no sys.path e fixa ENABLE_ACTIONS=1 para a suite do alvo. Nao exercita componente algum.
+  - path: workspace/target/tests/requirements-test.txt
+    justification: >
+      Declaracao das dependencias da suite do alvo. E entrada dos testes, nao teste.
+  - path: workspace/target/tests/fixtures/dom_min.mjs
+    justification: >
+      Stub minimo de DOM para os testes de logica de tela rodarem no node. E ambiente de execucao, nao asserto.
+  - path: workspace/target/tests/fixtures/dom_stub.mjs
+    justification: >
+      Stub de DOM mais completo; mesmo papel do dom_min, ambiente para o modulo ES importar.
+  - path: workspace/target/tests/fixtures/nginx-inverted.conf
+    justification: >
+      Entrada sintetica do parser de ingress com a ordem dos blocos invertida. E o dado do teste.
+  - path: workspace/target/tests/fixtures/nginx-synthetic.conf
+    justification: >
+      Entrada sintetica do parser de ingress, caso base. E o dado do teste, nao o teste.
+  - path: workspace/target/tests/fixtures/nginx-vps.conf
+    justification: >
+      Copia do nginx.conf real da VPS, usada como entrada do parser de ingress. E o dado do teste.
+  - path: workspace/target/tests/fixtures/nginx-vps.snapshot.json
+    justification: >
+      Saida esperada do parser sobre o nginx-vps.conf. E o gabarito da comparacao, nao o teste.
+  - path: workspace/target/tests/fixtures/stub_deploy/curl
+    justification: >
+      Shim de curl no PATH para o teste de deploy nao alcancar a rede. E ambiente de execucao.
+  - path: workspace/target/tests/fixtures/stub_deploy/docker
+    justification: >
+      Shim de docker no PATH para o teste de deploy nao alcancar o daemon. E ambiente de execucao.
+
