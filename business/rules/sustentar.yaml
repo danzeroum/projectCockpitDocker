@@ -1,0 +1,83 @@
+# Invariantes de CAP-SUSTENTAR. As três cobrem o que a aplicação garante sobre DADO e RESPOSTA —
+# nenhuma delas tem tela, e é por isso que são regras e não requisitos: um requisito de usuário
+# para "persistir dados" seria o nome do componente com um verbo na frente.
+# Schema: ../../harness/schemas/business-rules.schema.json
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+capability: CAP-SUSTENTAR
+
+rules:
+  - id: RULE-SUSTENTAR-001
+    name: "O histórico sobrevive ao restart, e a migração não perde linha"
+    status: verified
+    statement: >
+      A série de capacidade, o histórico de container, os eventos e a trilha de auditoria vivem em
+      SQLite com migração versionada. Subir uma versão nova migra o schema sem descartar dado
+      existente, e o cockpit NÃO faz backup automático do banco do host.
+    rationale: >
+      Duas coisas opostas, e as duas importam. Perder a série no restart tornaria a tela de
+      Capacidade uma tela de instante — e instante é exatamente o que ela existe para não ser.
+      Já um backup automático seria o cockpit escrevendo onde ele foi contratado para observar:
+      `no_backup` é REGRA DE ACHADO no motor (o cockpit avisa que o host não tem backup), não um
+      recurso que ele resolve sozinho. A fronteira entre observar e agir é essa.
+    verified_by:
+      - workspace/target/tests/test_db.py
+      - workspace/target/tests/test_migration.py
+      - workspace/target/tests/test_no_backup.py
+      - workspace/target/tests/test_container_history.py
+      - workspace/target/tests/test_events_v11.py
+
+  - id: RULE-SUSTENTAR-002
+    name: "A política de resposta é declarada, não improvisada por rota"
+    status: verified
+    statement: >
+      Cabeçalhos de segurança, cache HTTP e compressão são aplicados por middleware declarado
+      (`app/cabecalhos_seguranca.py`, `app/cache_http.py`, `app/compressao.py`), uma vez, para toda
+      resposta — nunca decididos rota a rota.
+    rationale: >
+      Política por rota é política que a próxima rota esquece. O modo de falha não é uma resposta
+      errada: é uma resposta certa em 21 rotas e ausente na vigésima segunda, que é a que ninguém
+      testa. Declarar no middleware faz a rota nova nascer coberta.
+    verified_by:
+      - workspace/target/tests/test_cache.py
+      - workspace/target/tests/test_cache_http.py
+      - workspace/target/tests/test_cabecalhos_seguranca.py
+      - workspace/target/tests/test_sinais_de_maturidade.py
+      - workspace/target/tests/test_capacidade_cards.py
+      - workspace/target/tests/test_security.py
+
+  - id: RULE-SUSTENTAR-003
+    name: "Segredo não chega à resposta nem ao log"
+    status: verified
+    statement: >
+      `app/masking.py` mascara token, senha e chave em toda saída da API e em toda linha de log,
+      antes da serialização.
+    rationale: >
+      O cockpit lê `inspect` de container e log de aplicação de terceiro — dois lugares onde
+      segredo aparece sem que ninguém o tenha colocado ali de propósito. Mascarar na ESCRITA é a
+      única posição que funciona: mascarar na leitura deixaria o valor no disco, e é a proporção
+      certa segundo a ordem "não coletar > mascarar na escrita > reter pouco > criptografar".
+      Ver RISCO-001 do parecer de proporcionalidade: a exposição incidental em log é aberta e
+      datada, e esta regra é o que a limita hoje.
+    verified_by:
+      - workspace/target/tests/test_api.py
+
+  - id: RULE-SUSTENTAR-004
+    name: "O que vai para o servidor é declarado, e o exemplo nunca carrega credencial real"
+    status: verified
+    statement: >
+      As dependências de runtime da aplicação têm pin exato no `requirements.txt` da imagem, e os
+      arquivos de exemplo de configuração (`config/servicos.example.json`, os `.env.example` de
+      deploy) contêm apenas placeholders — nenhuma senha, host ou caminho de produção.
+    rationale: >
+      As duas metades falham do mesmo jeito: em silêncio, e no servidor de outra pessoa. Faixa de
+      versão faz a imagem reconstruída em outra data conter software diferente do auditado, e o
+      laudo passa a descrever algo que não roda mais. Exemplo com credencial de verdade é pior:
+      ele é COPIADO por definição, então o segredo se multiplica por cada instalação nova, e
+      normalmente com a senha mais fraca — porque "é só o exemplo".
+    verified_by:
+      - workspace/target/tests/test_deploy_credencial.py
+      - workspace/target/tests/test_config_ingress_path.py

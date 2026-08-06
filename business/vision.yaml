@@ -30,3 +30,36 @@ product:
     - id: MET-COMPARAVEL
       description: "Laudos com fingerprint de régua idêntica entre dois runs da mesma versão."
       target: "100% — divergência é 'não comparável', nunca média silenciosa"
+
+    # ── EMENDA (fatia-5 da CP-003, 2026-08-06): as quatro métricas do ALVO ───────────────────
+    #
+    # As três acima medem a ADOÇÃO — se a régua está sendo consumida direito. Continuam válidas.
+    # O que faltava: nenhuma delas mede o COCKPIT. Ao autorar os requisitos reais do alvo, cada um
+    # precisava citar a métrica que move, e não havia nenhuma que um requisito de operador movesse:
+    # "o operador vê o certificado expirando antes de ele expirar" não move `MET-COMPARAVEL`.
+    #
+    # A emenda vai na VISÃO e não nos requisitos, e a direção é deliberada. Inventar a métrica que
+    # o requisito já move é escrever o alvo no lugar da flecha; o caminho honesto é a visão admitir
+    # que passou a governar outro sistema. As quatro saíram da leitura das 10 telas e das 22 rotas.
+    - id: MET-ATENCAO
+      description: >
+        Problemas do host que chegam ao operador como ACHADO NOMEADO — com regra, severidade e o
+        que fazer — em vez de como número num gráfico que alguém precisa interpretar. Medida pela
+        cobertura do motor de regras sobre as classes de falha observáveis no daemon e no nginx.
+      target: "toda classe de falha observável tem regra nomeada; 'o gráfico subiu' nunca é o achado"
+    - id: MET-ACAO-AUDITADA
+      description: >
+        Mutações que atravessam a barreira declarada — destravamento com motivo, e linha de
+        auditoria gravada inclusive nos caminhos de ERRO, não só no sucesso.
+      target: "100%. Ação sem trilha é ação que ninguém consegue reconstruir depois"
+    - id: MET-LEITURA-ESTAVEL
+      description: >
+        Leituras periódicas que NÃO reconstroem a árvore da tela. O cockpit relê a cada 30s, e uma
+        releitura que redesenha tudo devolve o scroll ao topo e troca o botão sob o ponteiro entre
+        o mousedown e o mouseup.
+      target: "0 reconstruções por leitura sem mudança de dado (doc 13 do alvo)"
+    - id: MET-SUPERFICIE
+      description: >
+        Superfície de escrita exposta quando `ENABLE_ACTIONS` está desligado — medida por rota
+        REGISTRADA, não por botão escondido no DOM.
+      target: "0 rotas de mutação registradas. 404, não 403: o que não existe não se tenta"

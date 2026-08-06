@@ -17,6 +17,17 @@ ui_surfaces:
     # alvo, e a capacidade do alvo que as possui é CAP-NARRAR — a mesma dona dos dez CMP-TELA-*.
     capability: CAP-NARRAR
     status: proposed
+    # Os requisitos que esta superfície entrega, autorados na fatia-5. `alignment_report::R3`
+    # acusava superfície sem `satisfies` — "ou o requisito sumiu, ou a tela não deveria existir",
+    # e aqui era a primeira: os requisitos do alvo não existiam ainda.
+    # Só requisitos de CAP-NARRAR, que é a capacidade desta superfície — o fiscal recusa o
+    # contrário, e com razão: uma tela que "satisfaz" requisito de outra capacidade dissolveria a
+    # fronteira que as capacidades existem para marcar. REQ-001 (ver container sem alterá-lo) é de
+    # CAP-OBSERVAR e continua sendo entregue por CMP-CONTAINERS; esta superfície o RENDERIZA, que
+    # é coisa diferente de satisfazê-lo.
+    satisfies:
+      - REQ-020
+      - REQ-026
     routes:
       - /
     primary_user_goal: "Ver o estado dos containers do servidor sem poder alterá-lo."
@@ -29,6 +40,8 @@ ui_surfaces:
   - id: UI-COCKPIT-EXECUTIVO
     capability: CAP-NARRAR
     status: proposed
+    satisfies:
+      - REQ-017
     routes:
       - /
       - /api/executive

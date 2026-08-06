@@ -310,6 +310,40 @@
 # desde a primeira linha. O marco de `exit 0` fica por declarar, e a data em que ele chegar entra
 # aqui, embaixo desta linha, com a medição que o comprovou.
 #
+# ── A LINHA RESERVADA, PREENCHIDA EM 06/08/2026 — E O MARCO NÃO CHEGOU ────────────────────────
+#
+# A fatia-5 fez o que esta linha esperava: autorou o que faltava. `ci/alignment_report.py` saiu de
+# 40 divergências para 0, por 27 requisitos e 9 regras de negócio LIDOS das 10 telas e das 22
+# rotas do alvo — zero isenções, zero requisitos inventados. A frase da CONF-011 ("declara o que o
+# alvo É sem declarar o que ele deve FAZER") deixou de ser verdade.
+#
+#     medição: workspace/target/ materializado em d6ae70ea, os 9 fiscais de ci/validate_all.py,
+#              achados severity:info não contam · catraca 12 = baseline, nenhuma categoria nova
+#
+# E `validate_all` continua saindo 1. Dois bloqueios, de naturezas diferentes, e a diferença é o
+# que esta linha precisa registrar:
+#
+#   (1) 11 achados de metadado — os 10 `teste órfão` (CONF-007) e 1 `meta:dependência` (CONF-008).
+#       A CP-039 do molde JÁ OS CORRIGIU: `check_orphan_tests` passou a consultar `exemptions`, e
+#       o inventário passou a enxergar referência direta PEP 508. O conserto existe e não chegou:
+#       `target.lock:mold_release` ancora a release v1.0.0 (commit 9b8071c), e a CP-039 está na
+#       `main` do molde sem release que a carregue. Consumir exige release nova MAIS atualização
+#       de carcaça — a operação de risco alto da CP-002.
+#
+#   (2) 1 achado de LGPD, e este NÃO se fecha com metadado nenhum. `ci/audit_lgpd.py:490` reprova
+#       qualquer issue P0/P1 aberta, e RISCO-001 é P1 aberto: `GET /api/containers/{id}/logs`
+#       devolve a saída bruta de qualquer container do host, com dado pessoal que chega ali sem
+#       ninguém ter coletado. Fechá-lo é reduzir janela, autorização ou retenção NO ALVO — que
+#       este repositório lê e não escreve.
+#
+# O primeiro é dívida com caminho conhecido. O SEGUNDO É O PRODUTO, e é por isso que o marco fica
+# em branco em vez de ser declarado: um `exit 0` alcançado fechando RISCO-001 sem reduzir nada
+# seria o painel verde sobre o servidor que não está — exatamente a coisa que esta série inteira
+# existiu para tornar cara. A régua aguentou até o fim, e aguentou também aqui.
+#
+# O marco continua reservado. Quem o preencher declara junto: a release do molde consumida, e o
+# que foi feito com RISCO-001.
+#
 # ESTADO TERMINAL FORMAL: não existe um que o schema permita declarar, e isto é registro, não
 # omissão. Esta proposta é `schema_version: "1.0"`, e `check_cp_lifecycle` a ignora por
 # não-retroatividade — reescrevê-la como 1.1 apagaria o registro do que foi proposto. E mesmo

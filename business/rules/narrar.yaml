@@ -1,0 +1,40 @@
+# Invariante de CAP-NARRAR. Uma só, e ela é a que o alvo mais repete: o cabeçalho das dez telas
+# cita "doc 13". Está aqui como REGRA e não só como REQ-020 porque ela vale para o kernel e para
+# a infraestrutura de UI, que não têm comportamento de usuário próprio para descrever.
+# Schema: ../../harness/schemas/business-rules.schema.json
+schema_version: "1.0"
+metadata_version: "1.0"
+source_of_truth: true
+generated_from: null
+
+capability: CAP-NARRAR
+
+rules:
+  - id: RULE-NARRAR-001
+    name: "Nenhuma reconstrução de árvore por leitura"
+    status: verified
+    statement: >
+      Leitura periódica que não muda o dado não redesenha nada; leitura que muda o dado altera
+      apenas a linha, o rótulo, a classe ou a medida que mudou. O desenho é chaveado por
+      identidade (nome do projeto, id do achado, host do ingress), nunca por posição.
+    rationale: >
+      O cockpit relê a cada 30s. Uma releitura que reconstrói a árvore tem três consequências, e
+      nenhuma é estética: o scroll volta ao topo enquanto se lê a quinta linha; a série de
+      capacidade "pula" de estado em vez de crescer, o que destrói a leitura de TENDÊNCIA; e o
+      botão troca sob o ponteiro entre o `mousedown` e o `mouseup`, o que na tela de Projetos
+      significa reabilitar um botão de parar stack que o próprio código havia desabilitado
+      enquanto a ação estava em voo.
+      O relógio único em `kernel/relogio.js` é a outra metade: telas em fase, e pausa com a aba
+      oculta — um painel esquecido aberto não interroga o daemon a noite inteira.
+    verified_by:
+      - workspace/target/tests/test_render_vivo.py
+      - workspace/target/tests/test_frontend_modulos.py
+      - workspace/target/tests/test_kernel_cockpit.py
+      - workspace/target/tests/test_telas_renderizam.py
+      - workspace/target/tests/test_notificacoes_ui.py
+      - workspace/target/tests/test_contraste_severidade.py
+      - workspace/target/tests/test_acessibilidade.py
+      - workspace/target/tests/fixtures/exercita_kernel.mjs
+      - workspace/target/tests/fixtures/exercita_render_vivo.mjs
+      - workspace/target/tests/fixtures/exercita_notificacoes.mjs
+      - workspace/target/tests/fixtures/exercita_updates.mjs

@@ -63,7 +63,9 @@ components:
     - workspace/target/tests/test_container_history.py
     - workspace/target/tests/test_logs_texto.py
     - workspace/target/tests/test_telas_renderizam.py
-    implements: []
+    implements:
+      - REQ-001
+      - REQ-002
     owner: danzeroum
 
   # Imagens, `/info` do daemon e o agrupamento por projeto compose. É a visão do host que não é
@@ -86,7 +88,8 @@ components:
     tested_by:
     - workspace/target/tests/test_projects_security.py
     - workspace/target/tests/test_session.py
-    implements: []
+    implements:
+      - REQ-003
     owner: danzeroum
 
   # O motor que aplica as regras ao estado observado e o expõe por `/api/findings`, mais o score de
@@ -113,7 +116,9 @@ components:
     - workspace/target/tests/test_regras_container_parado.py
     - workspace/target/tests/test_guarda_schema_literal.py
     - workspace/target/tests/test_telas_topologia_plantao.py
-    implements: []
+    implements:
+      - REQ-004
+      - REQ-014
     owner: danzeroum
 
   # As dezoito regras, uma por arquivo. Onze são sobre o INGRESS (TLS fraco em protocolo e cifra,
@@ -150,7 +155,8 @@ components:
     - workspace/target/tests/test_findings.py
     - workspace/target/tests/test_no_backup.py
     - workspace/target/tests/test_regras_container_parado.py
-    implements: []
+    implements:
+      - REQ-005
     owner: danzeroum
 
   # B8: compara o que o compose DECLARA com o que está EM EXECUÇÃO. Lê os compose files pelo rótulo
@@ -174,7 +180,8 @@ components:
     - workspace/target/tests/test_render_vivo.py
     - workspace/target/tests/test_kernel_cockpit.py
     - workspace/target/tests/test_guarda_docs_registro.py
-    implements: []
+    implements:
+      - REQ-007
     owner: danzeroum
 
   # Validade de certificado lida do X.509 (`notAfter`), nunca parseada da saída do certbot — é a
@@ -191,7 +198,8 @@ components:
     exposes: []
     tested_by:
     - workspace/target/tests/test_certs_sprint5.py
-    implements: []
+    implements:
+      - REQ-006
     owner: danzeroum
 
   # B6: pergunta ao Docker Hub se a imagem em execução está desatualizada. É a única capacidade que
@@ -211,7 +219,8 @@ components:
     tested_by:
     - workspace/target/tests/test_updates_v14.py
     - workspace/target/tests/test_updates_ui.py
-    implements: []
+    implements:
+      - REQ-008
     owner: danzeroum
 
   # Lê a configuração nginx do host montada em `/etc/nginx-ingress:ro` e a transforma em rotas
@@ -231,7 +240,8 @@ components:
     - workspace/target/tests/test_rotas_rail.py
     - workspace/target/tests/test_config_ingress_path.py
     - workspace/target/tests/fixtures/exercita_rotas.mjs
-    implements: []
+    implements:
+      - REQ-009
     owner: danzeroum
 
   # B10: a barreira de escrita. Com a flag desligada as rotas são DESREGISTRADAS — 404, não 403 — e
@@ -273,7 +283,8 @@ components:
     - workspace/target/tests/test_session.py
     - workspace/target/tests/test_hardening_b11.py
     - workspace/target/tests/test_deploy_credencial.py
-    implements: []
+    implements:
+      - REQ-012
     owner: danzeroum
 
   # As mutações que existem: prune de recursos órfãos (B10), tarefas assíncronas, e o registro de
@@ -301,7 +312,10 @@ components:
     - workspace/target/tests/test_ack_audit.py
     - workspace/target/tests/test_tasks.py
     - workspace/target/tests/test_ciclo_acao_sintetico.py
-    implements: []
+    implements:
+      - REQ-010
+      - REQ-011
+      - REQ-013
     owner: danzeroum
 
   # Fluxo de eventos do daemon por cliente, e o FILTRO VIVE NO SERVIDOR: o cliente pede
@@ -324,7 +338,8 @@ components:
     - workspace/target/tests/test_events_rota.py
     - workspace/target/tests/test_events_v11.py
     - workspace/target/tests/test_cabecalhos_seguranca.py
-    implements: []
+    implements:
+      - REQ-015
     owner: danzeroum
 
   # B5: ingestão incremental de logs para um índice FTS5, que é o que faz `/api/logs/search`
@@ -342,7 +357,8 @@ components:
     tested_by:
     - workspace/target/tests/test_logs_fts_v13.py
     - workspace/target/tests/test_notify_v15.py
-    implements: []
+    implements:
+      - REQ-027
     owner: danzeroum
 
   # A série temporal: `sampler` coleta, `telemetry` mantém histograma em memória, e as duas rotas
@@ -368,7 +384,9 @@ components:
     - workspace/target/tests/test_metrics_prom.py
     - workspace/target/tests/test_frescor_amostra.py
     - workspace/target/tests/test_capacidade_serie_curta.py
-    implements: []
+    implements:
+      - REQ-016
+      - REQ-025
     owner: danzeroum
 
   # O bloco `summary` que a UI lê (espelho de `ENABLE_ACTIONS`, com `actions.habilitadas` como fonte
@@ -401,7 +419,8 @@ components:
     - workspace/target/tests/test_offline.py
     - workspace/target/tests/test_kernel_cockpit.py
     - workspace/target/tests/test_backend.py
-    implements: []
+    implements:
+      - REQ-017
     owner: danzeroum
 
   # B7: o motor que decide o que vira notificação e a rota que a entrega.
@@ -420,7 +439,8 @@ components:
     exposes: []
     tested_by:
     - workspace/target/tests/test_notify_v15.py
-    implements: []
+    implements:
+      - REQ-018
     owner: danzeroum
 
   # A aplicação FastAPI: lifespan, montagem dos routers e o serviço dos estáticos.
@@ -551,7 +571,9 @@ components:
     exposes: []
     tested_by:
     - workspace/target/tests/test_frontend_modulos.py
-    implements: []
+    implements:
+      - REQ-018
+      - REQ-020
     owner: danzeroum
 
   # O registro do que foi feito e por quem.
@@ -571,7 +593,8 @@ components:
     exposes: []
     tested_by:
     - workspace/target/tests/test_frontend_modulos.py
-    implements: []
+    implements:
+      - REQ-020
     owner: danzeroum
 
   # O estado do próprio backend do cockpit.
@@ -591,7 +614,8 @@ components:
     exposes: []
     tested_by:
     - workspace/target/tests/test_frontend_modulos.py
-    implements: []
+    implements:
+      - REQ-024
     owner: danzeroum
 
   # Capacidade e séries curtas — CPU, memória, disco.
@@ -612,7 +636,8 @@ components:
     tested_by:
     - workspace/target/tests/test_frontend_modulos.py
     - workspace/target/tests/fixtures/renderiza_capacidade.mjs
-    implements: []
+    implements:
+      - REQ-016
     owner: danzeroum
 
   # A tela do gestor: o agregado sem o detalhe.
@@ -632,7 +657,8 @@ components:
     exposes: []
     tested_by:
     - workspace/target/tests/test_frontend_modulos.py
-    implements: []
+    implements:
+      - REQ-017
     owner: danzeroum
 
   # As rotas do nginx do host, lidas do disco.
@@ -652,7 +678,8 @@ components:
     exposes: []
     tested_by:
     - workspace/target/tests/test_frontend_modulos.py
-    implements: []
+    implements:
+      - REQ-020
     owner: danzeroum
 
   # O turno: o que está aberto e quem responde.
@@ -673,7 +700,8 @@ components:
     tested_by:
     - workspace/target/tests/test_frontend_modulos.py
     - workspace/target/tests/fixtures/exercita_telas.mjs
-    implements: []
+    implements:
+      - REQ-022
     owner: danzeroum
 
   # Os projetos compose agrupados.
@@ -696,7 +724,8 @@ components:
     exposes: []
     tested_by:
     - workspace/target/tests/test_frontend_modulos.py
-    implements: []
+    implements:
+      - REQ-020
     owner: danzeroum
 
   # As tarefas assíncronas e seu andamento.
@@ -716,7 +745,8 @@ components:
     exposes: []
     tested_by:
     - workspace/target/tests/test_frontend_modulos.py
-    implements: []
+    implements:
+      - REQ-020
     owner: danzeroum
 
   # O mapa de quem fala com quem.
@@ -738,7 +768,8 @@ components:
     - workspace/target/tests/test_frontend_modulos.py
     - workspace/target/tests/fixtures/exercita_telas.mjs
     - workspace/target/tests/fixtures/renderiza_telas.mjs
-    implements: []
+    implements:
+      - REQ-020
     owner: danzeroum
 
   # Os nove módulos que renderizam INLINE, sem arquivo de tela dedicado.
@@ -777,7 +808,9 @@ components:
     tested_by:
     - workspace/target/tests/test_frontend_modulos.py
     - workspace/target/tests/test_notificacoes_ui.py
-    implements: []
+    implements:
+      - REQ-020
+      - REQ-021
     owner: danzeroum
 
   # O núcleo da UI, e `registry.js` é o ponto que dá forma a todo o resto: ele é o ÚNICO
@@ -811,7 +844,9 @@ components:
     - workspace/target/tests/test_contraste_severidade.py
     - workspace/target/tests/fixtures/exercita_kernel.mjs
     - workspace/target/tests/fixtures/exercita_render_vivo.mjs
-    implements: []
+    implements:
+      - REQ-020
+      - REQ-021
     owner: danzeroum
 
   # O que os módulos usam e não é do núcleo: busca de dados, formatação, store, comandos e
@@ -839,7 +874,9 @@ components:
     - workspace/target/tests/test_notificacoes_ui.py
     - workspace/target/tests/fixtures/exercita_notificacoes.mjs
     - workspace/target/tests/fixtures/exercita_updates.mjs
-    implements: []
+    implements:
+      - REQ-018
+      - REQ-020
     owner: danzeroum
 
   # A casca que o navegador carrega antes de qualquer módulo: o HTML, o service worker que
@@ -874,7 +911,9 @@ components:
     tested_by:
     - workspace/target/tests/test_contraste_severidade.py
     - workspace/target/tests/test_acessibilidade.py
-    implements: []
+    implements:
+      - REQ-023
+      - REQ-026
     owner: danzeroum
 
   # Como a aplicação é construída e configurada: o Dockerfile, o pin exato das sete

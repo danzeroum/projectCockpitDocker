@@ -21,6 +21,8 @@ capabilities:
 # Sobram as cinco capacidades do ALVO — que é o que este repositório governa.
 - id: CAP-OBSERVAR
   name: Observar o estado do daemon Docker de um host
+  business_rules:
+  - business/rules/observar.yaml
   status: implemented
   owners:
     business_owner: danzeroum
@@ -45,6 +47,8 @@ capabilities:
   - workspace/target/tests/test_updates_v14.py
 - id: CAP-DIAGNOSTICAR
   name: Transformar o estado observado em achados acionáveis
+  business_rules:
+  - business/rules/diagnosticar.yaml
   status: implemented
   owners:
     business_owner: danzeroum
@@ -82,6 +86,8 @@ capabilities:
   - workspace/target/tests/test_updates_v14.py
 - id: CAP-AGIR
   name: Executar mutação operacional sob barreira e auditoria
+  business_rules:
+  - business/rules/agir.yaml
   status: implemented
   owners:
     business_owner: danzeroum
@@ -110,6 +116,8 @@ capabilities:
   - workspace/target/tests/test_unlock_v8.py
 - id: CAP-NARRAR
   name: 'Entregar o estado ao operador: fluxo, séries e notificação'
+  business_rules:
+  - business/rules/narrar.yaml
   status: implemented
   owners:
     business_owner: danzeroum
@@ -159,6 +167,8 @@ capabilities:
   - workspace/target/tests/test_summary.py
 - id: CAP-SUSTENTAR
   name: Servir a aplicação com política declarada de resposta e dados
+  business_rules:
+  - business/rules/sustentar.yaml
   status: implemented
   owners:
     business_owner: danzeroum
