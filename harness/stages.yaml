@@ -131,7 +131,7 @@ stages:
     enforced_by:
       - kind: workflow_step
         ref: .github/workflows/qa.yml
-        step: "Rodar testes de unidade (alvo do inventário é código real)"
+        step: "Inventário (Trabalho B — sem rede, sem autorização)"
       - kind: external_standard
         ref: "webqa inventario"
         standard: webqa-suite
@@ -147,11 +147,11 @@ stages:
     # para danzeroum/cockpit-harness, onde a unidade sob teste mora. Sobra o que testa ESTE
     # repositório: integração (o que os metadados afirmam sobre o alvo e sobre a bancada) e
     # governança (as mordidas dos fiscais).
-    artifacts: ["tests/integration", "tests/governance"]
+    artifacts: ["tests/integration", "tests/governance", "tests/conftest.py"]
     enforced_by:
       - kind: workflow_step
         ref: .github/workflows/qa.yml
-        step: "Rodar testes de unidade (alvo do inventário é código real)"
+        step: "Inventário (Trabalho B — sem rede, sem autorização)"
       - kind: workflow_step
         ref: .github/workflows/governance.yml
         step: "Testes dos fiscais"
@@ -169,7 +169,7 @@ stages:
         symbol: check_version_single_source
       - kind: workflow_step
         ref: .github/workflows/qa.yml
-        step: "Auditoria passiva (Trabalho A — só se escopo autorizar)"
+        step: "Auditoria passiva (Trabalho A — só com alvo e escopo autorizados)"
     privacy_lens:
       scan: true
       question: "O escopo autorizado e a evidência retida contêm dado pessoal do alvo?"

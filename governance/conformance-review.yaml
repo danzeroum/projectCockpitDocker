@@ -12,7 +12,7 @@ generated_from: null
 review:
   produced_by: agent
   agent: conformance
-  scope_fingerprint: "sha256:fc568f107f1e0f16e7c411f08b72b138c8c9c8f3f2411962352c4aaed3c3ee44"
+  scope_fingerprint: "sha256:4110bbf719560e24f14d4cb66a482129a9a5561364976e94e870c941775b8de3"
 
   findings:
     - id: CONF-001
@@ -131,6 +131,10 @@ review:
         recusando a declaração — e zero redução nos dez `teste órfão`. Líquido: +10.
         Não existe, na carcaça, instrumento para "arquivo de apoio de teste, declarado, que não é
         teste". Os dez ficam contados como dívida VISÍVEL, que é o segundo melhor estado.
+        DONO E DATA (fecho da CP-003, 06/08/2026): o conserto é do MOLDE, não daqui — vai na
+        CP-039 de danzeroum/project. Dono: danzeroum (technical_owner do molde). Revisão:
+        2026-11-03, a mesma data dos riscos abertos desta casa. Enquanto isso, os 10 continuam
+        contados no baseline da catraca: dívida com número, não com adjetivo.
       disposition: change_proposal
       ref: harness/change-proposals/CP-003-virar-derivado-do-molde.yaml
       consumed_by:
@@ -159,6 +163,10 @@ review:
         `version_source` apontando para onde o pin mora — o mesmo desenho de `standard_symbol`,
         que já resolve exatamente este problema para a régua externa e foi escrito como se a régua
         fosse a única dependência com essa propriedade.
+        DONO E DATA (fecho da CP-003, 06/08/2026): conserto do MOLDE, na CP-039 de
+        danzeroum/project. Dono: danzeroum. Revisão: 2026-11-03. Até lá o achado fica contado, e
+        a categoria `meta:dependência` segue no baseline — a alternativa (não inventariar) daria
+        zero achados com uma dependência git invisível ao inventário, que é o verde-por-não-olhar.
       disposition: change_proposal
       ref: harness/change-proposals/CP-003-virar-derivado-do-molde.yaml
       consumed_by:
@@ -178,6 +186,13 @@ review:
         Não é consertada aqui porque a correção é uma decisão sobre QUAL schema é o certo: o da
         carcaça, e então a harness muda o envelope; ou o pré-transplante, e então o molde precisa
         aceitar `findings`/`result`. Essa escolha vale para todo derivado, não só para este.
+        DONO E DATA (fecho da CP-003, 06/08/2026): dono é a RÉGUA — webqa-suite, security_owner.
+        É defeito medido do envelope de laudo que a suíte produz contra o schema que a carcaça
+        transplanta, e nenhum dos dois artefatos é deste repositório. Revisão: 2026-11-03, junto
+        com a próxima revisão do pin em requirements-qa.txt.
+        NÃO É ACHADO CONTADO: o exit 30 aparece como passo vermelho da qa.yml, não como item de
+        `validate_all`. Fica aqui porque resto que só existe em log de CI é resto que ninguém
+        revisa.
       disposition: change_proposal
       ref: harness/change-proposals/CP-003-virar-derivado-do-molde.yaml
       consumed_by:
@@ -208,6 +223,34 @@ review:
         Registrado como corrigido em vez de silenciosamente arrumado porque o padrão do erro
         importa mais que a correção — é a mesma classe da CONF-006, e a reincidência dentro do
         próprio vigia é o dado interessante.
+
+    - id: CONF-011
+      severity: low
+      summary: >
+        O FECHO DA CP-003, e o que ele NÃO alcançou. Medido em 06/08/2026 com `workspace/target/`
+        materializado em d6ae70ea e os 9 fiscais de `ci/validate_all.py`: 299 → 77 → 29 → 12.
+        Os 12 restantes não são resíduo: são três dívidas nomeadas, com dono e data, e nenhuma
+        delas tem conserto neste repositório —
+        10 `meta:teste órfão` (CONF-007, dono molde, 2026-11-03),
+        1 `meta:dependência` (CONF-008, dono molde, 2026-11-03),
+        1 `lgpd:lgpd_judgment` (RISCO-001 aberto, consumido por RISK-ALVO-001, 2026-11-03).
+        `validate_all` NÃO sai 0, e a razão é uma quarta coisa que também não é resíduo:
+        `ci/alignment_report.py` acusa 40 divergências de cobertura reversa — 36 componentes
+        `verified`/`implemented` que não implementam requisito algum, 2 superfícies de UI sem
+        requisito, e 2 capacidades `risk_level: high` que nenhum risco referencia. A causa é exata:
+        a fatia-2 autorou os COMPONENTES do cockpit e a fatia-4 aposentou os requisitos que
+        descreviam o plano de controle antigo, então o repositório hoje declara o que o alvo É sem
+        declarar o que ele deve FAZER. Fechar isso é autorar o backlog do cockpit — leitura do
+        produto, não conserto de ponteiro —, e inventá-lo para zerar contador seria requisito sem
+        leitura, que é a coisa que esta casa recusa desde a primeira linha.
+        Os 40 não entram no baseline da catraca (ela conta `validate_metadata` mais os laudos JSON
+        de `audit_governance`, `audit_lgpd` e `audit_ledger`), e passaram a ser visíveis em
+        `docs/alignment.md`, que este PR gerou pela primeira vez — era um dos dois `change_buffer`.
+      disposition: accepted
+      rationale: >
+        Registrado como achado em vez de nota de rodapé porque a diferença entre "12 restantes" e
+        "12 restantes mais 40 que outro fiscal vê" é exatamente o que some quando um número é
+        citado sozinho. O próximo trabalho deste repositório está nomeado aqui: o backlog do alvo.
 
   not_assessed:
     - >

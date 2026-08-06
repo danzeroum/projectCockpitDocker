@@ -268,17 +268,59 @@
 # resolvíveis, e o enunciado de cada uma está preservado na ADR-018. Isentar `deploy/` teria sido
 # mais barato e teria custado a evidência do artefato de maior consequência deste repositório.
 #
-# ESTADO TERMINAL: não há um que o schema permita declarar aqui, e isto é registro, não omissão.
-# Esta proposta é `schema_version: "1.0"` — `check_cp_lifecycle` a ignora por não-retroatividade,
-# porque reescrever uma 1.0 como 1.1 apagaria o registro do que foi proposto. E mesmo promovida, o
-# `status: executed` de uma proposta de risco alto exige `executed_in.merge_commit_sha` e
-# `approved_by.review_id`, que não existem dentro do PR que a executa — o schema diz isso por
-# escrito, e diz certo: uma proposta não pode declarar dentro do próprio PR o merge commit que
-# ainda não existe nem o review que ainda não aconteceu. O terminal honesto é esta emenda.
+# A fatia-4 foi integrada em 06/08/2026, PR #17, merge commit dc76a4322f60e8aae718a68948001ebf1288973f.
 #
-# `tests_required` abaixo ainda cita os dois arquivos de `tests/e2e/` que esta fatia removeu. Não
+# ─────────────────────────────────────────────────────────────────────────────────────────────
+# O FECHO (06/08/2026, PR do fecho). Esta seção é o terminal da CP-003, e conta a travessia
+# inteira porque quem a ler em 2027 não terá a conversa que a produziu.
+#
+# O QUE ESTA PROPOSTA FEZ. Ela mudou o SIGNIFICADO dos metadados deste repositório. Antes, eles
+# descreviam o próprio repositório: uma CLI de adoção com 4 capacidades, 5 componentes, 24 regras e
+# 9 requisitos. Depois, passaram a descrever o ALVO — o Docker Cockpit, materializado em
+# `workspace/target/` no SHA de `target.lock`. Cinco linhas de `ci/inventory_code.py` fazem a
+# virada; o resto foi reescrever tudo que apontava para o lugar antigo.
+#
+# A CONTAGEM, e cada número diz com o que foi medido:
+#
+#     299  fatia-1 (PR #12)   primeira medição COM o alvo materializado. As anteriores diziam 68
+#                             porque o alvo não estava no disco e as invariantes de órfão ficavam
+#                             caladas — não reprovavam, não avisavam, não apareciam.
+#      77  fatia-3 (PR #16)   depois dos metadados autorados do sistema real: 36 componentes do
+#                             cockpit, 5 capacidades, ameaças e riscos.
+#      29  fatia-4 (PR #17)   depois da divisão: o código próprio virou danzeroum/cockpit-harness,
+#                             pinado por SHA, e as declarações que o descreviam saíram junto.
+#      12  fecho   (este PR)  depois de fechar tudo que tinha conserto local.
+#
+#     Todas as quatro com `workspace/target/` materializado em d6ae70ea e os 9 fiscais de
+#     `ci/validate_all.py`; achados `severity: info` não contam.
+#
+# O QUE FICA ABERTO, com dono e data. Nenhum dos três tem conserto neste repositório:
+#
+#     10  meta:teste órfão .... CONF-007 · dono: molde (CP-039) ......... revisão 2026-11-03
+#      1  meta:dependência .... CONF-008 · dono: molde (CP-039) ......... revisão 2026-11-03
+#      1  lgpd:lgpd_judgment .. RISCO-001, via RISK-ALVO-001 ............ revisão 2026-11-03
+#      —  laudo exit 30 ....... CONF-009 · dono: régua (webqa-suite) .... revisão 2026-11-03
+#     40  cobertura reversa ... CONF-011 · é o PRÓXIMO TRABALHO, não dívida do molde
+#
+# `validate_all` NÃO sai 0, e a razão está na última linha. O repositório declara hoje o que o alvo
+# É — 36 componentes, 5 capacidades — sem declarar o que ele deve FAZER: `business/requirements/`
+# está vazio desde que os 9 requisitos do plano de controle antigo aposentaram. `alignment_report`
+# acusa isso corretamente, 40 vezes. Autorar o backlog do cockpit é leitura do produto, e
+# inventá-lo para zerar contador seria requisito sem leitura — que é a coisa que esta casa recusa
+# desde a primeira linha. O marco de `exit 0` fica por declarar, e a data em que ele chegar entra
+# aqui, embaixo desta linha, com a medição que o comprovou.
+#
+# ESTADO TERMINAL FORMAL: não existe um que o schema permita declarar, e isto é registro, não
+# omissão. Esta proposta é `schema_version: "1.0"`, e `check_cp_lifecycle` a ignora por
+# não-retroatividade — reescrevê-la como 1.1 apagaria o registro do que foi proposto. E mesmo
+# promovida, `status: executed` com risco alto exige `executed_in.merge_commit_sha` e
+# `approved_by.review_id`. O merge commit da fatia-4 existe e está citado acima; o `review_id` não
+# existe, porque não houve review humano — e escrever um seria a única fraude que esta série
+# inteira existiu para tornar cara. A regra aguentou até o fim: o terminal honesto é este texto.
+#
+# `tests_required` abaixo ainda cita os dois arquivos de `tests/e2e/` que a fatia-4 removeu. Não
 # são corrigidos, pela isenção do CP-018: uma proposta fala do dia em que foi escrita, e naquele
-# dia eram os testes que a sustentavam. Hoje eles rodam no CI do repositório extraído.
+# dia eram os testes que a sustentavam. Hoje rodam no CI do repositório extraído.
 # ─────────────────────────────────────────────────────────────────────────────────────────────
 #
 # Schema: harness/schemas/change-proposal.schema.json · Fiscal: ci/validate_metadata.py
