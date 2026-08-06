@@ -63,6 +63,10 @@ components:
     - workspace/target/tests/test_container_history.py
     - workspace/target/tests/test_logs_texto.py
     - workspace/target/tests/test_telas_renderizam.py
+    # Chegou com o alvo em 1da4d51 (CP-005): e a prova do teto declarado da janela de log, nas
+    # DUAS rotas. Reivindicado porque teste que ninguem declara e teste que ninguem sabe que
+    # existe — e cuja remocao nao doi.
+    - workspace/target/tests/test_log_tail_max.py
     implements:
       - REQ-001
       - REQ-002

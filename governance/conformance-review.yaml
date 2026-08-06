@@ -12,7 +12,7 @@ generated_from: null
 review:
   produced_by: agent
   agent: conformance
-  scope_fingerprint: "sha256:4c1f14200e95cca7d22b8991f5fc5e9255beb1f2524c6d182af878bf78df34bc"
+  scope_fingerprint: "sha256:e20e7585756796b8de919d955d13da3516fd9783e1369babde310af66be5ab13"
 
   findings:
     - id: CONF-001
@@ -307,6 +307,64 @@ review:
         ref: CP-003
       rationale: >
         DONO: molde (danzeroum/project), junto de CONF-007 e CONF-008. Revisão: 2026-11-03.
+
+    - id: CONF-014
+      severity: low
+      summary: >
+        `audit_conformance --sync-diff` É CEGO A METADADO AUTORADO À MÃO, e o descobri ao rodar o
+        primeiro `/sincronizar` real. Ele respondeu "nenhum metadado com proveniência aponta para
+        eles" sobre um diff que mexeu em `app/db.py` e `app/routers/containers.py`. A palavra que
+        carrega o peso é PROVENIÊNCIA: o fiscal cruza `derived_from.path`, e ZERO dos 36
+        componentes deste repositório tem `derived_from` — foram autorados na fatia-2 por leitura,
+        não propostos pelo cartographer, então têm `source_paths` e mais nada.
+        Cruzando pelo elo que existe aqui, a lista real tem dois itens: CMP-PERSISTENCIA (db.py) e
+        CMP-CONTAINERS (containers.py). O fiscal não mentiu; ele respondeu uma pergunta mais
+        estreita do que a que o comando parece fazer, e "nenhum" e "não sei olhar" saem iguais na
+        tela. Mesma família de CONF-013 e do fail-open: a trava conhece metade do próprio escopo.
+        O QUE FALTA, nomeado: `--sync-diff` cruzar também `source_paths`, `tested_by` e
+        `validated_by` quando `derived_from` estiver ausente — ou, no mínimo, DIZER quantos
+        metadados ele não pôde considerar por não terem proveniência.
+      disposition: accepted
+      rationale: >
+        DONO: molde, no lote da CP-040 junto de CONF-013. Não bloqueou a sincronização porque a
+        lista real foi obtida por medição direta e está declarada na CP-005.
+
+    - id: CONF-015
+      severity: medium
+      summary: >
+        CUSTO DO MASCARAMENTO POR LINHA — medido, e o resultado inverte a pergunta. A hipótese em
+        aberto era "mask por linha tem preço de CPU e risco de quebrar o consumo do stream". O
+        preço de CPU é DESPREZÍVEL e não é o obstáculo; o obstáculo é que a máquina não existe.
+        CPU (Xeon 2.80GHz, 4 vCPU, Python 3.11, corpus sintético determinístico): ~400 ns/linha,
+        ~170 MB/s, estável nas três densidades (0%/1%/10%) e nos três volumes (1k/100k/1M). A
+        janela de 500 linhas custa 0,2 ms. O atraso acrescentado à PRIMEIRA linha do stream — o
+        custo que o operador às 3h sente — é de 372 ns. Nada disso decide coisa alguma.
+        COBERTURA, que é o que decide: `mask_inspect` é ESTRUTURALMENTE inaplicável a texto livre —
+        recebe `dict` e procura `Config.Env/Cmd/Labels`. `mask_value` exige uma CHAVE, que uma
+        linha de log não tem. Sobra `_mask_uri_credential`, e ele pega 2 de 7 segredos realistas
+        (29%) e ZERO de 5 amostras de dado pessoal (0%) — que é exatamente o material do RISCO-001.
+        FALSO POSITIVO da máquina atual sobre URL legítima: 1 em 5 (20%), e o caso é eloquente —
+        ela mascara `https://github.com/danzeroum/docker@1da4d51` para `https://********@1da4d51`,
+        destruindo o SHA que este repositório inteiro usa como âncora.
+        FALSO POSITIVO de uma implementação NOVA de PII (regex de e-mail, CPF, telefone, CEP)
+        sobre ruído de log: 1 em 6 (17%) — `checksum 192.168.001-24` vira `********` por parecer
+        CPF.
+        BORDA DO STREAM, e ela é decisiva: um segredo partido entre dois frames VAZA. O demux
+        entrega texto que pode cortar no meio de um token, e a máscara por linha não tem como ver
+        o que ficou no frame anterior.
+        CONCLUSÃO: a alavanca custa uma IMPLEMENTAÇÃO NOVA, não uma aplicação — um detector de PII
+        em texto livre, com buffer de fronteira de frame, que hoje não existe em lugar nenhum do
+        alvo. Estimativa: módulo próprio (~150 linhas), suíte de corpus com falso-positivo medido,
+        e uma decisão de produto sobre o que fazer quando o detector erra — porque `********` no
+        meio de um stack trace destrói a informação que o operador abriu o log para ver.
+      disposition: accepted
+      rationale: >
+        Medição pedida pela mesa para uma decisão que continua sendo dela. NADA foi implementado no
+        alvo nesta rodada. As condições estão declaradas junto dos números porque número sem
+        condição não entra em decisão.
+        A bancada NÃO foi o compose de homologação: não há daemon Docker neste runner, e subir o
+        stack não mudaria o que se mede — o custo por linha é da função, não do ambiente. O que
+        NÃO foi medido por isso está dito: latência ponta a ponta com o daemon real no caminho.
 
   not_assessed:
     - >
