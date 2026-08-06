@@ -53,15 +53,22 @@ rules:
     name: "Segredo não chega à resposta nem ao log"
     status: verified
     statement: >
-      `app/masking.py` mascara token, senha e chave em toda saída da API e em toda linha de log,
-      antes da serialização.
+      `app/masking.py` mascara token, senha e chave na saída ESTRUTURADA da API — o inspect de
+      container (`mask_inspect`, chamado em `routers/containers.py:79`) e a comparação de ambiente
+      do drift —, onde existe CHAVE para decidir o que é segredo.
+      NÃO cobre o log bruto, e a fronteira é declarada em vez de presumida.
     rationale: >
       O cockpit lê `inspect` de container e log de aplicação de terceiro — dois lugares onde
       segredo aparece sem que ninguém o tenha colocado ali de propósito. Mascarar na ESCRITA é a
       única posição que funciona: mascarar na leitura deixaria o valor no disco, e é a proporção
       certa segundo a ordem "não coletar > mascarar na escrita > reter pouco > criptografar".
-      Ver RISCO-001 do parecer de proporcionalidade: a exposição incidental em log é aberta e
-      datada, e esta regra é o que a limita hoje.
+      CORREÇÃO DA FATIA-5, medida ao ler o endpoint para propor a obra do RISCO-001: eu havia
+      escrito "em toda saída da API e em toda linha de log". É falso, e generosamente falso — a
+      rota `/logs` devolve `text/plain` sem passar por lugar nenhum. E não é descuido do alvo: log
+      é stdout arbitrário de terceiro, sem chave para casar, e mascarar por adivinhação produz
+      falso negativo SILENCIOSO — que é pior que não mascarar e dizer que não mascara.
+      É por isso que RISCO-001 existe e continua aberto: a exposição incidental em log não se
+      fecha por mascaramento, só por redução do que se expõe. Ver REQ-028.
     verified_by:
       - workspace/target/tests/test_api.py
 

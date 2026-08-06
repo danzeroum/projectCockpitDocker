@@ -513,6 +513,61 @@ items:
     # Severidade só por cor exclui quem não distingue as cores exatamente no momento em que a
     # informação mais importa — é por isso que este é `high` e não `medium`.
 
+  # ══ OBRA PROPOSTA NO ALVO — canal de retorno ═════════════════════════════════════════════
+  - id: REQ-028
+    title: "Declarar o teto da janela de log em vez de embuti-lo, e reduzi-lo por padrão"
+    type: task
+    capability: CAP-OBSERVAR
+    status: proposed
+    priority: high
+    risk: RISK-ALVO-001
+    metrics:
+      - MET-SUPERFICIE
+    acceptance_criteria:
+      - "O teto de `tail` sai do corpo do handler e vira constante declarada, no mesmo padrão `_env_int(nome, default, piso)` que `db.py` já usa para as três retenções."
+      - "O default cai de 5000 para 500 — o mesmo valor que o parâmetro já tem como padrão, tornando o teto igual ao pedido comum em vez de dez vezes maior."
+      - "Quem precisa de mais o declara no ambiente, deliberadamente, e o piso impede `=0`."
+      - "Nenhuma capacidade é destruída: `tail=500` continua sendo o pedido da tela, e o índice FTS continua respondendo sobre 7 dias."
+    # ─────────────────────────────────────────────────────────────────────────────────────────
+    # A PROPOSTA MÍNIMA PARA RISCO-001, e ela é UMA LINHA — mesmo formato do `ENABLE_TERMINAL=0`
+    # que fechou a redução real do RISK-SOCKET-001. Medido em d6ae70ea, não suposto:
+    #
+    #   workspace/target/app/routers/containers.py, em `container_logs`:
+    #
+    #       async def container_logs(container_id: str, tail: int = 500):
+    #           tail = min(tail, 5000)          # <-- o 5000 é a linha
+    #
+    #   proposta:
+    #           tail = min(tail, LOG_TAIL_MAX)  # LOG_TAIL_MAX = _env_int("LOG_TAIL_MAX", 500, 1)
+    #
+    # POR QUE ESTA LINHA E NÃO OUTRA — as quatro alavancas do RISCO-001, medidas:
+    #
+    #   RETENÇÃO ..... JÁ RESOLVIDA, e o texto do risco não sabe disso. `db.py:1043` declara
+    #                  `RETENTION_LOGS_DAYS = _env_int("RETENTION_LOGS_DAYS", 7, 1)` e
+    #                  `purge_logs` apaga de `logs_fts` o que passa da janela. Sete dias, com piso
+    #                  que impede o `=0` de um .env mal editado. Não há obra a propor aqui.
+    #   JANELA ....... É ESTA. O parâmetro pede 500 por padrão e o teto aceita 5000: uma
+    #                  requisição pode puxar dez vezes o pedido comum de saída bruta de qualquer
+    #                  container. Baixar o teto ao próprio default reduz o pior caso por
+    #                  requisição em 10x sem mudar o caso comum em nada.
+    #   MASCARAMENTO . NÃO SE APLICA, e é o núcleo do risco. `mask_inspect` roda em
+    #                  `containers.py:79`, que é a rota `/json`; a rota `/logs` devolve
+    #                  `Response(content=text, media_type="text/plain")` sem passar por lugar
+    #                  nenhum. E não é descuido: log é stdout arbitrário de terceiro, sem chave
+    #                  para casar. Mascarar exigiria adivinhar, e adivinhar em texto livre produz
+    #                  falso negativo silencioso — pior que não mascarar e dizer que não mascara.
+    #   AUTORIZAÇÃO .. É DECISÃO DE PRODUTO, NÃO MINHA. A rota não exige destravamento, e isso é
+    #                  coerente com a invariante do cockpit inteiro ("leitura é livre, escrita é
+    #                  gateada"). Gatear a leitura de log seria a redução mais forte E a única que
+    #                  quebra um invariante do produto — quem opera perde o caminho mais curto
+    #                  para diagnosticar às 3h. Fica listada como opção com o custo dito, para o
+    #                  dono decidir; não vai como proposta.
+    #
+    # `status: proposed` e não `done`: é a única entrada deste backlog que descreve trabalho que
+    # NÃO existe. E o canal está fechado — `harness.yaml:target_feedback` nasce false —, então
+    # isto é registro no consumidor, não issue aberta no alvo.
+    # ─────────────────────────────────────────────────────────────────────────────────────────
+
   # ─────────────────────────────────────────────────────────────────────────────────────────
   # RECUSADOS POR MIM, e ficam listados porque a recusa é o critério em ação.
   #

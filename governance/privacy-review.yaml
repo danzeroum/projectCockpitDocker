@@ -44,6 +44,24 @@ review:
         pessoal chega aqui sem ter sido coletado por ninguém. É incidental por natureza e não por
         configuração, o que significa que nenhum ajuste do cockpit o elimina: só a redução do que
         se expõe (janela, autorização, retenção) muda o quadro.
+        AS TRÊS ALAVANCAS, MEDIDAS em d6ae70ea (2026-08-06) — o texto acima as tratava como três
+        pendências iguais, e não são:
+        RETENÇÃO já está resolvida e o risco não sabia: `db.py:1043` declara
+        `RETENTION_LOGS_DAYS = _env_int("RETENTION_LOGS_DAYS", 7, 1)` e `purge_logs` apaga de
+        `logs_fts` o que passa de sete dias, com piso que impede o `=0` de um .env mal editado.
+        JANELA é onde há obra, e ela é uma linha: `containers.py::container_logs` tem
+        `tail: int = 500` e teto `min(tail, 5000)` — o pior caso por requisição é dez vezes o
+        pedido comum. A proposta mínima está declarada em REQ-028.
+        AUTORIZAÇÃO é a redução mais forte e a única que quebra invariante do produto ("leitura é
+        livre, escrita é gateada"): fica listada com o custo dito, para decisão do dono, e NÃO vai
+        como proposta.
+        E há uma quarta que o texto não citava: MASCARAMENTO não se aplica a este caminho.
+        `mask_inspect` roda na rota `/json`; `/logs` devolve `text/plain` sem passar por lugar
+        nenhum — log é stdout arbitrário de terceiro, sem chave para casar, e mascarar por
+        adivinhação produz falso negativo silencioso. É exatamente por isso que este risco não se
+        fecha por mascaramento.
+        CONTINUA `open`, e continua sendo o que impede `validate_all` de sair 0 neste repositório
+        (`ci/audit_lgpd.py:490` reprova P0/P1 aberto). Fechá-lo exige obra no alvo.
       consumed_by:
         kind: risk
         ref: RISK-ALVO-001
