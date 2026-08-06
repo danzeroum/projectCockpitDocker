@@ -184,6 +184,31 @@ review:
         kind: change_proposal
         ref: CP-003
 
+    - id: CONF-010
+      severity: low
+      summary: >
+        FALHA LEGADA CORRIGIDA, e classificada porque corrigir sem classificar é o que esta casa
+        não faz. `test_catraca.py::test_o_baseline_ainda_bate_com_a_medicao` reprovava dentro do
+        `pytest -q` da qa.yml — que não materializa o alvo — com `CATEGORIA NOVA: meta:I6 (101),
+        meta:componente (133)` e `SUBIDA: meta:I4 6→51`. Nenhum desses números descrevia o
+        repositório: descreviam 36 componentes cujos `source_paths` apontam para um diretório
+        ausente naquele runner. Vinha desde o PR #12, que instituiu a catraca.
+        Não é afrouxamento: `catraca.yml` continua materializando o alvo e chamando o mesmo
+        arquivo, sem nenhuma mudança — o gate real segue mordendo com a mesma força. O que mudou é
+        que uma medição feita sem o objeto da medição deixou de ser reportada como veredito, o que
+        é o princípio (h) aplicado a si mesmo. E o pulo não pode virar universal: o caso irmão
+        `test_o_workflow_da_catraca_materializa_o_alvo_ANTES_de_medir` reprova se a
+        materialização ou a chamada saírem do workflow.
+        QUINTA OCORRÊNCIA da âncora-na-menção, e desta vez dentro do teste escrito para vigiar as
+        outras quatro: a primeira versão do caso irmão procurava a string `workspace/target` no
+        workflow, que não aparece lá — quem cria o diretório é `ci/bootstrap.py --only-workspace`.
+        Reancorado nos dois elos que são fato: o workflow chama a flag, e a flag existe no script.
+      disposition: accepted
+      rationale: >
+        Registrado como corrigido em vez de silenciosamente arrumado porque o padrão do erro
+        importa mais que a correção — é a mesma classe da CONF-006, e a reincidência dentro do
+        próprio vigia é o dado interessante.
+
   not_assessed:
     - >
       O COMPORTAMENTO DO ALVO. Este julgamento é leitura de código em `workspace/target/` no SHA de
