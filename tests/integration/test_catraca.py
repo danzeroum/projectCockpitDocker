@@ -124,10 +124,59 @@ def test_o_baseline_gravado_existe_e_descreve_este_repositorio():
 
 def test_o_baseline_ainda_bate_com_a_medicao():
     """O teste que faz a catraca ser catraca: se este falhar, ou o repositório mudou e o baseline
-    não foi regravado, ou o baseline foi regravado sem o repositório mudar."""
+    não foi regravado, ou o baseline foi regravado sem o repositório mudar.
+
+    O PULO NÃO É COMODIDADE, e foi medido: sem `workspace/target/` no disco, este caso reprovava
+    dentro do `pytest -q` da qa.yml — que não materializa o alvo — com `CATEGORIA NOVA: meta:I6
+    (101), meta:componente (133)` e `SUBIDA: meta:I4 6→51`. Nenhum desses números descreve o
+    repositório: descrevem 36 componentes cujos `source_paths` apontam para um diretório que não
+    existe naquele runner. O baseline vale sobre o repositório MAIS o alvo materializado, e
+    comparar contra ele sem o alvo não é medir mal — é medir outra coisa.
+
+    Reportar isso como regressão inverte o princípio (h) desta casa: indeterminação e fraude são
+    estados distintos e recebem reações distintas. E é a quarta vez nesta migração que um fiscal
+    sem o que medir produz um veredito com convicção — três vezes verde por não ter olhado, e
+    aqui vermelho pelo mesmo motivo.
+
+    Onde ele roda de verdade: `catraca.yml`, que materializa o alvo antes e chama este arquivo
+    diretamente. O caso abaixo é o que impede o pulo de virar universal.
+    """
+    if not (RAIZ / "workspace" / "target").is_dir():
+        pytest.skip("alvo não materializado neste job — a medição seria sobre outro repositório; "
+                    "a catraca de verdade roda em .github/workflows/catraca.yml, que o materializa")
     doc = json.loads((RAIZ / catraca.BASELINE).read_text(encoding="utf-8"))
     v = catraca.comparar(atual=catraca.medir(), baseline=doc["por_categoria"])
     assert v.segurou, "\n".join(v.motivos)
+
+
+def test_o_workflow_da_catraca_materializa_o_alvo_ANTES_de_medir():
+    """A trava do pulo acima. Ele é honesto só enquanto existe UM lugar onde a medição acontece
+    com o alvo no disco — e esse lugar é declarado, não presumido.
+
+    Se alguém remover a materialização de `catraca.yml`, o caso anterior passaria a pular em toda
+    parte e a catraca deixaria de morder, em silêncio e com o CI mais verde do que antes. Aqui a
+    remoção vira falha imediata.
+
+    A ÂNCORA É O COMANDO QUE MATERIALIZA, e a primeira versão deste caso procurava a string
+    `workspace/target` no workflow — que não aparece lá, porque quem cria o diretório é
+    `ci/bootstrap.py --only-workspace`. Quinta ocorrência da mesma classe nesta migração, agora
+    dentro do teste escrito para vigiar as outras quatro: ancorei na MENÇÃO do caminho em vez de
+    no FATO de a materialização acontecer. Os dois elos abaixo são fatos — o workflow chama a
+    flag, e a flag existe no script.
+    """
+    import yaml
+    doc = yaml.safe_load((RAIZ / ".github/workflows/catraca.yml").read_text(encoding="utf-8"))
+    passos = [p for j in doc["jobs"].values() for p in (j.get("steps") or [])]
+    corpo = "\n".join(str(p.get("run", "")) for p in passos)
+    assert "--only-workspace" in corpo, (
+        "catraca.yml não materializa mais o alvo — e sem ele a medição da catraca descreve um "
+        "repositório que não é este")
+    assert "--only-workspace" in (RAIZ / "ci/bootstrap.py").read_text(encoding="utf-8"), (
+        "ci/bootstrap.py não conhece mais --only-workspace: o workflow chama uma flag morta e a "
+        "materialização falha, ou pior, não falha")
+    assert "test_catraca.py" in corpo, (
+        "catraca.yml não roda mais este arquivo — o pulo do caso anterior passaria a valer em "
+        "toda parte, e ninguém mediria o baseline contra o repositório real")
 
 
 def test_o_baseline_esta_VERSIONADO_e_nao_so_no_disco():

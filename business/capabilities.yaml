@@ -3,85 +3,22 @@ metadata_version: '1.0'
 source_of_truth: true
 generated_from: null
 capabilities:
-- id: CAP-CONTRATO
-  name: Conformidade com o contrato de consumo
-  status: verified
-  owners:
-    business_owner: danzeroum
-    technical_owner: danzeroum
-  risk_level: high
-  source_paths:
-  - src/cockpit_harness/contrato.py
-  - src/cockpit_harness/codigos.py
-  test_paths:
-  - tests/unit/test_contrato.py
-  - tests/integration/test_repositorio.py
-  - tests/e2e/test_checklist_adocao.py
-  business_rules:
-  - business/rules/contrato.yaml
-  evidence:
-    tests:
-    - tests/unit/test_contrato.py
-    architecture:
-    - architecture/adr/ADR-003-versao-em-fonte-unica.md
-- id: CAP-MODOS
-  name: Roteamento de modo e higiene de ambiente
-  status: verified
-  owners:
-    business_owner: danzeroum
-    technical_owner: danzeroum
-  risk_level: critical
-  source_paths:
-  - src/cockpit_harness/plano.py
-  test_paths:
-  - tests/unit/test_plano.py
-  - tests/integration/test_workflows.py
-  - tests/e2e/test_cli_laudo.py
-  business_rules:
-  - business/rules/modos.yaml
-  evidence:
-    tests:
-    - tests/unit/test_plano.py
-    architecture:
-    - architecture/adr/ADR-001-webqa-como-padrao-externo.md
-- id: CAP-PROCEDENCIA
-  name: Procedência e comparabilidade do laudo
-  status: verified
-  owners:
-    business_owner: danzeroum
-    technical_owner: danzeroum
-  risk_level: high
-  source_paths:
-  - src/cockpit_harness/procedencia.py
-  - src/cockpit_harness/cli.py
-  - src/cockpit_harness/__main__.py
-  test_paths:
-  - tests/unit/test_procedencia.py
-  - tests/e2e/test_cli_laudo.py
-  business_rules:
-  - business/rules/procedencia.yaml
-  evidence:
-    tests:
-    - tests/unit/test_procedencia.py
-    quality_reports:
-    - docs/laudo-adocao.json
-- id: CAP-ALVO
-  name: Auditoria do Docker Cockpit publicado
-  status: planned
-  owners:
-    business_owner: danzeroum
-    technical_owner: danzeroum
-  risk_level: high
-  source_paths:
-  - src/cockpit_harness/escopo_regua.py
-  - src/cockpit_harness/veredito.py
-  test_paths:
-  - tests/integration/test_homologacao.py
-  - tests/integration/test_fase_c.py
-  - tests/unit/test_escopo_regua.py
-  - tests/unit/test_veredito.py
-  business_rules:
-  - business/rules/homologacao.yaml
+# APOSENTADAS NA FATIA-4 DA CP-003 — CAP-CONTRATO, CAP-MODOS, CAP-PROCEDENCIA e CAP-ALVO.
+#
+# As três primeiras têm DESTINO: descreviam `src/cockpit_harness/`, e o equivalente vive em
+# danzeroum/cockpit-harness, onde o código passou a morar. Não são história apagada — são
+# história que mudou de repositório junto com o que ela descrevia.
+#
+# CAP-ALVO ("Auditoria do Docker Cockpit publicado") é a única sem equivalente, e aposenta com
+# MOTIVO em vez de destino: ela nunca descreveu o cockpit. Descrevia o plano de controle que
+# auditaria o cockpit — o mesmo software que saiu. O sucessor da história dela é a CP-001, a
+# campanha de homologação do Trabalho A: a bancada de `deploy/` existe para servir aquela
+# campanha, e é isso que ADR-018 registra.
+#
+# As quatro regras que CAP-ALVO possuía (RULE-HOMOLOG-001..004) não sumiram: viraram as
+# invariantes de STAGE-DEPLOY em harness/stages.yaml, uma por fiscal declarado.
+#
+# Sobram as cinco capacidades do ALVO — que é o que este repositório governa.
 - id: CAP-OBSERVAR
   name: Observar o estado do daemon Docker de um host
   status: implemented

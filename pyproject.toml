@@ -2,18 +2,34 @@
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
+# ESTE REPOSITÓRIO DEIXOU DE SER UM PACOTE (CP-003 fatia-4). Até aqui, `name` era
+# "cockpit-harness" e `packages.find` apontava para `src/` — o consumidor e o software que ele
+# consome eram o mesmo artefato, e "a harness está correta" e "a adoção está correta" não tinham
+# como divergir. Não podiam divergir porque não eram duas afirmações.
+#
+# Agora são. A harness virou danzeroum/cockpit-harness, com CI próprio, e este repositório a
+# DECLARA por pin exato — a mesma regra do padrão externo, pela mesma razão: consumidor que
+# carrega uma cópia do que audita não consegue provar contra o quê mediu.
+#
+# O projeto continua instalável (`pip install -e .`) porque é assim que a CI resolve a
+# dependência pinada; ele apenas não empacota código próprio, e não tem código próprio a
+# empacotar.
 [project]
-name = "cockpit-harness"
-version = "0.1.0"
-description = "Harness de adoção do Docker Cockpit (danzeroum/docker) sob o padrão externo WebQA Suite."
+name = "projectcockpitdocker"
+version = "1.0.0"
+description = "Consumidor governado: adoção do Docker Cockpit (danzeroum/docker) sob o molde danzeroum/project e o padrão externo WebQA Suite."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
 dependencies = [
     "pyyaml>=6",
+    # PIN EXATO POR SHA, e o commit é o objeto — não a branch nem a tag. `@main` seria uma
+    # referência móvel: a mesma linha resolveria software diferente amanhã, e o laudo deixaria de
+    # dizer com o que foi medido. É a regra da régua aplicada à própria harness.
+    "cockpit-harness @ git+https://github.com/danzeroum/cockpit-harness@9522f0dbf4c308648189a999f095393e439067b2",
 ]
 
-# NOTA: o pacote NÃO depende de webqa-suite no core. A suíte é um concern de QA,
+# NOTA: o consumidor NÃO depende de webqa-suite no core. A suíte é um concern de QA,
 # declarada com pin exato apenas em requirements-qa.txt (fonte única da versão).
 [project.optional-dependencies]
 dev = [
@@ -22,11 +38,13 @@ dev = [
     "pyyaml>=6",
 ]
 
-[tool.setuptools.packages.find]
-where = ["src"]
+# Sem [tool.setuptools.packages.find]: não há pacote a descobrir. `src/` não existe mais.
+[tool.setuptools]
+packages = []
 
 [tool.pytest.ini_options]
-# Inventário (Trabalho B) = `pytest -q` sobre os quatro níveis. tests/qa/ NÃO é testpath:
-# lá moram declarações (config, campanha, escopo), não código de teste.
-testpaths = ["tests/unit", "tests/integration", "tests/e2e"]
-pythonpath = ["src"]
+# Inventário (Trabalho B) = `pytest -q`. Sobraram DOIS níveis: unidade e aceitação foram para
+# danzeroum/cockpit-harness com o código que exercitavam. tests/governance é rodado à parte pelo
+# governance.yml (são as mordidas dos fiscais, não o inventário), e tests/qa/ nunca foi testpath:
+# lá moram declarações — config, campanha, escopo —, não código de teste.
+testpaths = ["tests/integration"]

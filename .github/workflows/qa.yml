@@ -81,17 +81,26 @@ jobs:
         with:
           python-version: "3.11"
 
+      # A harness NÃO é mais deste repositório (CP-003 fatia-4): `pip install -e .` resolve o pin
+      # exato por SHA declarado em pyproject.toml, apontando para danzeroum/cockpit-harness.
       - name: Instalar a harness da adoção + ferramentas
         run: pip install -e ".[dev]"
 
-      # Trabalho B — INVENTÁRIO. Sem rede, sem autorização: roda os quatro níveis de teste do
-      # próprio repositório (unidade, integração, sistema, aceitação). É o passo mais barato e
-      # o mais seguro, por isso vem primeiro (invariante 3: inventário antes de auditoria).
+      # Trabalho B — INVENTÁRIO. Sem rede, sem autorização: roda os testes de integração do próprio
+      # repositório. Unidade e aceitação saíram na fatia-4 junto com o código que exercitavam, e
+      # rodam no CI do repositório extraído. É o passo mais barato e o mais seguro, por isso vem
+      # primeiro (invariante 3: inventário antes de auditoria) — e é ele que executa os quatro
+      # fiscais declarados por STAGE-DEPLOY.
       - name: Inventário (Trabalho B — sem rede, sem autorização)
         run: pytest -q
 
+      # `--raiz .` em TODA chamada, e não é estilo. Instalada, a harness resolve sua raiz padrão
+      # por `Path(__file__).parents[2]` — que em src-layout era o repositório e em site-packages é
+      # `lib/`. Medido antes de ajustar: sem a flag, as nove chamadas saem
+      # `CONFIG_INVALID: requirements-qa.txt ausente`. O consumidor passou a declarar a própria
+      # raiz, que é o que ele sabe e a dependência não.
       - name: Verificação do contrato de consumo
-        run: python -m cockpit_harness checar
+        run: python -m cockpit_harness --raiz . checar
 
       # Consumo do padrão externo. A versão sai da FONTE ÚNICA (requirements-qa.txt), lida pela
       # harness — o YAML nunca restata o número. A v1.0.0 não está no PyPI e não expõe CLI
@@ -102,7 +111,7 @@ jobs:
         id: regua
         run: |
           set -uo pipefail
-          VERSAO="$(python -m cockpit_harness versao)"
+          VERSAO="$(python -m cockpit_harness --raiz . versao)"
           echo "versao=$VERSAO" >> "$GITHUB_OUTPUT"
           pip install -r requirements-qa.txt || echo "::notice::webqa-suite ainda não resolve por PyPI — usando o clone na tag."
           if git clone --depth 1 --branch "v$VERSAO" https://github.com/danzeroum/qa-suite "$RUNNER_TEMP/qa-suite"; then
@@ -137,7 +146,7 @@ jobs:
       - name: Auditoria passiva (Trabalho A — só com alvo e escopo autorizados)
         run: |
           set -uo pipefail
-          if ! python -m cockpit_harness pendencias --exigir; then
+          if ! python -m cockpit_harness --raiz . pendencias --exigir; then
             echo "::warning::Auditoria passiva pulada — pendências acima (SCOPE_MISSING, código 12). Ver docs/ADOCAO.md §5."
             exit 0
           fi
@@ -145,7 +154,7 @@ jobs:
             echo "::warning::Régua indisponível — nada a medir (suite_not_installed, código 20)."
             exit 0
           fi
-          WEBQA_TARGET_URL="$(python -m cockpit_harness alvo)"
+          WEBQA_TARGET_URL="$(python -m cockpit_harness --raiz . alvo)"
           export WEBQA_TARGET_URL
           cd "$RUNNER_TEMP/qa-suite/webqa-suite"
 
@@ -189,7 +198,7 @@ jobs:
         if: always()
         run: |
           set -uo pipefail
-          python -m cockpit_harness laudo --modo inventory --runner ci \
+          python -m cockpit_harness --raiz . laudo --modo inventory --runner ci \
             --regua "$RUNNER_TEMP/qa-suite" \
             --saida "harness/reports/laudo-${GITHUB_RUN_ID}.json"
 
@@ -236,7 +245,7 @@ jobs:
       - name: Obter padrão declarado (pin exato)
         run: |
           set -uo pipefail
-          VERSAO="$(python -m cockpit_harness versao)"
+          VERSAO="$(python -m cockpit_harness --raiz . versao)"
           pip install -r requirements-qa.txt || true
           git clone --depth 1 --branch "v$VERSAO" https://github.com/danzeroum/qa-suite "$RUNNER_TEMP/qa-suite" \
             && pip install -r "$RUNNER_TEMP/qa-suite/webqa-suite/requirements.txt" || \
@@ -283,7 +292,7 @@ jobs:
             echo "::warning::régua ausente — nada a rodar (suite_not_installed, código 20)."
             exit 0
           fi
-          WEBQA_TARGET_URL="$(python -m cockpit_harness alvo)" || {
+          WEBQA_TARGET_URL="$(python -m cockpit_harness --raiz . alvo)" || {
             echo "::error::sem alvo declarado — modo segregado recusado (SCOPE_MISSING, 12)."
             exit 12
           }
@@ -301,7 +310,7 @@ jobs:
               # escopo a sondagem não tem para onde apontar. Recusar aqui é mais barato — e
               # mais honesto — do que descobrir na régua com o probe já no ar.
               ESCOPO="$RUNNER_TEMP/escopo-da-regua.yaml"
-              python -m cockpit_harness escopo-regua --saida "$ESCOPO" || exit 12
+              python -m cockpit_harness --raiz . escopo-regua --saida "$ESCOPO" || exit 12
 
               cd "$RUNNER_TEMP/qa-suite/webqa-suite"
               LAUDO="$RAIZ/harness/reports/sondagem-${GITHUB_RUN_ID}.json"
@@ -318,7 +327,7 @@ jobs:
               # (medido: alvo fora do ar ⇒ "0/8 caminhos, 0 achado(s)", exit 0). 22 = não medido,
               # 23 = medido e reprovou. Sem este passo, um alvo inalcançável passaria como limpo.
               cd "$RAIZ"
-              python -m cockpit_harness veredito --laudo "$LAUDO"
+              python -m cockpit_harness --raiz . veredito --laudo "$LAUDO"
               ;;
           esac
 

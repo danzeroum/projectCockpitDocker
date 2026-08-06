@@ -108,3 +108,23 @@ def test_fiscal_de_metadados_roda_no_ci(request):
             "dia é o que impede docs/metadata-graph.md de virar ficção editada à mão")
     else:
         assert "ci/generate_graph.py --check" in comandos
+
+
+def test_toda_chamada_da_harness_declara_a_raiz(request):
+    """A trava do que a fatia-4 mediu ANTES de ajustar, e que o CI só denunciaria em vermelho.
+
+    A harness deixou de morar aqui: virou danzeroum/cockpit-harness, instalada por pin exato.
+    Instalada, ela resolve a raiz padrão por `Path(__file__).resolve().parents[2]` — que em
+    src-layout era o repositório e em site-packages é `lib/`. Sem `--raiz`, as nove chamadas do
+    qa.yml saem `CONFIG_INVALID: requirements-qa.txt ausente`: o consumidor inteiro fica invisível
+    para a própria harness, e o modo de falha é o pior possível, porque cada comando responde algo
+    plausível em vez de estourar.
+
+    A flag é conhecimento que só o consumidor tem — a dependência não sabe onde ele mora. Este
+    caso existe para que acrescentar uma chamada nova sem ela seja erro na revisão, e não
+    descoberta no runner.
+    """
+    texto = (Path(request.config.rootpath) / QA).read_text(encoding="utf-8")
+    nuas = [l.strip() for l in texto.splitlines()
+            if "python -m cockpit_harness" in l and "--raiz" not in l]
+    assert not nuas, f"chamada da harness sem --raiz: {nuas}"

@@ -12,7 +12,10 @@ generated_from: null
 
 ui_surfaces:
   - id: UI-COCKPIT-PAINEL
-    capability: CAP-ALVO
+    # CAP-ALVO até a fatia-4 da CP-003, e era ponteiro errado desde antes: aquela capacidade
+    # descrevia o software que AUDITARIA o cockpit, não o cockpit. Estas duas superfícies são do
+    # alvo, e a capacidade do alvo que as possui é CAP-NARRAR — a mesma dona dos dez CMP-TELA-*.
+    capability: CAP-NARRAR
     status: proposed
     routes:
       - /
@@ -24,7 +27,7 @@ ui_surfaces:
       - "Com ENABLE_ACTIONS desligado, nenhum botão de mutação aparece no DOM."
 
   - id: UI-COCKPIT-EXECUTIVO
-    capability: CAP-ALVO
+    capability: CAP-NARRAR
     status: proposed
     routes:
       - /

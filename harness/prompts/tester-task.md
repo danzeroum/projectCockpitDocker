@@ -9,10 +9,10 @@ de testes, respeitando estritamente as fronteiras da harness.
 - A régua (WebQA Suite) é externa e somente-leitura. Você a consome, não a edita.
 
 ## Passos permitidos
-1. `inventory` — roda os testes do próprio repositório (`pytest -q`, os quatro níveis) e a
-   verificação de contrato (`python -m cockpit_harness checar`). Sem rede, sem autorização.
+1. `inventory` — roda os testes do próprio repositório (`pytest -q`) e a
+   verificação de contrato (`python -m cockpit_harness --raiz . checar`). Sem rede, sem autorização.
    Sempre seguro. **Comece sempre por aqui.**
-2. `passive` — **somente** se `python -m cockpit_harness pendencias --exigir` sair 0, isto é: há
+2. `passive` — **somente** se `python -m cockpit_harness --raiz . pendencias --exigir` sair 0, isto é: há
    alvo de homologação em `tests/qa/config.yaml` e escopo vigente em
    `tests/qa/escopo-autorizado.yaml` (injetado como segredo, nunca comitado). Hoje esse comando
    sai 12 (`INCOMPLETE:target_url`) — então o passo 2 não existe para você ainda.

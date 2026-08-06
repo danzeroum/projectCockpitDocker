@@ -100,7 +100,7 @@ mesmo IP. `active_discovery` exige `proof_of_possession.reference` não-vazio e 
 porque a régua os cobra para aceitar uma autorização (`webqa/escopo.py` recusa entrada com autor
 vazio, evidência vazia ou data futura). Este arquivo está no schema do CONSUMIDOR; a régua lê
 outro, com o mesmo nome e schema incompatível (`alvos:` por origem). A ponte é
-`python -m cockpit_harness escopo-regua --saida <path>`, que traduz um no outro e **recusa com
+`python -m cockpit_harness --raiz . escopo-regua --saida <path>`, que traduz um no outro e **recusa com
 `SCOPE_MISSING` (12) quando falta declaração** — nenhum campo é preenchido por default. O arquivo
 traduzido é efêmero: vive no runner e some com ele.
 

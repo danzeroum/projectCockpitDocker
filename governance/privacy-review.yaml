@@ -15,7 +15,19 @@ review:
   document: governance/parecer-proporcionalidade.md
   produced_by: agent
   skill: revisao-lgpd
-  scope_fingerprint: "sha256:0c4517619783e510fd0db53b6cb8572781e2ec64806a4b750b600121566c83df"
+  # REGRAVADO na fatia-4 da CP-003 (2026-08-06), e o motivo importa mais que o número.
+  #
+  # O escopo mudou porque o metadado governável mudou — saíram as declarações da harness extraída,
+  # entrou STAGE-DEPLOY. Nenhum CAMPO com forma de dado pessoal foi criado, removido ou movido:
+  # `governance/data-inventory.yaml` continua inventariando zero, o alvo continua em d6ae70ea, e os
+  # riscos abaixo continuam sendo sobre o mesmo endpoint do cockpit, no mesmo arquivo, na mesma
+  # linha. O julgamento não foi refeito porque não havia julgamento novo a fazer — o que havia era
+  # um fingerprint que amarra o parecer a um estado do repositório, e esse estado mudou.
+  #
+  # Se um dia um campo entrar, isto deixa de valer: o tipo de julgamento exigido sobe de Parecer
+  # para RIPD completo, e regravar o número sem rodar /revisao-lgpd passa a ser exatamente o
+  # carimbo que este campo existe para impedir.
+  scope_fingerprint: "sha256:18c352402a6032cfecb2b58825259b51feb400cba71de4cef045c9c3a09422bc"
 
   issues:
     - id: RISCO-001

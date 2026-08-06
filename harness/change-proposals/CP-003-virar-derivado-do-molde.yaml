@@ -245,6 +245,41 @@
 #   PR-2 .......... os seis metadados autorados do sistema real + asserções de ADR + renumeração
 #   PR-3+ ......... os 209: componentes reais do app/ e os testes que os exercitam
 # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+# ─────────────────────────────────────────────────────────────────────────────────────────────
+# EMENDA 4 (2026-08-06): FATIA-4 EXECUTADA — a divisão, e o fecho da pergunta que esta proposta
+# submeteu a aval em vez de resolver sozinha.
+#
+# A proposta oferecia duas saídas para "o cockpit_harness sai do campo de visão do fiscal": a
+# isenção declarada, que assume a perda, ou a divisão em dois repositórios. A arbitragem escolheu
+# a segunda, e ela está feita: `src/cockpit_harness/` (9 módulos), `tests/unit/` (5) e
+# `tests/e2e/` (2) saíram para danzeroum/cockpit-harness com o histórico preservado, e voltam por
+# pin exato de SHA em pyproject.toml. Com eles saíram as declarações que os descreviam — 4
+# capacidades, 5 componentes, 4 interfaces, 17 regras e 9 requisitos —, tudo num único commit,
+# porque remover o metadado antes do código produz ponteiro quebrado e remover o código antes do
+# metadado produz ponteiro para o vazio. São as duas metades do mesmo movimento.
+#
+#     medição pré  (workspace materializado, 9 fiscais) .... 77 achados, 14 categorias
+#     medição pós  (mesmas condições) ...................... 29 achados, 11 categorias
+#
+# A BANCADA NÃO SEGUIU JUNTO, e é a única decisão da fatia que não estava na proposta original.
+# `deploy/homologacao/` fica (ADR-017), mas as 4 regras que o descreviam eram do plano de controle
+# que saiu. Aposentaram COM MIGRAÇÃO: viraram STAGE-DEPLOY, etapa governada com cinco fiscais
+# resolvíveis, e o enunciado de cada uma está preservado na ADR-018. Isentar `deploy/` teria sido
+# mais barato e teria custado a evidência do artefato de maior consequência deste repositório.
+#
+# ESTADO TERMINAL: não há um que o schema permita declarar aqui, e isto é registro, não omissão.
+# Esta proposta é `schema_version: "1.0"` — `check_cp_lifecycle` a ignora por não-retroatividade,
+# porque reescrever uma 1.0 como 1.1 apagaria o registro do que foi proposto. E mesmo promovida, o
+# `status: executed` de uma proposta de risco alto exige `executed_in.merge_commit_sha` e
+# `approved_by.review_id`, que não existem dentro do PR que a executa — o schema diz isso por
+# escrito, e diz certo: uma proposta não pode declarar dentro do próprio PR o merge commit que
+# ainda não existe nem o review que ainda não aconteceu. O terminal honesto é esta emenda.
+#
+# `tests_required` abaixo ainda cita os dois arquivos de `tests/e2e/` que esta fatia removeu. Não
+# são corrigidos, pela isenção do CP-018: uma proposta fala do dia em que foi escrita, e naquele
+# dia eram os testes que a sustentavam. Hoje eles rodam no CI do repositório extraído.
+# ─────────────────────────────────────────────────────────────────────────────────────────────
 #
 # Schema: harness/schemas/change-proposal.schema.json · Fiscal: ci/validate_metadata.py
 schema_version: "1.0"

@@ -8,48 +8,15 @@ metadata_version: "1.0"
 source_of_truth: true
 generated_from: null
 
-interfaces:
-  - id: IFC-CONTRATO
-    name: "Situação verificada do consumidor"
-    kind: python-api
-    provider: CMP-CONTRATO
-    consumers:
-      - CMP-PLANO
-      - CMP-PROCEDENCIA
-      - CMP-CLI
-    exposes:
-      - "cockpit_harness.contrato.situacao"
-      - "cockpit_harness.contrato.exigir_rede_liberada"
-    status: verified
-
-  - id: IFC-PLANO
-    name: "Roteamento de modo por runner-kind"
-    kind: python-api
-    provider: CMP-PLANO
-    consumers:
-      - CMP-CLI
-    exposes:
-      - "cockpit_harness.plano.pode_disparar"
-      - "cockpit_harness.plano.exigir_permissao"
-      - "cockpit_harness.plano.exigir_ambiente_limpo"
-    status: verified
-
-  - id: IFC-PROCEDENCIA
-    name: "Envelope de laudo com procedência"
-    kind: python-api
-    provider: CMP-PROCEDENCIA
-    consumers:
-      - CMP-CLI
-    exposes:
-      - "cockpit_harness.procedencia.montar_laudo"
-      - "cockpit_harness.procedencia.validar"
-    status: verified
-
-  - id: IFC-CLI
-    name: "Porta de linha de comando da harness"
-    kind: cli
-    provider: CMP-CLI
-    consumers: []
-    exposes:
-      - "cockpit_harness.cli.main"
-    status: verified
+# VAZIA DESDE A FATIA-4 DA CP-003, e a vacuidade é uma afirmação, não uma pendência.
+#
+# As quatro interfaces que viviam aqui (IFC-CONTRATO, IFC-PLANO, IFC-PROCEDENCIA, IFC-CLI) eram
+# a API interna de `src/cockpit_harness/` — `provider`, `consumers` e `exposes` todos apontando
+# para módulos do mesmo pacote. Ele saiu para danzeroum/cockpit-harness levando os contratos que
+# fazem sentido dentro dele; declará-los daqui seria este repositório afirmar coisas sobre o
+# formato interno de uma dependência sua.
+#
+# O alvo ainda não tem interfaces declaradas: a fatia-2 autorou os componentes do cockpit e
+# NÃO as fronteiras entre eles, que é trabalho de outra fatia. Lista vazia é o estado honesto —
+# uma IFC inventada agora seria contrato afirmado sem leitura.
+interfaces: []

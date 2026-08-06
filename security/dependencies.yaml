@@ -27,8 +27,25 @@ dependencies:
     pin_kind: range
     owner: technical_owner
     purpose: >
-      Parser de todo metadado deste repositório. Sem ele nenhum fiscal roda — é a única
-      dependência de runtime, e a razão de `ci/bootstrap.py` ser stdlib puro até a etapa 2.
+      Parser de todo metadado deste repositório. Sem ele nenhum fiscal roda — e a razão de
+      `ci/bootstrap.py` ser stdlib puro até a etapa 2.
+
+  - name: cockpit-harness
+    scope: runtime
+    declared_in: pyproject.toml
+    # EXACT, e por SHA de commit — não por tag, não por branch. É a segunda dependência desta casa
+    # que precisa ser exata, e pelo mesmo motivo da régua: `@main` faria a mesma linha resolver
+    # software diferente amanhã, e um laudo que não sabe com o que mediu não se compara com o do
+    # mês passado. A diferença para a régua é que esta saiu DAQUI (CP-003 fatia-4), o que torna o
+    # pin mais necessário e não menos: é justamente o software da própria casa que se tem a
+    # tentação de acompanhar pela branch, "porque a gente controla".
+    pin_kind: exact
+    owner: technical_owner
+    purpose: >
+      O plano de controle da adoção: verificação do contrato de consumo, roteamento de modo,
+      procedência do laudo e a CLI que a qa.yml invoca. Viveu em `src/cockpit_harness/` até a
+      fatia-4 da CP-003; extraído para danzeroum/cockpit-harness porque consumidor e software
+      consumido no mesmo artefato não conseguem discordar — e discordar é o que auditoria faz.
 
   - name: pytest
     scope: dev

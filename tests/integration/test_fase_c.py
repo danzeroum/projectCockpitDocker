@@ -19,6 +19,7 @@ por quê, em vez de passar em silêncio.
 
 from __future__ import annotations
 
+import re
 import shutil
 from pathlib import Path
 
@@ -75,8 +76,16 @@ def test_a_sondagem_recebe_o_escopo_traduzido(passo_segregado: str):
 
 def test_o_veredito_e_nosso(passo_segregado: str):
     """`webqa.sondagem` sai 0 mesmo com `inconclusivo: true` no laudo. Confiar no
-    código de saída dela faria um alvo fora do ar passar como alvo limpo."""
-    assert "cockpit_harness veredito" in passo_segregado
+    código de saída dela faria um alvo fora do ar passar como alvo limpo.
+
+    Regex e não literal desde a fatia-4 da CP-003: a harness virou dependência pinada
+    e toda chamada passou a levar `--raiz .`. O literal `"cockpit_harness veredito"`
+    casava a FORMA de escrever o comando e não o fato de o veredito ser nosso — e
+    quebrou na primeira flag acrescentada, que é justamente o sinal de que estava
+    ancorado no lugar errado.
+    """
+    assert re.search(r"cockpit_harness\b.*\bveredito\b", passo_segregado), (
+        "o veredito voltou a ser o código de saída da régua")
 
 
 def test_a_evidencia_da_fase_c_e_arquivada(request):

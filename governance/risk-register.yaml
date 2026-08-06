@@ -22,8 +22,11 @@ risks:
         ref: harness/policies/execution-modes.md
       - kind: local_path
         ref: .github/workflows/qa.yml
-      - kind: local_path
-        ref: src/cockpit_harness/plano.py
+      # Havia aqui `src/cockpit_harness/plano.py` — o roteamento de modo. Ele saiu na fatia-4 da
+      # CP-003 e hoje vive em danzeroum/cockpit-harness, pinado por SHA em pyproject.toml. O
+      # controle NÃO sumiu; o vocabulário é que não sabe dizê-lo: `kind` só admite local_path,
+      # standard_symbol (const "webqa-suite"), github_environment e branch_protection. Registrado
+      # como CONF-008. Os dois controles locais acima continuam cobrindo a decisão de modo.
       - kind: standard_symbol
         standard: webqa-suite
         version_source: requirements-qa.txt
@@ -104,10 +107,10 @@ risks:
     controls:
       - kind: local_path
         ref: tests/qa/config.yaml
-      - kind: local_path
-        ref: src/cockpit_harness/contrato.py
-      - kind: local_path
-        ref: tests/e2e/test_checklist_adocao.py
+      # `src/cockpit_harness/contrato.py` e `tests/e2e/test_checklist_adocao.py` eram os controles
+      # EXECUTÁVEIS deste risco — a pendência que recusa alvo inventado. Saíram na fatia-4 e vivem
+      # no pacote pinado; mesma limitação de vocabulário da RISK-WEBQA-001 (CONF-008). O que resta
+      # aqui é a declaração e a decisão, que continuam locais e continuam verdadeiras.
       - kind: local_path
         ref: architecture/adr/ADR-016-pendencia-em-vez-de-alvo-inventado.md
 
@@ -147,8 +150,12 @@ risks:
         ref: .gitignore
       - kind: local_path
         ref: tests/qa/escopo-autorizado.yaml.example
+      # Trocado, e não apenas removido: `tests/e2e/test_checklist_adocao.py` saiu na fatia-4, mas
+      # este risco tem controle executável LOCAL de sobra — os casos de credencial da bancada, que
+      # conferem que o .env real não está comitado e que nenhum arquivo de deploy/ atribui segredo.
+      # É o único dos três em que o controle não precisou emigrar.
       - kind: local_path
-        ref: tests/e2e/test_checklist_adocao.py
+        ref: tests/integration/test_homologacao.py
       - kind: local_path
         ref: architecture/adr/ADR-016-pendencia-em-vez-de-alvo-inventado.md
 
